@@ -12,13 +12,13 @@ class Config:
     FLASKY_MAIL_SUBJECT_PREFIX = '[FLASKY]'
     FLASKY_MAIL_SENDER = '*****'
     FLASKY_ADMIN = '*****'
+    BOOTSTRAP_BOOTSWATCH_THEME = 'Slate'  # bootstrap主题设置
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CKEDITOR_FILE_UPLOADER = 'main.upload'
     CKEDITOR_ENABLE_CODESNIPPET = True
     CODEMIRROR_LANGUAGES = ['python', "c", 'html']  # optional
     CODEMIRROR_THEME = 'colorforth'
     CODEMIRROR_ADDONS = (('display', 'placeholder'),)
-
     @staticmethod
     def init_app(app):
         pass

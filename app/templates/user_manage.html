@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{%block title%}
+<title>人员管理</title>
+{%endblock%}
+{%block title1%}<h4>数据中心：<small>管理老师和学生</small></h4>{%endblock%}</span>
+{% from 'bootstrap/table.html' import render_table %}
+{% from 'bootstrap/form.html' import render_form %}
+{% from 'bootstrap/utils.html' import render_messages %}
+{%block main%}
+    
+    <div class="row">
+        <div class="col-md-12">
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>
+                        序号
+                    </td>
+                    <th>
+                        用户名
+                    </th>
+                    <th>
+                        真实姓名
+                    </th>
+                    <th>
+                        角色
+                    </th>
+                    <th>
+                        电话号码
+                    </th>
+                    <th>
+                        身份证号
+                    </th>
+                    <th>
+                        性别
+                    </th>
+                    <th>
+                        登录时间
+                    </th>
+                    <th>
+                        状态
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for j in user%}
+                <tr>										
+                    <td>
+                        {{ loop.index + pagination.skip }}
+                    </td>
+                    <td>
+                        {{j.username}}
+                    </td>
+                    <td>
+                        {{j.realname}}
+                    </td>
+                    <td>
+                        {{j.role.role}}
+                    </td>
+                    <td>
+                        {{j.phone_number}}
+                    </td>
+                    <td>
+                        {{j.id_number}}
+                    </td>
+                    <td>
+                        {{j.gender}}
+                    </td>
+                    <td>
+                        {{j.login_time}}
+                    </td>
+                    <td>
+                        {{j.status}}
+                    </td>	
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>  
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+        {{ pagination.links }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="btn-group" role="group">
+
+                        <a id="modal-80" href="#modal-container-80" role="button" class="btn btn-primary" data-toggle="modal">添加教师用户</a>
+                        
+                        <div class="modal fade" id="modal-container-80" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="myModalLabel">
+                                            个别添加
+                                        </h5> 
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">		
+                                        {{render_form(u,form_type="basic")}}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                            关闭
+                                        </button>
+                                    </div>
+                                </div>	
+                            </div>	
+                        </div>
+                        <a id="modal-801" href="#modal-container-801" role="button" class="btn btn-primary" data-toggle="modal">批量添加教师</a>
+                    
+                        <div class="modal fade" id="modal-container-801" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="myModalLabel">
+                                            批量添加
+                                        </h5> 
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <a href='/download/add_teacher.xlsx'>点击下载模板文件</a>																
+                                        {{render_form(us1,form_type="basic")}}				
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                            关闭
+                                        </button>
+                                    </div>
+                                </div>														
+                            </div>													
+                        </div>
+                        <a id="modal-802" href="#modal-container-802" role="button" class="btn btn-primary" data-toggle="modal">添加学生</a>
+                    
+                        <div class="modal fade" id="modal-container-802" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="myModalLabel">
+                                            添加学生
+                                        </h5> 
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <a href="/static/file/add_students.xlsx">点击下载模板文件</a>																	
+                                        {{render_form(us,form_type="basic")}}				
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                            关闭
+                                        </button>
+                                    </div>
+                                </div>														
+                            </div>													
+                        </div>
+                        <a id="modal-801" href="#modal-container-801" role="button" class="btn btn-primary" data-toggle="modal">升班</a>
+                    
+                        <div class="modal fade" id="modal-container-801" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="myModalLabel">
+                                            升班
+                                        </h5> 
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">																	
+                                        {{render_form(u,form_type="basic")}}				
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                            关闭
+                                        </button>
+                                    </div>
+                                </div>														
+                            </div>													
+                        </div>	
+                    </div>
+                </div>	
+            </div>
+        </div>
+    </div>
+{{render_messages()}}                        
+{%endblock%}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{%block head%}
+    <div class="row">
+        <div class="col-md-12" >
+            <span class="d-block p-2 bg-primary text-white">{%block title1%}<h3>数据中心：<small>作业管理</small></h3>{%endblock%}</span>
+        </div>
+    </div>		
+{%endblock%}
+{% block main%}
+{% from 'bootstrap/form.html' import render_field %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <img class="card-img-top" alt="Bootstrap Thumbnail First" src="https://www.layoutit.com/img/people-q-c-600-200-1.jpg" />
+                    <div class="card-block">
+                        <h5 class="card-title">
+                            Card title
+                        </h5>
+                        <p class="card-text">
+                           发布作业
+                        </p>
+                        <p>
+                            <a id="modal-344280" href="#modal-container-344280" role="button" class="btn" data-toggle="modal">作业发布</a>
+			
+                            <div class="modal fade" id="modal-container-344280" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="myModalLabel">
+                                               作业发布
+                                            </h5> 
+                                            <button type="button" class="close" data-dismiss="modal">
+                                                <span aria-hidden="true">×</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">  <!时间选择器，使用tempus Dominus实现：https://getdatepicker.com/5-4/>
+                                            <form method="post" >
+                                            {{p.csrf_token}}
+                                            {{render_field(p.subject)}}
+                                            {{render_field(p.job_name)}}
+                                            <script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+                                            <script type="text/javascript" src="/static/build/js/moment-with-locales.js"></script>
+                                            <script type="text/javascript" src="/static/build/js/tempusdominus-bootstrap-4.min.js" ></script>                                           
+                                            <link rel="stylesheet" href="/static/build/css/tempusdominus-bootstrap-4.min.css"/>
+                                                <div class="container">
+                                                    <div class="row">
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group">
+                                                                <div class="input-group date" id="datetimepicker4" data-target-input="nearest">
+                                                                    <input type="text" class="form-control datetimepicker-input" name = "date" data-target="#datetimepicker4"/>
+                                                                    <div class="input-group-append" data-target="#datetimepicker4" data-toggle="datetimepicker">
+                                                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <script type="text/javascript">
+                                                            $(function () {
+                                                                $('#datetimepicker4').datetimepicker({
+                                                                    format: 'L'
+                                                                });
+                                                            });
+                                                        </script>
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">发布作业</button>
+                                            </form>
+                                            
+
+
+                                        </div>
+                                        <div class="modal-footer">
+                                             
+                                            <button type="submit" class="btn btn-primary">
+                                                提交
+                                            </button> 
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                关闭
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                
+                            </div>
+                            
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <img class="card-img-top" alt="Bootstrap Thumbnail Second" src="https://www.layoutit.com/img/city-q-c-600-200-1.jpg" />
+                    <div class="card-block">
+                        <h5 class="card-title">
+                            Card title
+                        </h5>
+                        <p class="card-text">
+                            提交作业
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="#">提交</a> <a class="btn" href="#">Action</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <img class="card-img-top" alt="Bootstrap Thumbnail Third" src="https://www.layoutit.com/img/sports-q-c-600-200-1.jpg" />
+                    <div class="card-block">
+                        <h5 class="card-title">
+                            Card title
+                        </h5>
+                        <p class="card-text">
+                            作业的评价
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="#">评价</a> <a class="btn" href="#">Action</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{%endblock%}
+
+

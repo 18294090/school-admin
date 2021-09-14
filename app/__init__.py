@@ -6,11 +6,17 @@ from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from flask_codemirror import CodeMirror
 from flask_wtf import CSRFProtect
+from flask_login import LoginManager
+from flask_datepicker import datepicker
 
+
+login_manager = LoginManager()  # flask-loginm模块进行登录管理
+login_manager.login_view = "auth.login"
 ckeditor = CKEditor()  # 富文本编辑器插件
 bootstrap = Bootstrap()
+
 db = SQLAlchemy()
-codeMirror = CodeMirror()  # 代码编辑器差距
+codeMirror = CodeMirror()  # 代码编辑器插件
 csrf = CSRFProtect()  # 跨站攻击保护
 
 
@@ -23,6 +29,13 @@ def create_app(config_name):
     ckeditor.init_app(app)
     codeMirror.init_app(app)
     csrf.init_app(app)
+    login_manager.init_app(app)
+    datepicker(app)
+    
     from .main import main
+    from .auth import auth as auth_blueprint
+    from .job import job_manage
     app.register_blueprint(main)
+    app.register_blueprint(auth_blueprint, url_prefix="/auth")
+    app.register_blueprint(job_manage,url_prefix="/job")
     return(app)
