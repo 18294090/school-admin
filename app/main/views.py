@@ -26,8 +26,7 @@ def manage():
     u = teacher_add()
     us = students_add()
     us1 = teacher_add_all()
-    if u.submit2.data and u.validate_on_submit():  # 添加教师用户
-       
+    if u.submit2.data and u.validate_on_submit():  # 添加教师用户   
         if db.session.query(user).filter_by(realname=u.username.data,id_number=u.id_number.data).first():
             flash("当前用户已存在")
         else:
@@ -87,11 +86,10 @@ def manage():
         flash("成功导入教师%s名" %n)    
     db.session.commit()
     t = teacher.query.all()
-    search = False
+    search = False  # 分页切片，flask_paginate模块实现
     q = request.args.get('q')
     if q:
         search = True
-    
     page = request.args.get(get_page_parameter(), type=int, default=1)
     start = (page-1)*8
     end =page*8
@@ -119,8 +117,7 @@ def root():
 
 
 @main.route("/structure", methods=["POST", "GET"])  # 批量添加数据的方法案例, 设置年级和班级
-def structure():
-    
+def structure():   
     school = school_settings()
     if school.submit1.data and school.validate_on_submit():  # 组织结构设置
         name = ["一", "二", "三", "四", "五", "六", "七", "八", "九"]
