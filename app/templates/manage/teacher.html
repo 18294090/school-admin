@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{%block title%}
+<title>教师工作安排</title>
+{%endblock%}
+{%block title1%}<h4>{{teacher.teacher[0].subject}}老师:{{teacher.realname}}任教情况:</h4>{%endblock%}</span>
+{% from 'bootstrap/table.html' import render_table %}
+{% from 'bootstrap/form.html' import render_form %}
+{% from 'bootstrap/utils.html' import render_messages %}
+{%block main%}
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{csrf_token()}}"/><!添加crsf_token保护>
+班主任：<select name="class_master">
+<option selected >{%if teacher.class_info%}{{teacher.class_info[0].class_name}}{%else%}无{%endif%}</option>
+{%for i in c%}
+<option value="{{i.id}}">{{i.class_name}}</option>
+{%endfor%}
+
+</select>
+<div id="card-269540">
+    {%for i in g%}
+        <div class="card">
+            <div class="card-header">
+                <a class="card-link" data-toggle="collapse" data-parent="#card-269540" href="#card-element-{{i.id}}">{{i.grade_name}}</a>
+            </div>
+            <div id="card-element-{{i.id}}" class="collapse show">
+                <div class="card-body">
+                    {%for j in c%}
+                        {%if j.grade_id==i.id%}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="cla" value="{{j.id}}" id="checkbox-{{j.id}}" {%if j.id in teaching_information%}checked{%endif%}>
+                            <label class="form-check-label" for="checkbox-{{j.id}}">
+                            {{j.class_name}}
+                        </label>
+                        </div>
+                        {%endif%}
+                    {%endfor%}        
+                </div>
+            </div>
+        </div>
+    {%endfor%}
+    <span class="btn btn-primary" onclick="cls()">全部清除</span>  
+<button class="btn btn-primary" type="submit">提交</button>    
+</div>
+</form>
+
+
+<script> 
+function cls(){
+    var chk=document.getElementsByName("cla");
+    for(var i=0;i<chk.length;i++){
+        if (chk[i].checked){
+            chk[i].checked=false
+        }
+    }
+}
+</script>
+{%endblock%}

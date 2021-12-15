@@ -10,7 +10,6 @@ def job():
     p = publish()
     subject = request.form.get('subject')
     job_name = request.form.get('job_name')
-    deadline = request.form.get('date')
-    
-    return(render_template("job/mainpage.html", p=p,d=date))
+    deadline = request.form.get('date')  
+    return(render_template("job/mainpage.html", p=p))
 

@@ -44,16 +44,16 @@
 													</thead>
 													<tbody>
 														{%for j in c%}
-														{%if j.grade_name==i.grade_name%}
+														{%if j.grade_id==i.id%}
 														<tr>
 															<td>
-																{{j.id}}
+																{{loop.index}}
 															</td>
 															<td>
 																{{j.class_name}}
 															</td>
 															<td>
-																{{j.class_master}}
+																{{j.teacher.realname}}
 															</td>
 														</tr>		
 														{%endif%}
@@ -68,7 +68,7 @@
 								{%endfor%}
 							</div>
 							<div class="col-md-12">
-								 <a id="modal-806292" href="#modal-container-806292" role="button" class="btn" data-toggle="modal">初始化</a>
+								 <a id="modal-806292" href="#modal-container-806292" role="button" class="btn btn-primary" data-toggle="modal">初始化</a>
 								
 								<div class="modal fade" id="modal-container-806292" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 									<div class="modal-dialog" role="document">

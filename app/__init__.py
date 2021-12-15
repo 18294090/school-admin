@@ -35,7 +35,11 @@ def create_app(config_name):
     from .main import main
     from .auth import auth as auth_blueprint
     from .job import job_manage
+    from .examination import examination
+    from .manage import manage
     app.register_blueprint(main)
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
     app.register_blueprint(job_manage,url_prefix="/job")
+    app.register_blueprint(examination,url_prefix="/exam")
+    app.register_blueprint(manage,url_prefix="/manage")
     return(app)

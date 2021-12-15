@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{%block title%}
+<title>
+学生评价管理
+</title>
+{%endblock%}
+{%block title1%}<h4>学生管理</h4>{%endblock%}
+{%block main%}
+<div class="row">
+<div class="col-md-12">
+    <div id="card-818869">
+        <div class="card">
+            <div class="card-header">
+                 <a class="card-link" data-toggle="collapse" data-parent="#card-818869" href="#card-element-458856">筛选</a>
+            </div>
+            <div id="card-element-458856" class="collapse hide">
+                <div class="card-body">
+                    Anim pariatur cliche...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>
+                序号
+            </th>
+            <th>
+                学号
+            </th>
+            <th>
+                姓名
+            </th>
+            <th>
+                班级
+            </th>
+            <th>
+                性别
+            </th>
+            <th>
+                操作
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {%for i in class_%}
+        {%for j in i.class_info.student%}
+        <tr>
+            <td>
+                {{loop.index}}
+            </td>
+            <td>
+                {{j.number}}
+            </td>
+            <td>
+                {{j.name}}
+            </td>
+            <td>
+                {{j.class_info.class_name}} 
+            </td>
+            <td>
+                {{j.user_infor.gender}}
+            </td>
+            <td>
+                <a href=""><input type="button"  class="btn-group-sm btn-primary" value="评价"></a>
+                <input type="button"  class="btn-group-sm btn-primary" value="设为课代表">
+            </td>    
+        </tr>
+        {%endfor%}
+        {%endfor%}
+    </tbody>
+</table>
+{%endblock%}

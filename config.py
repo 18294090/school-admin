@@ -12,7 +12,7 @@ class Config:
     FLASKY_MAIL_SUBJECT_PREFIX = '[FLASKY]'
     FLASKY_MAIL_SENDER = '*****'
     FLASKY_ADMIN = '*****'
-    BOOTSTRAP_BOOTSWATCH_THEME = 'Slate'  # bootstrap主题设置
+    BOOTSTRAP_BOOTSWATCH_THEME = 'yeti'  # bootstrap主题设置
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CKEDITOR_FILE_UPLOADER = 'main.upload'
     CKEDITOR_ENABLE_CODESNIPPET = True

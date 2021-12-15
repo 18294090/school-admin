@@ -39,22 +39,6 @@ class school_settings(FlaskForm):
     submit1 = SubmitField("确定")
 
 
-class teacher_add(FlaskForm):
-    username = StringField(label="姓名", validators=[DataRequired('请输入账号')])
-    id_number = StringField(label="身份证号码", validators=[DataRequired('请输入身份证号码')])
-    subject = SelectField(label="任教学科", validators=[DataRequired('请选择标签')], render_kw={
-            'class': 'form-control'},
-            choices=subjects,
-            default=1,
-            coerce=int)
-    submit2 = SubmitField("确定")
 
-class teacher_add_all(FlaskForm):
-    file = FileField(label="请选择上传的文件", validators=[FileRequired('选择文件')])
-    submit = SubmitField("提交")
-
-class students_add(FlaskForm):
-    file = FileField(label="请选择上传的文件", validators=[FileRequired('选择文件')])
-    submit3 = SubmitField("提交")
 
 
