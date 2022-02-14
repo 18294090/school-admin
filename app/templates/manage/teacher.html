@@ -2,7 +2,7 @@
 {%block title%}
 <title>教师工作安排</title>
 {%endblock%}
-{%block title1%}<h4>{{teacher.teacher[0].subject}}老师:{{teacher.realname}}任教情况:</h4>{%endblock%}</span>
+{%block title1%}<h4>{{teacher.teacher.subject}}老师:{{teacher.realname}}任教情况:</h4>{%endblock%}</span>
 {% from 'bootstrap/table.html' import render_table %}
 {% from 'bootstrap/form.html' import render_form %}
 {% from 'bootstrap/utils.html' import render_messages %}
@@ -29,8 +29,8 @@
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="checkbox" name="cla" value="{{j.id}}" id="checkbox-{{j.id}}" {%if j.id in teaching_information%}checked{%endif%}>
                             <label class="form-check-label" for="checkbox-{{j.id}}">
-                            {{j.class_name}}
-                        </label>
+                                {{j.class_name}}
+                            </label>
                         </div>
                         {%endif%}
                     {%endfor%}        
@@ -49,7 +49,7 @@ function cls(){
     var chk=document.getElementsByName("cla");
     for(var i=0;i<chk.length;i++){
         if (chk[i].checked){
-            chk[i].checked=false
+            chk[i].checked=false;
         }
     }
 }

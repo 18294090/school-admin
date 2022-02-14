@@ -1,13 +1,14 @@
 from .import manage
-from ..models import grade_info, class_info, teacher, user
+from ..models import grade_info, class_info, job_submission, teacher, user
 from .. import db
 from flask_paginate import Pagination, get_page_parameter
 from flask import render_template, redirect, flash, url_for, request
 from ..models import grade_info, class_info, student, teacher, teaching_information, user,subject
-from .forms import students_add, teacher_add, teacher_add_all
+from .forms import students_add, teacher_add, teacher_add_all,subjects
 from .. import db
 import pandas as pd
 from flask_login import current_user
+
 
 @manage.route("/", methods=["POST", "GET"])
 def personnel_managementmanage():
@@ -24,7 +25,7 @@ def personnel_managementmanage():
                 db.session.add(user_)
                 db.session.flush()
                 db.session.commit()
-                teacher_.subject = u.subject.data
+                teacher_.subject = subjects[int(request.values.get("subject"))-1][1]
                 teacher_.user_id = user_.id
                 db.session.add(teacher_)
                 try:
@@ -87,11 +88,11 @@ def personnel_managementmanage():
         page = request.args.get(get_page_parameter(), type=int, default=1)
         start = (page-1)*10
         end =page*10
-        user_ = user.query.slice(start,end)
+        user_ = user.query.order_by(user.role_id).slice(start,end)
         pagination = Pagination(page=page, total=len(user.query.all()), bs_version=4, search=search, record_name='user_')
         return(render_template("manage/user_manage.html", u=u, us=us, us1=us1, user=user_,pagination=pagination))
     elif current_user.role.role=="teacher":
-        class_=current_user.teacher[0].teaching_information
+        class_=current_user.teacher.teaching_information
         return(render_template("manage/manage_student.html",class_=class_))
 
 @manage.route("/teacher/<id>", methods =["POST","GET"])
@@ -99,7 +100,7 @@ def teacher_manage(id):
     teacher_ = user.query.filter_by(id=id).first()
     g = grade_info.query.all()
     c = class_info.query.all()
-    t=teaching_information.query.filter(teaching_information.teacher_id==teacher_.teacher[0].id)
+    t=teaching_information.query.filter(teaching_information.teacher_id==teacher_.teacher.id)
     class_=[]
     for i in t.all():
         class_.append(i.class_id)
@@ -118,9 +119,20 @@ def teacher_manage(id):
         for i in t.all():
             db.session.delete(i) 
         for i in class_:
-            add=teaching_information(class_id=i,teacher_id=teacher_.teacher[0].id,subject=teacher_.teacher[0].subject)
+            add=teaching_information(class_id=i,teacher_id=teacher_.teacher.id,subject=teacher_.teacher.subject)
             db.session.add(add)
         db.session.commit()
         return(redirect(url_for("main.index")))
     return(render_template("manage/teacher.html",teacher=teacher_,teaching_information=class_ ,g=g,c=c))
 
+
+@manage.route("/student/<id>", methods =["POST","GET"])
+def student_overview(id):
+    stu=student.query.filter(student.id==id).first()
+    jobs=job_submission.query.filter(job_submission.student==id)
+    return(render_template("manage/stu_personal_info.html",stu=stu,jobs=jobs,job_submission=job_submission))
+
+@manage.route("/class/<id>", methods =["POST","GET"])
+def class_overview(id):
+    cla=class_info.query.filter(class_info.id==id).first()
+    return(render_template("manage/class_info.html",cla=cla))

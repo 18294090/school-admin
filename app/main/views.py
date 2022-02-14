@@ -5,9 +5,10 @@ from flask.helpers import url_for
 from sqlalchemy.sql.elements import Null
 from .import main
 from flask import render_template, redirect, flash, send_from_directory, request
-from ..models import grade_info, class_info, student, teacher, teaching_information, user,subject
+from ..models import grade_info, class_info, representative, student, teacher, teaching_information, user,subject
 from .forms import school_settings
 from .. import db
+from flask_login import current_user 
 
 
 @main.route("/index", methods=["POST", "GET"])
@@ -76,14 +77,29 @@ def structure():
         flash("操作成功，你已成功添加%s个年级和%s个班级" % (i+1, (i+1) * (j+1)))
     g = grade_info.query.all()
     c = class_info.query.all()
-    
     return(render_template("structure.html", school=school, g=g, c=c))
-
 
 @main.route("/download/<path:filename>",methods=["POST","GET"])
 def download(filename):
-    
     dir = os.getcwd()
     dir =os.path.join(dir,"app\\static\\file\\")    
     return send_from_directory(dir,filename, as_attachment=True)
 
+@main.route("/representative/<arg>")
+def rep(arg):
+    s=arg.split('-')
+    rep=representative.query.filter(representative.teacher_id==s[0],representative.student_id==s[1]).first()
+    if not rep:
+        stu=representative(teacher_id=s[0],student_id=s[1],subject=current_user.teacher.subject)
+        db.session.add(stu)
+        db.session.flush()
+        stu.student.user_infor.role_id=2   
+    else:
+        db.session.delete(rep)
+        rep.student.user_infor.role_id=4
+    try:
+        db.session.flush()
+        db.session.commit()
+    except Exception:
+        db.session.rollback
+    return(redirect( url_for("manage.student_overview",id=s[1])))

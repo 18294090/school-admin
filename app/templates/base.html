@@ -4,7 +4,7 @@
 {{bootstrap.load_css() }}
 {{bootstrap.load_js() }}
 <script type="text/javascript" src="/static/vue.js/vue.global.js"></script>
-{% endblock%}
+{%endblock%}
 {%block title%}
 <title>网页标题</title>
 {%endblock%}
@@ -27,7 +27,7 @@
 							{{render_nav_item("main.index","主页")}}
 						</li>
 						<li class="nav-item">
-							{{render_nav_item("job.job","作业管理")}}
+							{{render_nav_item("job.job_mg","作业管理")}}
 						</li>
 						<li class="nav-item">
 							{{render_nav_item("main.teaching","测验管理")}}
@@ -39,9 +39,11 @@
 							{{render_nav_item("manage.personnel_managementmanage","人员管理")}}
 							{%endif%}
 						</li>
+						{%if current_user.role.role=="admin"%}
 						<li class="nav-item">
 							 {{render_nav_item("main.structure","组织结构")}}
 						</li>
+						{%endif%}
 						<li class="nav-item dropdown">
 							 <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown">功能</a>
 							<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
@@ -82,13 +84,14 @@
 			{%endblock%}
 			{%block head%}
 			<div class="row">
-				<div class="col-md-12" >
-					<span class="d-block p-2 bg-primary text-white">{%block title1%}<h3>欢迎使用！<small>数据中心</small></h3>{%endblock%}</span>
+				<div class="col-md-12 " >
+					<span class="d-block p-2  bg-primary text-white">{%block title1%}<h3>欢迎使用！<small>数据中心</small></h3>{%endblock%}</span>
+					
 				</div>
 			</div>
 			{%endblock%}
 			{%block main%}
-			<div class="row">
+	<div class="row">
 		<div class="col-md-12">
 			<div class="row">
 				<div class="col-md-4">

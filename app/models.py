@@ -38,11 +38,11 @@ class role(db.Model):  # 角色表
         return(self.permissions & perm == perm)
 
 class Permission:
-    enrollment = 1  # 入学
+    job_republish= 1  # 作业发布
     class_grouping = 2  # 分班
     offer_courses = 4  # 课程开设
     assign_teachers = 8  # 任课教师分配
-    job_republish = 16  # 作业发布
+    enrollment = 16  #  入学
     job_submission = 32  # 作业提交
     job_evaluation = 64  # 作业评价
 
@@ -61,7 +61,7 @@ class user(UserMixin, db.Model):  # 用户表
     gender = db.Column(db.String(1))
     login_time = db.Column(db.DateTime)
     status = db.Column(db.String(64))
-    teacher = db.relationship('teacher',backref=db.backref("user"))
+    job = db.relationship("job", order_by = "job.publish_time.desc()",backref=db.backref("user"))  #order_by用于排序，desc（）为降序
     
     # 禁止读密码
     @property
@@ -89,13 +89,13 @@ class class_info(db.Model):  # 班级信息
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     class_name = db.Column(db.String(64), unique=True)
     grade_id = db.Column(db.Integer, ForeignKey("grade_info.id"))
-    grade = db.relationship('grade_info',backref=db.backref("class_info", uselist=False))
+    grade = db.relationship('grade_info',backref=db.backref("class_info"))
     class_master = db.Column(db.Integer, ForeignKey("user.id"))
     attribute = db.Column(db.String(64))
-    student = db.relationship('student',backref=db.backref("class_info", uselist=False))
+    student = db.relationship('student', order_by="student.name",backref=db.backref("class_info"))
     teacher =  db.relationship('user',backref=db.backref("class_info"))
     teaching_information =db.relationship('teaching_information',backref=db.backref("class_info"))
-    
+    jobs = db.relationship("job", order_by="job.publish_time.desc()",backref=db.backref('class_info'))
 class teacher(db.Model):  # 教师信息
     __table_args__ = {'extend_existing': True}
     __tablename__ = "teacher"
@@ -103,6 +103,9 @@ class teacher(db.Model):  # 教师信息
     user_id = db.Column(db.Integer, ForeignKey("user.id"))
     subject = db.Column(db.String(64))
     teaching_information = db.relationship('teaching_information',backref=db.backref("teacher"))
+    user_info = db.relationship('user',backref=db.backref("teacher",uselist=False))
+    jobs = db.relationship('job',order_by = "job.publish_time.desc()",backref=db.backref("teacher"))
+    representative = db.relationship('representative',backref=db.backref("teacher"))
 
 class teaching_information(db.Model):  # 教师任教信息
     __table_args__ = {'extend_existing': True}
@@ -118,19 +121,22 @@ class job(db.Model):  # 作业
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_name = db.Column(db.String(64))
     class_id = db.Column(db.Integer, ForeignKey("class_info.id"))
-    class_name = db.relationship("class_info", backref=db.backref('jobs', lazy='dynamic'))
     publish_time = db.Column(db.DateTime)
     publisher = db.Column(db.Integer, ForeignKey("user.id"))
     deadline = db.Column(db.DateTime)
-
+    subject = db.Column(db.String(64))
+    teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
+    
 class job_submission(db.Model):  #作业提交信息
     __table_args__ = {'extend_existing': True}
     __tablename__ = "job_submission"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    job_id = db.Column(db.Integer, ForeignKey("job.id"))
+    job_id = db.Column(db.Integer, ForeignKey("job.id",ondelete='cascade'))
+    job = db.relationship("job",order_by="job_submission.submit_time.desc()", backref=db.backref('job_submission',lazy="dynamic", cascade="all, delete"))
     student = db.Column(db.Integer, ForeignKey("student.id"))
-    job_assessment = db.Column(db.Integer)
+    job_assessment = db.Column(db.Text)
     submit_time = db.Column(db.DateTime)
+    mark=db.Column(db.Integer)
 
 class job_assessment:
     A=5
@@ -147,6 +153,7 @@ class test(db.Model):  # 考试
     exam_name = db.Column(db.String(64))
     class_id = db.Column(db.Integer, ForeignKey("class_info.id"))
     class_name = db.relationship("class_info", backref=db.backref('class_info', lazy='dynamic'))
+    teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
     publish_time = db.Column(db.DateTime)
     publisher = db.Column(db.Integer, ForeignKey("user.id"))
 
@@ -164,10 +171,19 @@ class student(db.Model):  # 学生
     __tablename__ = "student"
     id= db.Column(db.Integer, autoincrement=True, primary_key=True)
     number = db.Column(db.String(64),ForeignKey("user.username"))
-    user_infor = db.relationship("user",backref=db.backref("student"))
+    user_infor = db.relationship("user",backref=db.backref("student",uselist=False))
     name = db.Column(db.String(64))
     class_id = db.Column(db.Integer, ForeignKey(class_info.id))
+    job_submission =  db.relationship("job_submission",backref=db.backref("student_job"))
 
+
+class representative(db.Model):
+     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+     student_id = db.Column(db.Integer, ForeignKey("student.id"))
+     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
+     subject = db.Column(db.String(64))
+     student=db.relationship("student",backref=db.backref("representative",lazy="dynamic"))
+     
 class assessment(db.Model):  # 教师对学生的评价
     __table_args__ = {'extend_existing': True}
     __tablename__ = "assessment"
@@ -176,9 +192,7 @@ class assessment(db.Model):  # 教师对学生的评价
     teacher = db.Column(db.Integer, ForeignKey("teacher.id"))
     time = db.Column(db.DateTime)
     content = db.Column(db.Text)
-
-
-
+    mark =db.Column(db.Integer)
 
 subject={
     "语文" : "chinese",

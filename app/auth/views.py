@@ -39,3 +39,11 @@ def logout():
     logout_user()
     flash("你已成功退出系统")
     return(redirect(url_for('auth.login')))
+
+@auth.route("/reset/<id>")
+def reset(id):
+    u=user.query.filter(user.id==id).first()
+    u.password="123456"
+    db.session.flush()
+    db.session.commit()
+    return("重置成功")
