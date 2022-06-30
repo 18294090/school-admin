@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{%block title%}
+<TITLE>教师作业统计</TITLE>
+{%endblock%}
+
+{%block main%}
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>
+                序号
+            </th>
+            <th>
+                姓名
+            </th>
+            <th>
+                学科
+            </th>
+            <th>
+                作业数量
+            </th>
+            <th>
+                提交率
+            </th>
+            <th>
+                教师批改数
+            </th>
+            <th>
+                平均分
+            </th>
+        </tr>
+    </thead>
+</thead>
+    <tbody>
+
+       {%for index in statistics.index%}
+
+        <tr>
+            <td>
+                {{loop.index}}
+            </td>
+            <td>
+                {{statistics.at[index,"姓名"]}}
+            </td>
+            <td>
+                <a href="">{{statistics.at[index,"学科"]}}</a>
+            </td>
+                <td>                   
+                    {{statistics.at[index,"作业数量"]}}
+                </td>
+                <td>
+                {{statistics.at[index,"提交率"]}}%
+                    
+                </td>
+                <td>
+                    {{statistics.at[index,"批改数"]}}
+                </td>
+                 <td>
+                    {{statistics.at[index,"平均分"]}}
+                </td>
+        </tr>
+        {%endfor%}
+    </tbody>
+</table>
+{%endblock%}

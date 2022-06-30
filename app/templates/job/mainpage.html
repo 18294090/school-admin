@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_field %}
+{%block title%}
+<TITLE>作业</TITLE>
+{%endblock%}
+{%block head%}
+    <div class="row ">
+        <div class="col-md-12 " >
+            <div class="btn-group" role="group" aria-label="Basic example">
+                {%if current_user.role.role=="teacher" or  current_user.role.role=="representative" %}
+                <a id="modal-311" href="#modal-container-311" data-toggle="modal"><button type="button" class="btn btn btn-primary">作业发布</button></a>
+                <div class="modal fade" id="modal-container-311" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="myModalLabel">
+                                    {%if current_user.role.role=="teacher"%}
+                                    {%set subject=current_user.teacher.subject%}
+                                    {%elif current_user.role.role=="representative"%}        
+                                    {%set subject=current_user.student.representative.first().subject%}
+                                    {%endif%}
+                                    {{subject}}作业发布
+                                </h5> 
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">  <!时间选择器，使用tempus Dominus实现：https://getdatepicker.com/5-4/>
+                                <form method="post" onsubmit ="return check()" >
+                                {{p.csrf_token}}
+                                {{render_field(p.job_name)}}   
+                                上交截止日期
+                                <input type="text" class="form-control datetimepicker-input" name="time" id="datetimepicker4" data-toggle="datetimepicker" data-target="#datetimepicker4"/>
+                                <br>
+                                
+                                {{render_field(p.context)}}
+                                <br>
+                                请选择班级
+                                <br>
+                                    <div class="form-check form-check-inline">
+                                        {%if current_user.role.role=="teacher"%}
+                                            {%for i in class_%}
+                                                <input class="form-check-input" type="checkbox" name="cla" value="{{i.id}}" id="checkbox-{{i.id}}" checked>
+                                                <label class="form-check-label" for="checkbox-{{i.id}}">
+                                                    {{i.class_name}}
+                                                </label> 
+                                            {%endfor%}
+                                        {%elif current_user.role.role=="representative"%}
+                                                <input class="form-check-input" type="checkbox" name="cla" value="{{current_user.student.class_info.id}}" id="checkbox" checked>
+                                                <label class="form-check-label" for="checkbox">
+                                                    {{current_user.student.class_info.class_name}}
+                                                </label>
+                                        {%endif%}
+                                    </div>
+                                <br>
+                                
+                                <script>
+                                    
+                                    $(function () {
+                                        $('#datetimepicker4').datetimepicker({locale: 'zh-cn',format:"YYYY-MM-DD"});
+                                    });
+                                    function check(){
+                                        var timepicker=document.getElementById("datetimepicker4")
+                                        if(timepicker.value=="" || timepicker.value==null){
+                                            alert("截止日期输入项不能为空");
+                                            return false;
+                                        }
+                                        return true;
+                                    }
+                                </script>
+                                <br>
+                                    <button type="submit" name="submit1" class="btn btn-primary">发布作业</button>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                    关闭
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+                {%endif%}
+                 {%if current_user.role.role in ["teacher"]%}
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">
+                            任教班级{{current_user.teacher.subject}}作业统计
+                        </button>
+                        
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        {%for i in class_%}
+                            <a class="dropdown-item" href="/job/class_statistics/{{subject}}/{{i.id}}">{{i.class_name}}</a>
+                        {%endfor%}
+                        
+                        </div>
+                        
+                        
+                    </div>
+                    {%if current_user.teacher.class_info%}
+                         <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1" data-toggle="dropdown" aria-expanded="false">
+                                {{ current_user.teacher.class_info.class_name}}作业统计
+                            </button>
+                        
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                {%for i in subjects%}
+                                    <a class="dropdown-item" href="/job/class_statistics/{{i}}/{{current_user.teacher.class_info.id}}">{{i}}</a>
+                                {%endfor%}
+                                <a  class="dropdown-item" href="/job/class_statistics/全科/{{current_user.teacher.class_info.id}}"> 全科作业统计</a>
+                            </div>
+                        </div>
+                    {%endif%}
+                {%endif%}
+                
+                 {%if current_user.role.role=="admin"%}
+                   <a  href="/job/teacher_statistics/"> <button type="button" class="btn btn-primary">教师作业统计</button></a>
+                 {%endif%}
+                {%if current_user.role.role in ["student","representative"] %}
+                    <a href="/job/current_job/"><button type="button" class="btn btn btn-primary">当前作业</button></a>
+                {%endif%}
+			</div>
+        </div>
+    </div>
+    <!以下为tempus dominus时间选择器的js和css引用>
+    <script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/build/js/moment-with-locales.js"></script>
+    <script type="text/javascript" src="/static/build/js/tempusdominus-bootstrap-4.min.js" ></script>                                           
+    <link rel="stylesheet" href="/static/build/css/tempusdominus-bootstrap-4.min.css"/>	
+   	
+{%endblock%}
+
+{% block main%}
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-dismissable alert-danger">
+				 
+							<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+								×
+							</button>
+							<h4>
+								警告
+							</h4> <strong>作业已过截止日期不能提交</strong> 
+		</div>
+          {% endfor %}
+    {% endif %}
+ {% endwith %}    
+{%if current_user.role.permissions>0%}
+
+<div class="row">
+    <div class="col-md-12">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            序号
+                        </th>
+                        <th>
+                            作业名称
+                        </th>
+                        <th>
+                            学科
+                        </th>
+                        <th>
+                            班级
+                        </th>
+                    
+                        <th>
+                            发布时间
+                        </th>
+                        <th>
+                            上交截止时间
+                        </th>
+                        
+                        <th>
+                            发布者
+                        </th>
+                        <th>
+                            责任教师
+                        </th>
+                        <th>
+                            完成率
+                        </th>
+                        <th>
+                            批改情况
+                        </th>
+                        <th>
+                        平均分
+                        </th>
+                        <th>
+                            操作
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for i in jobs%}
+                    <tr>
+                        <td>{{ loop.index + pagination.skip }}</td>
+                        <td>{{i.job_name}}</td>
+                        <td>{{i.subject}}</td>
+                        <td>{{i.class_info.class_name}}</td>
+                        <td>{{i.publish_time}}</td>
+                        <td>{{i.deadline}}</td>
+                        <td>{{i.user.realname}}</td>
+                        <td>{{i.teacher.user_info.realname}}</td>
+                        <td><div class="progress">
+                        <div class="progress-bar bg-info" style="width:{%if i.job_submission.all()|length%}{{(i.job_submission.filter(job_submission.submit_time !=None).all()|length/i.job_submission.all()|length*100)|round(2)}}{%else%}0{%endif%}%">{%if i.job_submission.all()|length%}{{(i.job_submission.filter(job_submission.submit_time !=None).all()|length/i.job_submission.all()|length*100)|round(2)}}{%else%}0{%endif%}%</div>
+                        </div>
+                        </td>
+                        <td>
+                            {{i.job_submission.filter(job_submission.submit_time!=None).filter(job_submission.mark==None).all()|length}}人未评价
+                        </td>
+                        <td>
+                            {{dic[i.id]}}
+                        </td>	
+                        <td>
+                            {%if current_user.role.has_permission(Permission.job_submit)%}<button id="modal-{{i.id}}" href="#modal-container-{{loop.index}}" role="button" class="btn-group-sm btn-primary" data-toggle="modal">提交作业</button>{%endif%}
+                            <div class="modal fade" id="modal-container-{{loop.index}}" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                    <form method="post">
+                                        {{p.csrf_token}}
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="myModalLabel">
+                                                        选择作业上交同学名单
+                                                    </h5> 
+                                                    <button type="button" class="close" data-dismiss="modal">
+                                                        <span aria-hidden="true">×</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    {%for j in i.class_info.student%}
+                                                    {%if job_submission.query.filter(job_submission.job_id==i.id).filter(job_submission.student==j.id).first().submit_time==none%}
+                                                    <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="checkbox" name="stu" value="{{i.id}}-{{j.id}}" id="checkbox-{{j.id}}" checked>
+                                                        <label class="form-check-label" for="checkbox-{{j.id}}">
+                                                            {{j.name.ljust(6,"—")}}
+                                                        </label>
+                                                    </div>
+                                                    {%endif%}
+                                                    {%endfor%}
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <div class="btn-group">"	 
+                                                    <button type="button" class="btn btn-primary" onclick="cls()">全部清除</button>
+                                                    <button type="button" class="btn btn-primary" onclick="s_all()">全选</button>
+                                                    <button type="button" class="btn btn-primary" onclick="anti()">反选</button>
+                                                    {%if current_user.role.has_permission(Permission.job_publish)%}
+                                                    <button type="submit" class="btn btn-primary" name="submit2">
+                                                        提交
+                                                    </button> 
+                                                    {%endif%}
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                        关闭
+                                                    </button>
+                                                    </div>
+                                                </div>
+                                            
+                                            </div>
+                                        </div>
+                                    </form>
+                            </div>
+                            {%if current_user.role.has_permission(Permission.job_assessment)%}{%if i.job_submission.filter(job_submission.submit_time !=None).all()|length!=0%}<a href="/job/job_assessment/{{i.id}}"><input type="button"  class="btn-group-sm btn-primary"  value="评价" ></a>{%endif%}{%endif%}
+                            {%if i.job_submission.filter(job_submission.submit_time !=None).all()|length==0%}<button  class="btn-group-sm btn-primary" onclick="del({{i.id}})" >删除</button>{%else%}<a href="/job/job_info/{{i.id}}"><input type="button"  class="btn-group-sm btn-primary"  value="查看" ></a>{%endif%}
+                            {%if current_user.role.role=="representative" and i.judged!=1%}<button class="btn-group-sm btn-primary" onclick="judge({{i.id}})">设为已批改</button>{%endif%}
+                        </td>
+                    </tr>
+                    {%endfor%}
+                </tbody>
+            </table>
+        {{ pagination.links }}
+    </div>
+</div>
+
+<script>
+
+    function anti(){
+        var stu=document.getElementsByName("stu");
+        for(var i=0;i<stu.length;i++){
+            stu[i].checked=!stu[i].checked;
+        }
+        };
+
+    function cls(){
+        var stu=document.getElementsByName("stu");
+        for(var i=0;i<stu.length;i++){
+            stu[i].checked=false;
+        };
+        };
+    //以下是ajax异步传输数据
+    function del(id){
+        var data={"del":id};
+        var csrf_token="{{csrf_token()}}";
+        $.ajax({
+                url: "/job/del/",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
+                    if (data) {    
+                        //跳转到系统首页
+                        alert(data)
+                        
+                        window.location.replace({{url_for('job.job_mg')}});
+                    } else {
+                        alert("删除作业失败")
+                    }
+                },
+            });
+    };    
+
+    function judge(id){
+        var data={"judge":id};
+        var csrf_token="{{csrf_token()}}";
+        $.ajax({
+                url: "/job/judge/",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
+                    if (data) {    
+                        //跳转到系统首页
+                        alert(data)
+                        window.location.replace({{url_for('job.job_mg')}});    
+                    } else {
+                        alert("删除作业失败")
+                    }
+                },
+            });
+    };
+    
+    function s_all(){
+        var stu=document.getElementsByName("stu");
+        for(var i=0;i<stu.length;i++){
+            stu[i].checked=true;
+        };
+        };
+
+
+</script>
+
+               
+
+
+{%endif%}        
+{%endblock%}
+
+
+
+

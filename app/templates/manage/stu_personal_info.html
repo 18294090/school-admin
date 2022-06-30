@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{%block title%}
+<title>个人作业信息</title>
+{%endblock%}
+
+{%block main%}
+<h3>{{stu.class_info.class_name}}班：{{stu.user_infor.realname}}<small>{%if stu.user_infor.role.role=="representative"%}({{stu.representative.first().subject}}课代表){%endif%}</small></h3>
+<div class="row">                            
+    <div class="col-md-2">        
+        <div class="progress">
+            <div class="progress-bar bg-success" role="progressbar" style="width:{%if jobs.all()%} {{"%.2f"|format((jobs.filter(job_submission.submit_time!=None).all()|length/jobs.all()|length)*100)}}%{%else%}{{0}}%{%endif%}" >
+                完成度： {%if jobs.all()%} {{"%.2f"|format((jobs.filter(job_submission.submit_time!=None).all()|length/jobs.all()|length)*100)}}%{%else%}{{0}}%{%endif%}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        作业数：
+        <span class="badge badge-info">{{stu.class_info.jobs|length}}</span>
+        未完成：
+        <span class="badge badge-danger">{{jobs.filter(job_submission.submit_time==None).all()|length}}</span>
+        平均分：{{"%.2f"|format(avg)}}
+    </div>
+    <div class="col-md-2">
+        {%if current_user.role.role=="teacher"%}
+        {%if stu.representative.first()==none or stu.representative.first().teacher_id==current_user.teacher.id%}
+        <a href="/representative/{{current_user.teacher.id}}-{{stu.id}}"><button class="btn btn-primary btn-sm">{%if stu.representative.first().teacher_id==current_user.teacher.id%}免去课代表{%elif stu.representative.first()==none%}设为课代表{%endif%}</button></a>
+        {%endif%}
+        {%endif%}
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+    
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                <th>
+                    序号
+                </th>
+                <th>
+                    作业名称
+                </th>
+                <th>
+                    学科
+                </th>
+                <th>
+                    发布时间
+                </th>
+                <th>
+                    提交时间
+                </th>
+                <th>
+                    评分
+                </th>
+                <th>
+                    评语
+                </th>
+                </tr>
+            </thead>
+            <tbody>
+                {%for i in stu.class_info.jobs%}
+                {%set mark =jobs.filter_by(job_id=i.id).first()%}
+                    <tr>
+                        <td>{{loop.index}}</td>
+                        <td>{{i.job_name}}</td>
+                        <td>{{i.subject}}</td>
+                        <td>{{i.publish_time}}</td>
+                        <td>
+                            {%if mark.submit_time%}{{mark.submit_time}}{%else%}<span class="badge  rounded-pill bg-danger">未提交</span>{%endif%}
+                        </td>
+                        <td>{{mark.mark}}</td>
+                        <td>{{mark.job_assessment}}</td>
+                    </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+    </div>
+</div>
+{%endblock%}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"> 
+    {{bootstrap.load_css()}}
+</head>
+<body >
+<div class="container-fluid">
+    <div class="row">
+        
+        <div class="col-md-12 display" display align="center"> 
+            <div class="card shadow-lg rounded" align="left" style="width: 42rem;">
+                <div class="card-header bg-dark">
+                    <h5 class="text-white">注册账号</h5>
+                </div>
+                <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{csrf_token()}}"/>
+                    <div class="form-group">
+                        
+                        <label for="username">用户名</label>
+                        <input type="text" class="form-control" name="username" aria-describedby="emailHelp" placeholder="输入用户名">
+                        <small id="textHelp1" class="form-text text-muted">设置一个长度不小于五位的用户名，必须以字母开头，只能包含字母数字和下划线</small>
+                    </div>
+                    <div class="form-group ">
+                        <label class="form-group-label" for="id_number">身份证号码</label>
+                        <input type="text" class="form-control" name="id_number">
+                        <small id="textHelp" class="form-text text-muted">注册前必须进行身份证备案，否则无法注册</small>
+                        
+                    </div>
+                    <div class="form-group">
+                        <label for="Password1">密码</label>
+                        <input type="password" class="form-control" name="Password1" placeholder="设置密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="Password2">确认密码</label>
+                        <input type="password" class="form-control" name="Password2" placeholder="两次输入的密码必须一致">
+                    </div>
+                    <div class="form-group form-group">
+                        <label class="form-group-label" for="phone_number">电话</label>
+                        <input type="text" class="form-control" name="phone_number">                                                
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" name ="sub">提交</button>
+                </form>
+                </div>
+                <div>
+                    <div class="card-footer " style="color:crimson"><h5>注册前请联系管理员</h5></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% from 'bootstrap/utils.html' import render_messages %}
+{{render_messages()}}
+</div>  
+</body>
+<script>
+    var p1=document.getElementsByName("Password1")[0];
+    var p2=document.getElementsByName("Password2")[0];
+    var u=document.getElementsByName("username")[0];
+    var b=document.getElementsByName("sub")[0];
+    var f1=true;
+    var f2=true
+    u.onchange=function(){
+        if(!/[A-Za-z][A-Za-z0-9_]{4,}$/.test(u.value)){
+            u.setCustomValidity("请仔细检查用户名格式");
+            u.style.borderColor="red";
+            f1=false
+        }
+        else{f1=true;u.style.removeProperty("border-color");u.setCustomValidity("")}
+        if(f1&&f2){b.disabled=false}else{b.disabled=true}
+    
+    } 
+    p2.onchange=function(){
+        if(p1.value!=p2.value){
+            p2.setCustomValidity("两次输入的密码不一致");
+            p2. style.borderColor="red";
+            f2=false
+        }else
+        {f2=true;p2.style.removeProperty("border-color");p2.setCustomValidity("")}
+        if(f1&&f2){b.disabled=false}else{b.disabled=true}}
+    
+</script>       
+{{bootstrap.load_js() }}
+</html>

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{%block title%}<title>个人信息</title>{%endblock%}
+{%block main%}
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="card" style:"width:50">
+				<h5 class="card-header">
+					完善你的个人信息
+				</h5>
+				<div class="card-body">
+					<form role="form">
+                        <div class="form-group">
+                             
+                            <label for="username">
+                               用户名
+                            </label>
+                            <input type="text" class="form-control" id="username" placeholder="用户名只能更改一次"/>
+                        </div>
+                        <div class="form-group">
+                             
+                            <label for="InputPassword1">
+                               密码
+                            </label>
+                            <input type="password" class="form-control" id="InputPassword1"  />
+                            <label for="InputPassword2">
+                                确认密码
+                             </label>
+                             <input type="password" class="form-control" id="InputPassword2" />
+                        </div>
+                        
+                       
+                        <button type="submit" class="btn btn-primary">
+                           提交
+                        </button>
+                    </form>
+				</div>
+				<div class="card-footer">
+					Card footer
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{%endblock%}
