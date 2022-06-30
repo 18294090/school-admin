@@ -30,7 +30,13 @@ def search(ob):
 
 @main.route("/test", methods=["POST", "GET"])
 def test():
+<<<<<<< HEAD
     
+=======
+    u = user(username = "test",password = "123",role_id = "1")
+    db.session.add(u)
+    db.session.commit()
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
     return(render_template("test.html"))
 
 
@@ -77,12 +83,19 @@ def structure():
     c = class_info.query.all()
     return(render_template("structure.html", school=school, g=g, c=c))
 
+<<<<<<< HEAD
 
 @main.route("/download/<path:filename>",methods=["POST","GET"])
 def download(filename):
     dir = os.getcwd()
     dir =os.path.join(dir,"app/static/file/") 
     print(dir)   
+=======
+@main.route("/download/<path:filename>",methods=["POST","GET"])
+def download(filename):
+    dir = os.getcwd()
+    dir =os.path.join(dir,"app\\static\\file\\")    
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
     return send_from_directory(dir,filename, as_attachment=True)
 
 @main.route("/representative/<arg>")
@@ -90,6 +103,7 @@ def rep(arg):
     s=arg.split('-')
     rep=representative.query.filter(representative.teacher_id==s[0],representative.student_id==s[1]).first()
     if not rep:
+<<<<<<< HEAD
         if representative.query.filter(representative.student_id==s[1]).first():
             flash("该学生已担任课代表")
         else:
@@ -97,6 +111,12 @@ def rep(arg):
             db.session.add(stu)
             db.session.flush()
             stu.student.user_infor.role_id=2   
+=======
+        stu=representative(teacher_id=s[0],student_id=s[1],subject=current_user.teacher.subject)
+        db.session.add(stu)
+        db.session.flush()
+        stu.student.user_infor.role_id=2   
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
     else:
         db.session.delete(rep)
         rep.student.user_infor.role_id=4

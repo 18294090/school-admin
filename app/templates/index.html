@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 
 {%block main%}
@@ -16,3 +17,30 @@
   </script>
 
   {%endblock%}
+=======
+{% extends "base.html" %}
+
+{%block main%}
+
+{%raw%}
+<div id="hello-vue" class="demo">
+    {{ message }}
+  </div>
+  
+{%endraw%}
+
+  
+  <script>
+  const HelloVueApp = {
+    data() {
+      return {
+        message: '开发中，敬请期待'
+      }
+    }
+  }
+  
+  Vue.createApp(HelloVueApp).mount('#hello-vue')
+  </script>
+
+  {%endblock%}
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09

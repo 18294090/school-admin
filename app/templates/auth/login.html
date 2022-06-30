@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
 <head>
@@ -42,4 +43,51 @@
                             {{render_messages()}}
 </div>         
 {{bootstrap.load_js() }}
+=======
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"> 
+    {{bootstrap.load_css()}}
+</head>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-12 bg-primary"  >
+                    <h1 class="text-center text-light">
+                        登录数据中心
+                    </h1>
+                </div>
+            </div>
+            <div class="row"  style="height: 70vh; align-items: center;">
+
+                <div class="col-md-6" style="text-align: right" >
+                    <img src="{{ url_for('static', filename='login1.png')}}" style="width:100%;height:100%">
+                </div>
+                <div class="col-md-6" >
+                    <div class="card text-center shadow-lg rounded" style="width: 22rem; ">
+                        <div class="card-header">
+                            输入账号和密码
+                        </div>
+                        <div class="card-body" style="text-align: left">
+                            {% from 'bootstrap/form.html' import render_form%}
+                            {{render_form(form1)}}
+                        </div>
+                        <div class="card-footer text-muted">
+                            
+                            {% from 'bootstrap/utils.html' import render_messages %}
+
+                            {{render_messages()}}
+                            登录有问题请联系管理员
+                        </div>
+                    </div>
+                 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>         
+{{bootstrap.load_js() }}
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
 </html>

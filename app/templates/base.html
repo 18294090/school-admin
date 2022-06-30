@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 <!DOCTYPE html>
 <head>
@@ -136,4 +137,158 @@
 	</div>
 </div>
 {{bootstrap.load_js() }}
+=======
+
+<head>
+{%block css%}
+{{bootstrap.load_css() }}
+{{bootstrap.load_js() }}
+<script type="text/javascript" src="/static/vue.js/vue.global.js"></script>
+{%endblock%}
+{%block title%}
+<title>网页标题</title>
+{%endblock%}
+</head>
+<body>
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">
+			{%block nav%}
+			<nav class="navbar navbar-expand-lg navbar-light bg-light">	 
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+					<span class="navbar-toggler-icon"></span>
+				</button> <a class="navbar-brand" href="#">导航</a>
+				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+					{% from 'bootstrap/nav.html' import render_nav_item %}
+					{% from 'bootstrap/utils.html' import render_icon %}
+					<ul class="navbar-nav">
+						<li class="nav-item">
+							{{render_nav_item("main.index","主页")}}
+						</li>
+						<li class="nav-item">
+							{{render_nav_item("job.job_mg","作业管理")}}
+						</li>
+						<li class="nav-item">
+							{{render_nav_item("main.teaching","测验管理")}}
+						</li>
+						<li class="nav-item">
+							{%if current_user.role.role=="admin"%}
+							{{render_nav_item("manage.personnel_managementmanage","人员管理")}}
+							{%elif current_user.role.role=="teacher"%}
+							{{render_nav_item("manage.personnel_managementmanage","人员管理")}}
+							{%endif%}
+						</li>
+						{%if current_user.role.role=="admin"%}
+						<li class="nav-item">
+							 {{render_nav_item("main.structure","组织结构")}}
+						</li>
+						{%endif%}
+						<li class="nav-item dropdown">
+							 <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown">功能</a>
+							<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+								 <a class="dropdown-item" href="#">Action</a> <a class="dropdown-item" href="#">Another action</a> <a class="dropdown-item" href="#">Something else here</a>
+								<div class="dropdown-divider">
+								</div> <a class="dropdown-item" href="#">Separated link</a>
+							</div>
+						</li>
+					</ul>
+					<form class="form-inline">
+						<input class="form-control mr-sm-2" type="text" placeholder="请输入要查找的对象" id="nn" /> 
+						<button class="btn btn-primary my-2 my-sm-0" type="submit" id="btn">
+							查找
+						</button>
+						<script type="text/javascript">
+                          var btn = document.getElementById('btn');btn.onclick = function () 
+                              {var a = document.getElementById('nn').value;
+                              window.location.href="/search/"+a;};
+                        </script>
+					</form>
+					<ul class="navbar-nav ml-md-auto">
+						{%if current_user.is_authenticated%}
+						<li class="nav-item active"><a class="nav-link" href="{{url_for('auth.logout')}}">登出<span class="sr-only">(current)</span></a></li>
+						{%else%}
+						<li class="nav-item active"><a class="nav-link" href="{{url_for('auth.login')}}">登录<span class="sr-only">(current)</span></a></li>
+						{%endif%}
+						<li class="nav-item dropdown">
+							 <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown">{%if current_user.is_authenticated%}{{current_user.realname}}{%else%}访客{%endif%}</a>
+							<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+								 <a class="dropdown-item" href="#">修改个人信息</a> <a class="dropdown-item" href="#">重置密码</a> <a class="dropdown-item" href="#">待办事项</a>
+								<div class="dropdown-divider">
+								</div> <a class="dropdown-item" href="#">Separated link</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</nav>
+			{%endblock%}
+			{%block head%}
+			<div class="row">
+				<div class="col-md-12 " >
+					<span class="d-block p-2  bg-primary text-white">{%block title1%}<h3>欢迎使用！<small>数据中心</small></h3>{%endblock%}</span>
+					
+				</div>
+			</div>
+			{%endblock%}
+			{%block main%}
+	<div class="row">
+		<div class="col-md-12">
+			<div class="row">
+				<div class="col-md-4">
+					<div class="card">
+						<img class="card-img-top" alt="Bootstrap Thumbnail First" src="https://www.layoutit.com/img/people-q-c-600-200-1.jpg" />
+						<div class="card-block">
+							<h5 class="card-title">
+								Card title
+							</h5>
+							<p class="card-text">
+								Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">Action</a> <a class="btn" href="#">Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card">
+						<img class="card-img-top" alt="Bootstrap Thumbnail Second" src="https://www.layoutit.com/img/city-q-c-600-200-1.jpg" />
+						<div class="card-block">
+							<h5 class="card-title">
+								Card title
+							</h5>
+							<p class="card-text">
+								Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">Action</a> <a class="btn" href="#">Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card">
+						<img class="card-img-top" alt="Bootstrap Thumbnail Third" src="https://www.layoutit.com/img/sports-q-c-600-200-1.jpg" />
+						<div class="card-block">
+							<h5 class="card-title">
+								Card title
+							</h5>
+							<p class="card-text">
+								Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">Action</a> <a class="btn" href="#">Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	{%endblock%}
+	</div>
+	</div>
+</div>
+
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
 </body>

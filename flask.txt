@@ -1,0 +1,7 @@
+cd D:\git\school-admin\venv\Scripts
+d:
+activate
+set FLASK_APP=main.py
+set FLASK_DEBUG=True
+cd D:\git\school-admin
+flask run -h 0.0.0.0

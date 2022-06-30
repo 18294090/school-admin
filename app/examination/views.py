@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from flask import render_template, redirect, flash, request
 from ..models import grade_info, class_info, teacher, user, test,test_scores
 from .. import db
@@ -19,3 +20,21 @@ def main():
     
     return(render_template("examination/mainpage.html", t=t,class_=class_))
 
+=======
+from flask import render_template, redirect, flash, request
+from ..models import grade_info, class_info, teacher, user, job
+from .. import db
+from .forms import publish
+from . import examination
+
+
+@examination.route("/",methods=["POST","GET"])
+def job():
+    p = publish()
+    subject = request.form.get('subject')
+    job_name = request.form.get('job_name')
+    deadline = request.form.get('date')
+    
+    return(render_template("job/mainpage.html", p=p,d=deadline))
+
+>>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
