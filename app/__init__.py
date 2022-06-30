@@ -2,11 +2,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import config
-<<<<<<< HEAD
 from flask_bootstrap import Bootstrap4
-=======
-from flask_bootstrap import Bootstrap
->>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
 from flask_ckeditor import CKEditor
 from flask_codemirror import CodeMirror
 from flask_wtf import CSRFProtect
@@ -17,11 +13,7 @@ from flask_datepicker import datepicker
 login_manager = LoginManager()  # flask-loginm模块进行登录管理
 login_manager.login_view = "auth.login"
 ckeditor = CKEditor()  # 富文本编辑器插件
-<<<<<<< HEAD
 bootstrap = Bootstrap4()
-=======
-bootstrap = Bootstrap()
->>>>>>> d989a01c055dd7066c1fb6cabda1c43d81584f09
 
 db = SQLAlchemy()
 codeMirror = CodeMirror()  # 代码编辑器插件
