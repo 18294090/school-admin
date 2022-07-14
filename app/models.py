@@ -155,9 +155,10 @@ class test(db.Model):  # 考试
     __table_args__ = {'extend_existing': True}
     __tablename__ = "test"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    exam_name = db.Column(db.String(64))
+    test_name = db.Column(db.String(64))
     class_id = db.Column(db.Integer, ForeignKey("class_info.id"))
     class_name = db.relationship("class_info", backref=db.backref('class_info', lazy='dynamic'))
+    subject=db.Column(db.String(64))
     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
     teacher = db.relationship("teacher", backref=db.backref('teacher', lazy='dynamic'))
     publish_time = db.Column(db.DateTime)

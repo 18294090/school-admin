@@ -33,19 +33,20 @@
 											<div class="modal-body">
 													<div class="form-group">
 														<label for="title">测试名称</label>
-														<input type="text" class="form-control" id="title" placeholder="测试名称" name="testname">
+														<input type="text" class="form-control" id="title" placeholder="测试名称" name="test_name">
 													</div>
+													 <input type="hidden" name="csrf_token" value="{{csrf_token()}}"/>
 													<br>
 													请选择班级
 													<br>
 													
 													<div class="form-group inline-block form-inline border border-box  " >
 														{%for i in class_%}	
-														<div class="form-check col-sm-3  d-flex justify-content-start" > <!对齐方式>
-																<input type="checkbox" class="form-check-input" name="class_name" id="Check{{i.id}}" checked>
-																<label class="form-check-label" name="class_" for="Check{{i.id}}">{{i.class_name}}</label>
-												
-														</div>
+															<div class="form-check col-sm-3  d-flex justify-content-start" > <!对齐方式>
+																	<input type="checkbox" class="form-check-input" name="class_name" value={{i.id}} id="Check{{i.id}}" checked>
+																	<label class="form-check-label" name="class_" for="Check{{i.id}}">{{i.class_name}}</label>
+													
+															</div>
 														{%endfor%}
 													
 														
