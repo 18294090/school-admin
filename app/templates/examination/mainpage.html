@@ -43,8 +43,8 @@
 													<div class="form-group inline-block form-inline border border-box  " >
 														{%for i in class_%}	
 															<div class="form-check col-sm-3  d-flex justify-content-start" > <!对齐方式>
-																	<input type="checkbox" class="form-check-input" name="class_name" value={{i.id}} id="Check{{i.id}}" checked>
-																	<label class="form-check-label" name="class_" for="Check{{i.id}}">{{i.class_name}}</label>
+																	<input type="checkbox" class="form-check-input" name="class_name" value={{i}} id="Check{{i}}" checked>
+																	<label class="form-check-label" name="class_" for="Check{{i}}">{{i}}</label>
 													
 															</div>
 														{%endfor%}
@@ -118,7 +118,7 @@
                 <tr>
                     <td>测验名称</td>
                     <td>班级</td>
-                    <td>责任教师</td>
+                   	<td>学科</td>
                     <td>发布时间</td>
                     <td>发布者</td>
                     <td>操作</td>
@@ -126,14 +126,16 @@
             </thead>
             <tbody>
 				{%for i in t%}
-					<tr>
-						<td>t.exam_name</td>
-						<td>t.class_name.class_name</td>
-						<td>t.teacher.user_info.realname</td>
-						<td>t.publish_time</td>
-						<td>t.publisher</td>
-						<td>操作</td>
-					</tr>
+					
+						<tr>
+							<td>{{i.test_name}}</td>
+							<td>{{i.class_name.class_name}}</td>
+							<td>{{i.subject}}</td>
+							<td>{{i.publish_time}}</td>
+							<td>{{i.publisher}}</td>
+							<td>操作</td>
+						</tr>
+					
 				{%endfor%}
             </tbody>
         </table>
@@ -160,7 +162,25 @@
             stu[i].checked=true;
         };
         };
-
+	function check(){
+		var stu=document.getElementsByName("class_name");
+		var test_name=document.getElementById("title");
+		var flag=false;		
+		if (test_name.value=="" || test_name.value==null){
+			alert("请输入测验名称");
+			return false};
+		for(var i=0;i<stu.length;i++){
+			if(stu[i].checked==true){
+				flag=true;
+				break;
+			};
+		};
+		if(flag==false){
+			alert("请选择班级");
+			return false;
+		};
+		return true;
+	}
 
 </script>                        
 {%endblock%}
