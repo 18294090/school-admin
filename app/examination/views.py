@@ -5,6 +5,7 @@ from .forms import publish
 from . import examination
 from flask_login import login_required, current_user
 import time
+from sqlalchemy import and_
 
 
 @examination.route("/",methods=["POST","GET"])
@@ -19,11 +20,14 @@ def main():
                 c.append(i.class_name)
         subjects=["语文","数学","外语","政治","历史","地理","物理","化学","生物","通用技术","信息技术"]
     elif current_user.role.role=="teacher":
-        t=current_user.teacher.teaching_information
-        class_=current_user.teacher.teaching_information
-        for i in class_:
-            if i.class_info.class_name not in c:
-                c.append(i.class_info.class_name)
+        classes=current_user.teacher.teaching_information.all()
+        c=[]
+        for i in classes:
+            if i.class_id not in c:
+                c.append(i.class_id)
+        
+        t=test.query.filter(test.subject==current_user.teacher.subject).filter(test.class_id.in_(c)).order_by(test.publish_time.desc()).all()
+        print(t)        
         subjects=[current_user.teacher.subject]
     elif current_user.role.role=="student":
         return("student")

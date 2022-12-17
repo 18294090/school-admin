@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_field %}
+{%block title%}
+<TITLE>作业</TITLE>
+{%endblock%}
+{% block main%}
+<div class="container-fluid ">
+    <div class="row">
+        <div class="col-4">
+            <div class="card border-primary mb-4" style="max-width: 32rem;">
+                <div class="card-header">作业信息</div>
+                <div class="card-body text-primary" style="text-align: left;">
+                <form>
+                    <div class="mb-4">
+                        <label for="title" class="form-label">请输入作业名称：</label>
+                        <input type="text" class="form-control" id="title" >
+                    </div>
+                    <div class="mb-4">
+                        <label for="number" class="form-label">学号位数</label>
+                        <input type="text" class="form-control" id="number'">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label" for="select">选择题数量</label>
+                        <input type="text" class="form-control" id="select">
+                        
+                    </div>
+                    <div class="mb-4">
+                        <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                       设置填空题
+                    </button>
+  
+                      <!-- Modal -->
+                      <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h1 class="modal-title fs-5" id="staticBackdropLabel">填空题详情</h1>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="mb-4">
+                                <label for="complete" class="form-label">填空题大题数量</label>
+                                <input type="text" class="form-control" id="complete">
+
+                            </div>
+                            <div class="mb-4 border border-primary min-vh-50 " >
+                              <div class="accordion" id="accordionExample">
+                                
+                              </div>
+
+                            </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>
+                              
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>              
+
+                    <script>
+                        var complete = document.getElementById("complete")
+                        var according =document.getElementById("accordionExample")
+                        list=[]
+                        complete.onchange=function(){
+                        for (var i=0;i<Number(complete.value);i++){
+                          list[i]=document.createElement("accordion-item")
+                          according.innerHTML(list[i])
+                        }
+                      }
+                    </script>
+                    <button type="submit" class="btn btn-primary">生成答题卡</button>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+    
+    <div class="col overflow-scroll" style="max-height:36rem">
+        
+        <img src={{url_for("static",filename="paper.png")}} class="img-responsive" style="max-width:36rem " alt="...">
+    </div>
+    </div>
+</div>
+
+{%endblock%}

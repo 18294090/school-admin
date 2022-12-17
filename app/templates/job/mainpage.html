@@ -3,133 +3,62 @@
 {%block title%}
 <TITLE>作业</TITLE>
 {%endblock%}
-{%block head%}
-    <div class="row ">
-        <div class="col-md-12 " >
-            <div class="btn-group" role="group" aria-label="Basic example">
-                {%if current_user.role.role=="teacher" or  current_user.role.role=="representative" %}
-                <a id="modal-311" href="#modal-container-311" data-toggle="modal"><button type="button" class="btn btn btn-primary">作业发布</button></a>
-                <div class="modal fade" id="modal-container-311" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="myModalLabel">
-                                    {%if current_user.role.role=="teacher"%}
-                                    {%set subject=current_user.teacher.subject%}
-                                    {%elif current_user.role.role=="representative"%}        
-                                    {%set subject=current_user.student.representative.first().subject%}
-                                    {%endif%}
-                                    {{subject}}作业发布
-                                </h5> 
-                                <button type="button" class="close" data-dismiss="modal">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">  <!时间选择器，使用tempus Dominus实现：https://getdatepicker.com/5-4/>
-                                <form method="post" onsubmit ="return check()" >
-                                {{p.csrf_token}}
-                                {{render_field(p.job_name)}}   
-                                上交截止日期
-                                <input type="text" class="form-control datetimepicker-input" name="time" id="datetimepicker4" data-toggle="datetimepicker" data-target="#datetimepicker4"/>
-                                <br>
-                                
-                                {{render_field(p.context)}}
-                                <br>
-                                请选择班级
-                                <br>
-                                    <div class="form-check form-check-inline">
-                                        {%if current_user.role.role=="teacher"%}
-                                            {%for i in class_%}
-                                                <input class="form-check-input" type="checkbox" name="cla" value="{{i.id}}" id="checkbox-{{i.id}}" checked>
-                                                <label class="form-check-label" for="checkbox-{{i.id}}">
-                                                    {{i.class_name}}
-                                                </label> 
-                                            {%endfor%}
-                                        {%elif current_user.role.role=="representative"%}
-                                                <input class="form-check-input" type="checkbox" name="cla" value="{{current_user.student.class_info.id}}" id="checkbox" checked>
-                                                <label class="form-check-label" for="checkbox">
-                                                    {{current_user.student.class_info.class_name}}
-                                                </label>
-                                        {%endif%}
-                                    </div>
-                                <br>
-                                
-                                <script>
-                                    
-                                    $(function () {
-                                        $('#datetimepicker4').datetimepicker({locale: 'zh-cn',format:"YYYY-MM-DD"});
-                                    });
-                                    function check(){
-                                        var timepicker=document.getElementById("datetimepicker4")
-                                        if(timepicker.value=="" || timepicker.value==null){
-                                            alert("截止日期输入项不能为空");
-                                            return false;
-                                        }
-                                        return true;
-                                    }
-                                </script>
-                                <br>
-                                    <button type="submit" name="submit1" class="btn btn-primary">发布作业</button>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                    关闭
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div> 
-                {%endif%}
-                 {%if current_user.role.role in ["teacher"]%}
-                    <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">
-                            任教班级{{current_user.teacher.subject}}作业统计
-                        </button>
-                        
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        {%for i in class_%}
-                            <a class="dropdown-item" href="/job/class_statistics/{{subject}}/{{i.id}}">{{i.class_name}}</a>
-                        {%endfor%}
-                        
-                        </div>
-                        
-                        
-                    </div>
-                    {%if current_user.teacher.class_info%}
-                         <div class="dropdown">
-                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton1" data-toggle="dropdown" aria-expanded="false">
-                                {{ current_user.teacher.class_info.class_name}}作业统计
-                            </button>
-                        
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                {%for i in subjects%}
-                                    <a class="dropdown-item" href="/job/class_statistics/{{i}}/{{current_user.teacher.class_info.id}}">{{i}}</a>
-                                {%endfor%}
-                                <a  class="dropdown-item" href="/job/class_statistics/全科/{{current_user.teacher.class_info.id}}"> 全科作业统计</a>
-                            </div>
-                        </div>
-                    {%endif%}
-                {%endif%}
-                
-                 {%if current_user.role.role=="admin"%}
-                   <a  href="/job/teacher_statistics/"> <button type="button" class="btn btn-primary">教师作业统计</button></a>
-                 {%endif%}
-                {%if current_user.role.role in ["student","representative"] %}
-                    <a href="/job/current_job/"><button type="button" class="btn btn btn-primary">当前作业</button></a>
-                {%endif%}
-			</div>
-        </div>
-    </div>
-    <!以下为tempus dominus时间选择器的js和css引用>
-    <script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/build/js/moment-with-locales.js"></script>
-    <script type="text/javascript" src="/static/build/js/tempusdominus-bootstrap-4.min.js" ></script>                                           
-    <link rel="stylesheet" href="/static/build/css/tempusdominus-bootstrap-4.min.css"/>	
-   	
-{%endblock%}
-
 {% block main%}
+<div class="container-fluid">
+<div class="col-md-12">
+	<div class="row">
+		<div class="col-md-4">
+			<div class="card">
+				<img class="card-img-top" alt="Bootstrap Thumbnail First" src="https://www.layoutit.com/img/people-q-c-600-200-1.jpg" />
+				<div class="card-block">
+					<h5 class="card-title">
+						发布作业
+					</h5>
+					<p class="card-text">
+						发布作业，填写作业标题，截至时间等作业信息，并生成相应答题卡
+					</p>
+					<p>
+						<button type="button" onclick="document.location = '/job/genarate_paper'" class="btn btn btn-primary">发布</button></a>
+							
+							</p>
+						    </div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card">
+						<img class="card-img-top" alt="Bootstrap Thumbnail Second" src="https://www.layoutit.com/img/city-q-c-600-200-1.jpg" />
+						<div class="card-block">
+							<h5 class="card-title">
+								任教学科成绩查询
+							</h5>
+							<p class="card-text">
+                                所任教学科的成绩查询
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">成绩查询</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card">
+						<img class="card-img-top" alt="Bootstrap Thumbnail Third" src="https://www.layoutit.com/img/sports-q-c-600-200-1.jpg" />
+						<div class="card-block">
+							<h5 class="card-title">
+								任教班级成绩查询
+							</h5>
+							<p class="card-text">
+                                查询班级成绩
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#"><i class="fa fa-bicycle"></i>Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</div>
 {% with messages = get_flashed_messages() %}
     {% if messages %}
           {% for message in messages %}
@@ -147,7 +76,7 @@
  {% endwith %}    
 {%if current_user.role.permissions>0%}
 
-<div class="row">
+<div class="row container-fluid">
     <div class="col-md-12">
             <table class="table table-striped">
                 <thead>

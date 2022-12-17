@@ -11,4 +11,5 @@ subjects =[(1, '语文'), (2, '数学'), (3, '外语'), (4, '政治'), (5, '历�
 class publish(FlaskForm):
     subject = SelectField(label="学科", choices=subjects, validators=[DataRequired('确定学科')])
     job_name = StringField(label="作业名称", validators=[DataRequired('作业名称')])
+    time = DateField(label="截止时间", validators=[DataRequired('请输入截止时间')])
     context = CKEditorField(label="备注")

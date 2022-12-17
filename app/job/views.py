@@ -258,3 +258,7 @@ def current_job():
             f="已提交"
         j.append({"job_name":i.job_name,"deadline":i.deadline,"subject":i.subject,"status":f,"context":i.context})
     return(render_template("job/current_job.html",jobs=j))
+
+@job_manage.route("genarate_paper")  #
+def genarate_paper():
+    return(render_template("job/genarate_paper.html"))
