@@ -1,4 +1,5 @@
 import statistics
+from io import StringIO
 from flask_paginate import Pagination, get_page_parameter
 from pandas import DataFrame
 from .import job_manage
@@ -6,10 +7,14 @@ from flask import render_template, redirect, flash, request,jsonify, url_for
 from ..models import job_submission,job, representative,student,class_info, teaching_information,user,teacher,Permission
 from .. import db
 from .forms import publish
-from flask_login import current_user
+from flask_login import current_user,login_required
 from sqlalchemy import func
 import time
 import datetime
+import os
+from .paper import creat_paper
+from ..decorators import permission_required
+
 
 @job_manage.route("/",methods=["POST","GET"]) # 作业管理主页教师页面为作业情况，学生页面为学生个人信息
 def job_mg():
@@ -259,6 +264,36 @@ def current_job():
         j.append({"job_name":i.job_name,"deadline":i.deadline,"subject":i.subject,"status":f,"context":i.context})
     return(render_template("job/current_job.html",jobs=j))
 
-@job_manage.route("genarate_paper")  #
+@job_manage.route("/show_paper/<url>",methods=["POST","GET"])  #
+@login_required 
+@permission_required(Permission.job_publish)
+def show_paper(url):
+    url="./paper/excercise/"+url
+    return(render_template("job/show_paper.html",url=url))
+
+@job_manage.route("/genarate_paper",methods=["POST","GET"])  #
+@login_required 
+@permission_required(Permission.job_publish)
 def genarate_paper():
+    if request.method == "POST":
+        title=request.form.get("title")
+        number = request.form.get("number")
+        select = request.form.get("select")
+        subtopic =request.form.getlist("subtopic[]") # ajax获取列表，要在字典key后加上[]
+        c_mark=request.form.get("c_mark")
+        teacher = current_user.username
+        print(number,select,subtopic,c_mark,teacher)
+        if current_user.role.role=="teacher":
+            subject=current_user.teacher.subject
+        else:
+            subject=current_user.representative.subject       
+        r=creat_paper.paper(subject,teacher,2000,title,int(select),subtopic)
+        output =StringIO()
+        r[-1].save(output,'PNG')
+        contents= output.getvalue().encode("base64")
+        output.close()
+        contents = contents.split('\n')[0]
+        print(contents)
+        return(contents)
     return(render_template("job/genarate_paper.html"))
+

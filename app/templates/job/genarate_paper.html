@@ -1,32 +1,34 @@
 {% extends "base.html" %}
 {% from 'bootstrap/form.html' import render_field %}
 {%block title%}
-<TITLE>作业</TITLE>
+<TITLE>作业发布，制作答题卡</TITLE>
 {%endblock%}
 {% block main%}
 <div class="container-fluid ">
     <div class="row">
+      
         <div class="col-4">
             <div class="card border-primary mb-4" style="max-width: 32rem;">
                 <div class="card-header">作业信息</div>
                 <div class="card-body text-primary" style="text-align: left;">
-                <form>
-                    <div class="mb-4">
+                <form id="form" method="post">
+                  <input type="hidden" name="csrf_token" value="{{csrf_token()}}"/>
+                    <div class="mb-4" >
                         <label for="title" class="form-label">请输入作业名称：</label>
-                        <input type="text" class="form-control" id="title" >
+                        <input type="text" class="form-control" id="title" name="title" >
                     </div>
                     <div class="mb-4">
-                        <label for="number" class="form-label">学号位数</label>
-                        <input type="text" class="form-control" id="number'">
+                        <label for="number" class="form-label">选择题每题分值</label>
+                        <input type="text" class="form-control" id="number" name="number">
                     </div>
                     <div class="mb-4">
                         <label class="form-label" for="select">选择题数量</label>
-                        <input type="text" class="form-control" id="select">
+                        <input type="text" class="form-control" id="select" name="select">
                         
                     </div>
                     <div class="mb-4">
                         <!-- Button trigger modal -->
-                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                    <button type="button" id="gen-com" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
                        设置填空题
                     </button>
   
@@ -39,50 +41,166 @@
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                              <div class="mb-4">
-                                <label for="complete" class="form-label">填空题大题数量</label>
-                                <input type="text" class="form-control" id="complete">
+                              <div class="mb-4" id="c">
+                                <label for="complete" class="form-label" >填空题大题数量</label>
+                                <input type="text" class="form-control" id="complete"  >
 
-                            </div>
-                            <div class="mb-4 border border-primary min-vh-50 " >
-                              <div class="accordion" id="accordionExample">
+                              </div>
+                              <div class="mb-4" id="c">
+                                <label for="complete" class="form-label" >填空题分值结构</label>
+                                <input type="text" class="form-control" id="c_mark" name="c_mark" placeholder="请输入每到大题的分值，中间用空格隔开">
+
+                              </div>
+                              <div class="mb-4 border border-primary" id="sub_c">
                                 
                               </div>
-
-                            </div>
-                            </div>
+                            </div>0
                             <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>
-                              
+                              <button  type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>  
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>              
-
-                    <script>
-                        var complete = document.getElementById("complete")
-                        var according =document.getElementById("accordionExample")
-                        list=[]
-                        complete.onchange=function(){
-                        for (var i=0;i<Number(complete.value);i++){
-                          list[i]=document.createElement("accordion-item")
-                          according.innerHTML(list[i])
-                        }
-                      }
-                    </script>
-                    <button type="submit" class="btn btn-primary">生成答题卡</button>
+                    <button type="button" class="btn btn-primary" id="s1" >生成答题卡</button>
+                    
+                    
+                    
                 </form>
-            </div>
-            
+            </div>            
         </div>
-    </div>
-    
-    <div class="col overflow-scroll" style="max-height:36rem">
+        </div>
+        <div class="col-8 text-center">
+          <div id="btn-hidden" class="btn-group visually-hidden" role="group" aria-label="Basic example">
+          <button type="button" class="btn btn-success" id="p" >打印答题卡</button>
+          <button type="button" class="btn btn-success" id="confirm" >确认</button>
+          <button type="button" class="btn btn-success" id="cancel" >取消</button>
+          </div>
+          <div class="row"><div class="row">
+          <img src="..." class="img-fluid" id='img' alt="...">
+          </div>
+         
+        </div>
         
-        <img src={{url_for("static",filename="paper.png")}} class="img-responsive" style="max-width:36rem " alt="...">
-    </div>
-    </div>
+  </div>
+    
 </div>
 
+<script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
+<script>
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+  var c = document.getElementById("sub_c")
+  var complete = document.getElementById("complete")
+  var s1 = document.getElementById("s1")
+  var f4=false
+  list=[]                        
+  complete.onchange=function(){ 
+  c.innerHTML=""
+  if(Number(complete.value)>10||!/[0-9]$/.test(complete.value)){
+    complete.value=""
+    complete.placeholder="只能够输入10以下的数字"
+    complete.style.borderColor="red"
+
+  }
+  else{complete.style.removeProperty("border-color")                     
+  for (var i=1;i<=Number(complete.value);i++){                          
+  list[i]=document.createElement("input")
+  list[i].name="subtopic"
+  list[i].className="form-control form-control-sm"
+  list[i].placeholder="请输入第"+String(i)+"道填空题的小题结构";                        
+  c.appendChild(list[i])
+  }}                      
+  }
+  
+  s1.onclick=function(){
+    var title=document.getElementById("title")
+    var number =document.getElementById("number")
+    var select =document.getElementById("select")
+    var subtopic = document.getElementsByName("subtopic")
+    var gen=document.getElementById("gen-com")
+      if(title.value.length<4){
+          title.value=""
+          title.placeholder=("标题长度不小于四个字符");
+          title.style.borderColor="red";
+          f1=false
+      }
+      else{title.style.removeProperty("border-color");f1=true}
+      if(!/[0-9]$/.test(number.value) || Number(number.value)>50){
+        number.value=""
+        number.placeholder="只能填不大于50的数字";
+        number.style.borderColor="red";
+        f2=false
+    }
+    else{number.style.removeProperty("border-color");f2=true}
+  
+    if(!/[0-9]$/.test(select.value) ||Number(select.value)>80){
+      select.value=""
+      select.placeholder=("只能填不大于80的数字");
+      select.style.borderColor="red";
+      f3=false
+    }
+    else{select.style.removeProperty("border-color");f3=true}
+    var n=0;
+    var sub=new Array();
+    for(var i=0;i<subtopic.length;i++){
+      
+      if(!/^\d+(\s+\d+)*$/.test(subtopic[i].value)){
+        subtopic[i].value=""
+        subtopic[i].placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
+        subtopic[i].style.borderColor="red"
+      }
+      else{
+        sub[i]=subtopic[i].value;
+        n++;subtopic[i].style.removeProperty("border-color")}
+    }
+     
+    var c_mark=document.getElementById("c_mark");
+    if (!/^\d+(\s+\d+)*$/.test(c_mark.value)){
+      c_mark.value=""
+      c_mark.placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
+      c_mark.style.borderColor="red"
+      
+  }else{n++
+  c_mark.style.removeProperty("border-color")}
+  if (n<subtopic.length+1){
+    gen.style.borderColor="red"
+    f4=false
+  }
+  else{gen.style.removeProperty("border-color");f4=true}
+    if(f1&&f2&&f3&&f4){
+      $(function () {
+            var url ="/job/genarate_paper";
+            var sendData = {
+                'title':title.value,
+                'number':number.value,
+                'select':select.value,
+                'subtopic':sub,
+                'c_mark':c_mark.value,
+                'csrf_token':'{{ csrf_token() }}'
+            };
+            $.ajax({
+                url:url,
+                type:'post',
+                data:sendData,
+                success:function (data) {                    
+                      $('#btn-hidden').removeClass("visually-hidden")
+                      $("#img").attr("src",'data:image/png;base64,' + data)
+                      console.log(data)
+                    } ,            
+                    
+               
+                error:function (error) {
+                    alert(error);
+                }
+ 
+            })
+      })                      
+  }
+    else{
+      window.alert("数据输入错误，请检查")
+    }                        
+  }
+
+</script>
 {%endblock%}

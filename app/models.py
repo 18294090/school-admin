@@ -3,7 +3,7 @@ from sqlalchemy.orm import backref
 from app import db
 from sqlalchemy import ForeignKey
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
+from flask_login import UserMixin,AnonymousUserMixin
 from . import login_manager
 
 @login_manager.user_loader
@@ -37,6 +37,10 @@ class role(db.Model):  # 角色表
     def has_permission(self, perm):
         return(self.permissions & perm == perm)
 
+
+   
+
+
 class Permission:
     job_publish= 1 # 作业的发布
     job_submit = 2 # 作业的提交
@@ -47,6 +51,7 @@ class Permission:
     class_info = 64 # 班级查询
     grade_info = 128 # 年级查询 
     teacher_info = 256 # 教师查询
+    admin = 511
 
 class user(UserMixin, db.Model):  # 用户表
     __table_args__ = {'extend_existing': True}
@@ -75,6 +80,18 @@ class user(UserMixin, db.Model):  # 用户表
 
     def verify_password(self, password):
         return(check_password_hash(self.password_hash, password))
+
+    def can(self,perm):
+        return self.role is not None and self.role.has_permission(perm)
+    def is_administrator(self):
+        return(self.can(Permission.admin))
+
+class AnonymousUser(AnonymousUserMixin):
+    def can(self,permission):
+        return False
+    def is_administrator(self):
+        return False
+login_manager.anonymous_user=AnonymousUser
 
 class grade_info(db.Model):  # 年级信息
     __table_args__ = {'extend_existing': True}
@@ -129,7 +146,10 @@ class job(db.Model):  # 作业
     subject = db.Column(db.String(64))
     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
     context = db.Column(db.Text)
-    judged = db.Column(db.Boolean)
+    paper = db.Column(db.String(64))
+    select =db.Column(db.Integer) #选择题数量
+    s_m=db.Column(db.Integer)#选择题分数
+    complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
 
 class job_submission(db.Model):  #作业提交信息
     __table_args__ = {'extend_existing': True}
@@ -142,6 +162,20 @@ class job_submission(db.Model):  #作业提交信息
     submit_time = db.Column(db.DateTime)
     mark=db.Column(db.Integer)
     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
+    paper = db.Column(db.String(64))
+
+class job_detail(db.Model):
+    __table_args__ = {'extend_existing': True}
+    __tablename__ = "job_detail"
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    job_id = db.Column(db.Integer, ForeignKey("job.id",ondelete='CASCADE'))
+    job = db.relationship("job",order_by="job_submission.submit_time.desc()", backref=db.backref('job_detail',lazy="dynamic", cascade="all, delete"))
+    student = db.Column(db.Integer, ForeignKey("student.id"))
+    style=db.Column(db.Integer)
+    serial_No=db.Column(db.Integer)
+    answer=db.Column(db.String(64))#选择题为ABCD，非选择题为图片路径
+    tag=db.Column(db.String(64))#标签，用于学情诊断
+    mark=db.Column(db.Integer)#得分
 
 class job_assessment:
     A=5
