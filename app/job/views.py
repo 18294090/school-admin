@@ -1,10 +1,10 @@
 import statistics
-from io import StringIO
+from io import BytesIO
 from flask_paginate import Pagination, get_page_parameter
 from pandas import DataFrame
 from .import job_manage
-from flask import render_template, redirect, flash, request,jsonify, url_for
-from ..models import job_submission,job, representative,student,class_info, teaching_information,user,teacher,Permission
+from flask import render_template, redirect, flash, request,jsonify
+from ..models import job, representative,student,class_info, teaching_information,user,teacher,Permission,job,job_class
 from .. import db
 from .forms import publish
 from flask_login import current_user,login_required
@@ -14,54 +14,19 @@ import datetime
 import os
 from .paper import creat_paper
 from ..decorators import permission_required
+import json
+from werkzeug.utils import secure_filename
 
 
 @job_manage.route("/",methods=["POST","GET"]) # 作业管理主页教师页面为作业情况，学生页面为学生个人信息
 def job_mg():
     if current_user.role.role=="student":
         return (redirect("/manage/student/%s" %current_user.student.id))
-    if request.method == "POST":
-        class_list=request.form.getlist("cla")
-        submit_list =request.form.getlist("stu")
-        if class_list and current_user.role.has_permission(Permission.job_publish):  # 作业布置
-            for i in class_list :
-                job_name=request.form.get("job_name")
-                publish_time=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
-                publisher=current_user.id
-                deadline=request.form.get("time")
-                deadline =datetime.datetime.strptime(deadline[0:-3],"%m/%d/%Y %H:%M")
-                context =request.form.get("context")
-                if current_user.role.role=="teacher": 
-                    teacher = current_user.teacher.id
-                    subject=current_user.teacher.subject
-                else:
-                    teacher = current_user.student.representative.first().teacher_id
-                    subject =  current_user.student.representative.first().subject
-                check_job=job.query.filter(job.job_name==job_name,job.class_id==i,job.teacher_id==teacher).first()  #避免重复布置相同作业
-                if check_job:
-                    flash("%s班已经有名为《%s》的作业！" %(check_job.class_info.class_name,job_name))
-                else:
-                    job_submit = job(job_name=job_name,publish_time=publish_time,publisher=publisher,teacher_id=teacher,deadline=deadline,subject=subject, class_id=i,context=context)
-                    db.session.add(job_submit)
-                    db.session.flush()
-                    for j in class_info.query.filter(class_info.id==i).first().student:
-                        submission=job_submission(job_id=job_submit.id,student=j.id,teacher_id=teacher)
-                        db.session.add(submission)
-                        db.session.flush()
-        if submit_list and current_user.role.has_permission(Permission.job_submit):  # 作业提交
-            for i in submit_list:
-                job_id,student=i.split("-")
-                job_sub=job.query.filter(job.id==job_id).first()
-                if job_sub.deadline < datetime.datetime.now():
-                    flash("已过截止时间，不能提交")
-                    break
-                verify_sub=job_submission.query.filter(job_submission.job_id==job_id,job_submission.student==student).first()
-                verify_sub.submit_time = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
-                db.session.flush()
-        try:
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+   
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     p = publish()
     search = False  # 分页切片，flask_paginate模块实现
     q = request.args.get('q')
@@ -70,10 +35,15 @@ def job_mg():
     page = request.args.get(get_page_parameter(), type=int, default=1)
     start = (page-1)*10
     end =page*10
+    class_=[]
+    count={}
     if current_user.role.role=="teacher":
         jobs=job.query.filter(job.teacher_id==current_user.teacher.id).order_by(job.publish_time.desc()).slice(start,end)
         class__=current_user.teacher.teaching_information.order_by(teaching_information.class_id.asc())
-        class_=[]
+        
+        for i in jobs:
+            a=os.path.join(os.getcwd()+"/app/static/answer/"+str(i.id))
+            count[i.id]=len(os.listdir(a))
         for i in class__:
             if i.class_info not in class_:
                 class_.append(i.class_info)
@@ -85,14 +55,19 @@ def job_mg():
             id.append(i.teacher_id)
         jobs = job.query.filter(job.class_id==current_user.student.class_info.id).filter(job.teacher_id.in_(id)).order_by(job.publish_time.desc()).slice(start,end)
         class_.append(current_user.student.class_info)
+        for i in jobs:
+            a=os.path.join(os.getcwd()+"/app/static/answer/"+str(i.id))
+            count[i.id]=len(os.listdir(a))
     elif current_user.role.role == "admin":
         jobs = job.query.slice(start,end)        
+        for i in jobs:
+            a=os.path.join(os.getcwd()+"/app/static/answer/"+str(i.id))
+            count[i.id]=len(os.listdir(a))
         class_=[]   
     dic={}
     pagination = Pagination(page=page, total=len(job.query.all()), bs_version=4, search=search, record_name='job')
-    for i in jobs:
-        dic[i.id]=job_submission.query.filter(job_submission.job_id==i.id).with_entities(func.avg(job_submission.mark)).scalar()  # 从数据库统计班级每个作业的平均分
-    return(render_template("job/mainpage.html", p=p,job_submission=job_submission,dic=dic,class_=class_,jobs=jobs,job=job,Permission=Permission,subjects=["语文","数学","外语","政治","历史","地理","物理","化学","生物","通用技术","信息技术"],pagination=pagination))
+   
+    return(render_template("job/mainpage.html", p=p,dic=dic,class_=class_,jobs=jobs,count=count,Permission=Permission,subjects=["语文","数学","外语","政治","历史","地理","物理","化学","生物","通用技术","信息技术"],pagination=pagination))
 
 
 
@@ -132,6 +107,7 @@ def job_submit_del():
         data =request.get_json()
         
         id=data["del"]
+        print(id)
         j=job.query.filter(job.id==id).first()
         sub=job_submission.query.filter(job_submission.job_id==j.id).all()
 
@@ -160,8 +136,6 @@ def set_judge():
         db.session.rollback()
         return("数据库写入错误")
 
-def job_publish(class_list):
-    pass
 
 def job_sub(submist_list):
     pass
@@ -218,8 +192,6 @@ def class_statistics(subject,class_id):
     statistics =DataFrame(columns=["姓名","学科","未提交","平均分","作业数量"])
     stu=student.query.filter(student.class_id==class_id).all()
     class_ = class_info.query.filter(class_info.id==class_id).first()
-    
-    
     for i in stu:
         if subject=="全科":
             n_sub = job_submission.query.filter(job_submission.student==i.id).filter(job_submission.submit_time==None).count()
@@ -275,25 +247,103 @@ def show_paper(url):
 @login_required 
 @permission_required(Permission.job_publish)
 def genarate_paper():
+    if current_user.role.role=="teacher":
+        class__=current_user.teacher.teaching_information.order_by(teaching_information.class_id.asc())
+        class_=[]
+        for i in class__:
+            if i.class_info not in class_:
+                class_.append(i.class_info)
+    elif current_user.role.role=="representative":
+        class_.append(current_user.student.class_info)
     if request.method == "POST":
-        title=request.form.get("title")
-        number = request.form.get("number")
-        select = request.form.get("select")
-        subtopic =request.form.getlist("subtopic[]") # ajax获取列表，要在字典key后加上[]
-        c_mark=request.form.get("c_mark")
-        teacher = current_user.username
-        print(number,select,subtopic,c_mark,teacher)
-        if current_user.role.role=="teacher":
-            subject=current_user.teacher.subject
+        flag=request.form.get("flag")
+        if flag=="1":
+            title=request.form.get("title")
+            number = request.form.get("number")
+            select = request.form.get("select")
+            subtopic =request.form.getlist("subtopic[]") # ajax获取列表，要在字典key后加上[]
+            c_mark=request.form.get("c_mark")
+            teacher = current_user.realname
+            publish_time=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
+            publisher=current_user.id
+            deadline=request.form.get("time")
+           #deadline =datetime.datetime.strptime(deadline,"/%Y/%m/%d")
+            context =request.form.get("context")           
+            if current_user.role.role=="teacher": 
+                teacher = current_user.teacher.id
+                subject=current_user.teacher.subject
+            else:
+                teacher = current_user.student.representative.first().teacher_id
+                subject =  current_user.student.representative.first().subject
+            r=creat_paper.paper(subject,current_user.realname,2000,title,int(select),subtopic)
+            url = "/static/paper/excercise/"+str(teacher)+"-"+str(time.time())+".png"                
+            r[-1].save(os.getcwd()+"/app"+url)
+            job_submit = job(job_name=title,publish_time=publish_time,publisher=publisher,teacher_id=teacher,deadline=deadline,subject=subject,context=context,paper_url=url,s_m=int(number),complete=c_mark,line=json.dumps(r[0]),select=int(select))
+            db.session.add(job_submit)
+            db.session.flush()
+            path=os.getcwd()+"/app/static/answer/"+str(job_submit.id)
+            if not os.path.exists(path):
+                os.makedirs(path)
+            class_list=request.form.getlist("classlist[]")
+            if class_list:  # 作业布置                
+                data={}
+                data["status"]=0
+                for i in class_list:                    
+                    check_job=job_class.query.join(job,job_class.job).filter(job.job_name==title,job_class.class_id==i,job.teacher_id==teacher).first()  #避免重复布置相同作业
+                    if check_job:
+                        data["status"]+=1
+                        data["%s" %data["status"]]="%s班已经有名为《%s》的作业！" %(check_job.class_info.class_name,title)
+                        db.session.rollback()                       
+                    else:
+                        job_publish = job_class(class_id=i,job_id=job_submit.id)
+                        db.session.add(job_publish)
+                db.session.flush()
+                db.session.commit()
+                if data['status']==0:
+                    data["url"]=url
+                return(data)
+            else:
+                return("没有设置班级")
         else:
-            subject=current_user.representative.subject       
-        r=creat_paper.paper(subject,teacher,2000,title,int(select),subtopic)
-        output =StringIO()
-        r[-1].save(output,'PNG')
-        contents= output.getvalue().encode("base64")
-        output.close()
-        contents = contents.split('\n')[0]
-        print(contents)
-        return(contents)
-    return(render_template("job/genarate_paper.html"))
+            url=request.form.get("url")
+            try:
+                job.query.filter(job.paper_url==url).delete()
+                db.session.commit()
+                return("已删除该作业")
+            except Exception:
+                db.session.rollback()
+                return("删除作业失败，请在作业主界面删除")
+    return(render_template("job/genarate_paper.html",class_=class_))
 
+@job_manage.route("/upload/<id>",methods=["POST","GET"])  #
+@login_required 
+@permission_required(Permission.job_publish)
+def upload_paper(id):
+    if request.method == 'POST':
+        url=os.getcwd()+"/app/static/answer/"+str(id)
+        files = request.files.getlist("files")
+        n=0
+        for file in files:            
+            filename=secure_filename(file.filename)
+            try:
+                file.save(os.path.join(os.getcwd()+"/app/static/answer/"+str(id), filename))
+                n+=1
+            except Exception:
+                pass        
+        a=os.getcwd()+"/app/static/answer/"+str(id)
+        count=len(os.listdir(a))
+        return(jsonify([n,count]))
+       
+@job_manage.route("/judge/<id>",methods=["POST","GET"])  #
+@login_required 
+@permission_required(Permission.job_publish)
+def job_judge(id):
+    job_=job.query.filter(job.id==id).first()
+    n=0
+    root=os.getcwd()+"/app/static/answer/"+str(id)
+    for dirpath, dirnames, filenames in os.walk(root): 
+        for filepath in filenames:
+            print(os.path.join(dirpath, filepath))
+            n+=1
+    return(jsonify(n))
+        
