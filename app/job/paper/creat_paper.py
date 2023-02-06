@@ -51,12 +51,12 @@ def genarate_select(n,n1,pic,x,y): #生成选择题，n1为题目数量，pic为
     return([end,n1]) 
 
 def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列表，存储每个小题几个空[[1,2],[1,1,1]],x,y 为位置，n1为题号
+    line=[]
     draw=ImageDraw.Draw(pic)
     font=ImageFont.truetype(f_url, int(n*1.5))
     draw.text((x,y),"二、填空题",fill="#000000",font=font)
     y+=3*n
     draw.rectangle([x,y,pic.width-n*5,pic.height-n*5],width=2,outline="#ff0000")
-    line=[]
     line.append(y//n)
     y+=3*n
     font=ImageFont.truetype(f_url, int(n*1.3))
@@ -106,14 +106,16 @@ def number_area(n,pic,x,y,n1): #产生学号填涂区，pic为image对象，x,y 
 def paper(subject,teacher,width,title,s_n,complete):
     paper=genarate_papaer(width)
     n=paper.width//82
-    d=ImageDraw.Draw(paper)
-    
+    d=ImageDraw.Draw(paper)    
     x=n*7
     y=n*40
     font=ImageFont.truetype(f_url, n*3)
     d.text(((paper.width-n*3*len(title))//2,n*5),title,fill=0,font=font)
     pos=genarate_select(n,s_n,paper,x,y)
-    line = generate_completion(n,paper,complete,n*6,pos[0]+n*2,pos[1]+1)
+    if len(complete):
+        line = generate_completion(n,paper,complete,n*6,pos[0]+n*2,pos[1]+1)
+    else:
+        line=[]
     img=Image.open(os.getcwd()+"/app/job/paper/pic/"+"name.png")
     name_width=n*20
     img=img.resize((name_width,27*n))
@@ -121,5 +123,4 @@ def paper(subject,teacher,width,title,s_n,complete):
     number_area(n,paper,n*27,n*9,10)
     qr_paste(subject+"-"+title+"-"+teacher,paper,(paper.width-n*16,n*15),n*12)
     p_name=os.getcwd()+"/app/static/paper/excercise/"+teacher+"-"+str(time.time())+".png"
-    
     return((line,paper))

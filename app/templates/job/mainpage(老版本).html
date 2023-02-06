@@ -261,7 +261,7 @@
                                     </form>
                             </div>
                             {%if current_user.role.has_permission(Permission.job_assessment)%}{%if i.job_submission.filter(job_submission.submit_time !=None).all()|length!=0%}<a href="/job/job_assessment/{{i.id}}"><input type="button"  class="btn-group-sm btn-primary"  value="评价" ></a>{%endif%}{%endif%}
-                            {%if i.job_submission.filter(job_submission.submit_time !=None).all()|length==0%}<button  class="btn-group-sm btn-primary" onclick="del({{i.id}})" >删除</button>{%else%}<a href="/job/job_info/{{i.id}}"><input type="button"  class="btn-group-sm btn-primary"  value="查看" ></a>{%endif%}
+                            {%if i.job_class.filter(job_submission.submit_time !=None).all()|length==0%}<button  class="btn-group-sm btn-primary" onclick="del({{i.id}})" >删除</button>{%else%}<a href="/job/job_info/{{i.id}}"><input type="button"  class="btn-group-sm btn-primary"  value="查看" ></a>{%endif%}
                             {%if current_user.role.role=="representative" and i.judged!=1%}<button class="btn-group-sm btn-primary" onclick="judge({{i.id}})">设为已批改</button>{%endif%}
                         </td>
                     </tr>

@@ -12,7 +12,7 @@ from sqlalchemy import func
 import time
 import datetime
 import os
-from .paper import creat_paper
+from .paper import creat_paper,judge
 from ..decorators import permission_required
 import json
 from werkzeug.utils import secure_filename
@@ -340,10 +340,16 @@ def upload_paper(id):
 def job_judge(id):
     job_=job.query.filter(job.id==id).first()
     n=0
+    judge.line=job_.line  
+    print(judge.line)
+    img=judge.open(os.getcwd()+"/app"+job_.paper_url) 
     root=os.getcwd()+"/app/static/answer/"+str(id)
     for dirpath, dirnames, filenames in os.walk(root): 
         for filepath in filenames:
-            print(os.path.join(dirpath, filepath))
-            n+=1
+            ep=judge.open2(img,os.path.join(dirpath, filepath))
+            if judge.qr(img)==judge.qr(ep):
+                dst=judge.paper_ajust(img,ep)
+                r=judge.paper_split(dst,judge.line)
+                n+=1
     return(jsonify(n))
         

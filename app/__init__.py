@@ -4,11 +4,10 @@ from flask_sqlalchemy import SQLAlchemy
 from config import config
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
-from flask_codemirror import CodeMirror
 from flask_wtf import CSRFProtect
 from flask_login import LoginManager
 from flask_datepicker import datepicker
-
+import os
 
 login_manager = LoginManager()  # flask-loginm模块进行登录管理
 login_manager.login_view = "auth.login"
@@ -16,7 +15,7 @@ ckeditor = CKEditor()  # 富文本编辑器插件
 bootstrap = Bootstrap5()
 
 db = SQLAlchemy()
-codeMirror = CodeMirror()  # 代码编辑器插件
+
 csrf = CSRFProtect()  # 跨站攻击保护
 
 
@@ -25,9 +24,11 @@ def create_app(config_name):
     app.config.from_object(config[config_name])  # 先导入设置
     config[config_name].init_app(app)
     db.init_app(app)  # 初始化sqlalchemy，必须先导入设置，然后初始化数据库，否则要报错
-    bootstrap.init_app(app)
+    bootstrap.init_app(app)    
+    app.config['BOOTSTRAP_SERVE_LOCAL'] = True
+    app.config['UPLOAD_FOLDER'] = os.getcwd()+"\\app\\static\\"
+    app.config['MAX_CONTENT_LENGTH'] = 32 * 4000 * 3000
     ckeditor.init_app(app)
-    codeMirror.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
     datepicker(app)

@@ -1,5 +1,5 @@
 from .import manage
-from ..models import grade_info, class_info, job_submission, teacher, user
+from ..models import grade_info, class_info, teacher, user
 from .. import db
 from flask_paginate import Pagination, get_page_parameter
 from flask import render_template, redirect, flash, url_for, request
@@ -121,11 +121,10 @@ def teacher_manage(id):
             if str(i.class_id) not in class__:                
                 db.session.delete(i)
         for i in class__:
-            print(i,class_)
-            print(i not in class_)
             if int(i) not in class_:
                 t2=teaching_information(subject=teacher_.teacher.subject,class_id=i,teacher_id=teacher_.teacher.id)
                 db.session.add(t2)
+        db.session.flush() 
         if id:
             appointed = class_info.query.filter(class_info.class_master==teacher_.teacher.id).first()
             new=class_info.query.filter(class_info.id==id).first()
@@ -134,9 +133,12 @@ def teacher_manage(id):
                     if appointed.id != new.id:
                         appointed.class_master=None
                         teachinfor=teaching_information.query.filter(teaching_information.class_id==appointed.id).filter(teaching_information.teacher_id==teacher_.teacher.id).filter(teaching_information.subject=="master_teacher").first()
-                        db.session.delete(teachinfor)
+                        print(appointed.id,teacher_.teacher.id,teachinfor)
+                        if teachinfor:
+                            db.session.delete(teachinfor)
                 new.class_master = teacher_.teacher.id
                 t1=teaching_information(subject="master_teacher",class_id=new.id,teacher_id=teacher_.teacher.id)
+                
                 db.session.add(t1)  
         db.session.flush()                
         db.session.commit()

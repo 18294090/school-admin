@@ -4,9 +4,10 @@
 <TITLE>作业发布，制作答题卡</TITLE>
 {%endblock%}
 {% block main%}
+
 <div class="container-fluid ">
     <div class="row">
-      
+       
         <div class="col-4">
             <div class="card border-primary mb-4" style="max-width: 32rem;">
                 <div class="card-header">作业信息</div>
@@ -26,6 +27,7 @@
                         <input type="text" class="form-control" id="select" name="select">
                         
                     </div>
+                   
                     <div class="mb-4">
                         <!-- Button trigger modal -->
                     <button type="button" id="gen-com" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
@@ -37,6 +39,7 @@
                         <div class="modal-dialog">
                           <div class="modal-content">
                             <div class="modal-header">
+
                               <h1 class="modal-title fs-5" id="staticBackdropLabel">填空题详情</h1>
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
@@ -54,32 +57,60 @@
                               <div class="mb-4 border border-primary" id="sub_c">
                                 
                               </div>
-                            </div>0
+                            </div>
                             <div class="modal-footer">
                               <button  type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>  
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>              
+                    </div>  
+                     <div class="mb-4">
+                     <label class="form-label" for="datetimepicker4">选择上交截止日期</label>
+                    <input type="text" class="form-control datetimepicker-input" name="time" id="datetimepicker4" data-toggle="datetimepicker" data-target="#datetimepicker4"/>
+                    </div>
+                    <div class="mb-4">
+                    <label class="form-label" for="check_class">选择班级</label>
+                    
+                        {%if current_user.role.role=="teacher"%}
+                            {%for i in class_%}
+                            <div class="form-check form-check-inline" name="check_class">
+                                <input class="form-check-input" type="checkbox" name="cla" value="{{i.id}}" id="checkbox-{{i.id}}" checked>
+                                <label class="form-check-label" for="checkbox-{{i.id}}">
+                                    {{i.class_name}}
+                                </label>
+                              </div> 
+                            {%endfor%}
+                        {%elif current_user.role.role=="representative"%}
+                                 <div class="form-check form-check-inline" name="check_class">
+                                <input class="form-check-input" type="checkbox" name="cla" value="{{current_user.student.class_info.id}}" id="checkbox" checked>
+                                <label class="form-check-label" for="checkbox">
+                                    {{current_user.student.class_info.class_name}}
+                                </label>
+                                </div>
+                        {%endif%}                    
+                    </div>  
+                    <div class="mb-4">
+                    <label for="Textarea1" class="form-label">备注</label>
+                    <textarea class="form-control" id="Textarea1" name="context" rows="3"></textarea>
+                  </div>          
                     <button type="button" class="btn btn-primary" id="s1" >生成答题卡</button>
-                    
-                    
-                    
                 </form>
             </div>            
         </div>
         </div>
         <div class="col-8 text-center">
           <div id="btn-hidden" class="btn-group visually-hidden" role="group" aria-label="Basic example">
-          <button type="button" class="btn btn-success" id="p" >打印答题卡</button>
-          <button type="button" class="btn btn-success" id="confirm" >确认</button>
-          <button type="button" class="btn btn-success" id="cancel" >取消</button>
+            <button type="button" class="btn btn-success" id="p" onclick="doPrint()" >打印答题卡</button>
+            <button type="button" class="btn btn-success" id="cancel" >取消</button>
           </div>
-          <div class="row"><div class="row">
-          <img src="..." class="img-fluid" id='img' alt="...">
-          </div>
-         
+
+          <div class="row border border-danger visually-hidden" id="paper-img">
+          
+          <!--startprint-->
+          <img src="{{url}}" class="img-fluid" id='img' alt="...">
+          <!--endprint-->
+          </div>         
         </div>
         
   </div>
@@ -88,12 +119,31 @@
 
 <script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
 <script>
+
+function doPrint() {   
+    bdhtml=window.document.body.innerHTML;   
+    sprnstr='<!--startprint-->';   
+    eprnstr='<!--endprint-->';   
+    prnhtml=bdhtml.substr(bdhtml.indexOf(sprnstr) + 17);   
+    prnhtml=prnhtml.substring(0, prnhtml.indexOf(eprnstr));   
+    window.document.body.innerHTML=prnhtml;  
+    window.print();}
+
+  $(function () {
+      $('#datetimepicker4').datetimepicker({locale: 'zh-cn',format:"YYYY-MM-DD"});
+  });
+ 
+  
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
   var c = document.getElementById("sub_c")
   var complete = document.getElementById("complete")
   var s1 = document.getElementById("s1")
   var f4=false
+  var cancel =document.getElementById("cancel")
+  var confirm = true
+  var p =document.getElementById("p")
+  var id=0
   list=[]                        
   complete.onchange=function(){ 
   c.innerHTML=""
@@ -105,12 +155,13 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstra
   }
   else{complete.style.removeProperty("border-color")                     
   for (var i=1;i<=Number(complete.value);i++){                          
-  list[i]=document.createElement("input")
-  list[i].name="subtopic"
-  list[i].className="form-control form-control-sm"
-  list[i].placeholder="请输入第"+String(i)+"道填空题的小题结构";                        
-  c.appendChild(list[i])
-  }}                      
+    list[i]=document.createElement("input")
+    list[i].name="subtopic"
+    list[i].className="form-control form-control-sm"
+    list[i].placeholder="请输入第"+String(i)+"道填空题的小题结构";                        
+    c.appendChild(list[i])
+  }
+  }                      
   }
   
   s1.onclick=function(){
@@ -119,8 +170,18 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstra
     var select =document.getElementById("select")
     var subtopic = document.getElementsByName("subtopic")
     var gen=document.getElementById("gen-com")
+    var classlist =document.getElementsByName("cla")
+    var tp=document.getElementById("datetimepicker4")
+    console.log(tp.value);
+    if(tp.value==""||tp.value==null||/^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(0[1-9]|1[1-9]|2[1-9])$/.test(tp.value)){
+      tp.value="",
+      tp.placeholder="日期格式不对，请重新选择"
+      tp.style.borderColor="red"
+      f0=false
+    }
+    else{tp.style.removeProperty("border-color");f0=true}
       if(title.value.length<4){
-          title.value=""
+          title.value="",
           title.placeholder=("标题长度不小于四个字符");
           title.style.borderColor="red";
           f1=false
@@ -143,6 +204,7 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstra
     else{select.style.removeProperty("border-color");f3=true}
     var n=0;
     var sub=new Array();
+    var cla=new Array();
     for(var i=0;i<subtopic.length;i++){
       
       if(!/^\d+(\s+\d+)*$/.test(subtopic[i].value)){
@@ -154,13 +216,17 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstra
         sub[i]=subtopic[i].value;
         n++;subtopic[i].style.removeProperty("border-color")}
     }
-     
+    for (var i=0;i<classlist.length;i++){
+      if (classlist[i].checked ){
+      cla.push(classlist[i].value)        
+      }
+
+    }
     var c_mark=document.getElementById("c_mark");
     if (!/^\d+(\s+\d+)*$/.test(c_mark.value)){
       c_mark.value=""
       c_mark.placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
-      c_mark.style.borderColor="red"
-      
+      c_mark.style.borderColor="red"      
   }else{n++
   c_mark.style.removeProperty("border-color")}
   if (n<subtopic.length+1){
@@ -168,39 +234,80 @@ const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstra
     f4=false
   }
   else{gen.style.removeProperty("border-color");f4=true}
-    if(f1&&f2&&f3&&f4){
+    if(f0&&f1&&f2&&f3&&f4){
       $(function () {
             var url ="/job/genarate_paper";
             var sendData = {
+                'flag':1,
                 'title':title.value,
                 'number':number.value,
                 'select':select.value,
                 'subtopic':sub,
                 'c_mark':c_mark.value,
-                'csrf_token':'{{ csrf_token() }}'
-            };
+                'csrf_token':'{{ csrf_token() }}',
+                'time':$('#datetimepicker4').val(),
+                'context':$('#Textarea1').val(),
+                "classlist":cla,
+            };           
             $.ajax({
                 url:url,
                 type:'post',
                 data:sendData,
-                success:function (data) {                    
-                      $('#btn-hidden').removeClass("visually-hidden")
-                      $("#img").attr("src",'data:image/png;base64,' + data)
-                      console.log(data)
-                    } ,            
-                    
-               
+                success:function (data) {
+                  
+                      if(data["status"]==0){                    
+                      $('#btn-hidden').removeClass("visually-hidden"),
+                      $('#paper-img').removeClass("visually-hidden"),
+                      $("#img").attr("src",data["url"])}
+                      else{
+                        for (var i = 1;i<=data["status"];i++){
+                          console.log("data[i]"),
+                          window.alert(data[i])
+                        }
+                      
+                        
+                      }
+                     
+                      
+                    } , 
                 error:function (error) {
                     alert(error);
-                }
- 
+                } 
             })
-      })                      
+      })
   }
     else{
       window.alert("数据输入错误，请检查")
     }                        
-  }
+  };
+
+$("#cancel").click(function(){  
+    var url ="/job/genarate_paper";
+    var sendData = {
+        'flag':0,
+        'url':$('#img').attr('src'),
+        'csrf_token':'{{ csrf_token() }}'
+    };
+     $.ajax({
+            url:url,
+            type:'post',
+            data:sendData,
+            success:function (data) { 
+              console.log(data)                   
+                  alert(data)
+                $('#btn-hidden').addClass("visually-hidden" ) 
+                $('#paper-img').addClass("visually-hidden" ) 
+                } ,
+            error:function (error) {
+                alert(error);
+            },
+        });
+})
 
 </script>
+<!以下为tempus dominus时间选择器的js和css引用>
+<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/build/js/moment-with-locales.js"></script>
+<script type="text/javascript" src="/static/build/js/tempusdominus-bootstrap-4.min.js" ></script>                                         
+<link rel="stylesheet" href="/static/build/css/tempusdominus-bootstrap-4.min.css"/>	
 {%endblock%}

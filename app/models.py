@@ -111,8 +111,7 @@ class class_info(db.Model):  # 班级信息
     class_master = db.Column(db.Integer, ForeignKey("teacher.id"))
     attribute = db.Column(db.String(64))
     student = db.relationship('student', order_by="student.name",backref=db.backref("class_info"))
-    teacher =  db.relationship('teacher',backref=db.backref("class_info",uselist=False))   
-    jobs = db.relationship("job", order_by="job.publish_time.desc()",backref=db.backref('class_info'))
+    teacher =  db.relationship('teacher',backref=db.backref("class_info",uselist=False))
 
 class teacher(db.Model):  # 教师信息
     __table_args__ = {'extend_existing': True}
@@ -139,40 +138,39 @@ class job(db.Model):  # 作业
     __tablename__ = "job"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_name = db.Column(db.String(64))
-    class_id = db.Column(db.Integer, ForeignKey("class_info.id"))
     publish_time = db.Column(db.DateTime)
     publisher = db.Column(db.Integer, ForeignKey("user.id"))
-    deadline = db.Column(db.DateTime)
+    deadline = db.Column(db.Date)
     subject = db.Column(db.String(64))
     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
     context = db.Column(db.Text)
-    paper = db.Column(db.String(64))
     select =db.Column(db.Integer) #选择题数量
     s_m=db.Column(db.Integer)#选择题分数
     complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
+    paper_url = db.Column(db.String(64))
+    line = db.Column(db.String(64))
 
-class job_submission(db.Model):  #作业提交信息
+class job_class(db.Model):  # 作业
     __table_args__ = {'extend_existing': True}
-    __tablename__ = "job_submission"
+    __tablename__ = "job_class"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    job_id = db.Column(db.Integer, ForeignKey("job.id",ondelete='CASCADE'))
-    job = db.relationship("job",order_by="job_submission.submit_time.desc()", backref=db.backref('job_submission',lazy="dynamic", cascade="all, delete"))
-    student = db.Column(db.Integer, ForeignKey("student.id"))
-    job_assessment = db.Column(db.Text)
-    submit_time = db.Column(db.DateTime)
-    mark=db.Column(db.Integer)
-    teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
-    paper = db.Column(db.String(64))
-
+    class_id = db.Column(db.Integer, ForeignKey("class_info.id"))
+    class_info =db.relationship("class_info", foreign_keys=[class_id], backref=db.backref('job_class',lazy="dynamic", cascade="all, delete"))
+    job_id = db.Column(db.Integer, ForeignKey("job.id"))
+    job = db.relationship("job",order_by="job.publish_time.desc()", foreign_keys=[job_id], backref=db.backref('job_class',lazy="dynamic", cascade="all, delete"),remote_side=[job_id])
+    submitted_rate=db.Column(db.Integer)
+    average=db.Column(db.Integer)
+    max=db.Column(db.Integer)
+    min=db.Column(db.Integer)
 class job_detail(db.Model):
     __table_args__ = {'extend_existing': True}
     __tablename__ = "job_detail"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_id = db.Column(db.Integer, ForeignKey("job.id",ondelete='CASCADE'))
-    job = db.relationship("job",order_by="job_submission.submit_time.desc()", backref=db.backref('job_detail',lazy="dynamic", cascade="all, delete"))
+    job = db.relationship("job",order_by="job.publish_time.desc()", backref=db.backref('job_detail',lazy="dynamic", cascade="all, delete"))
     student = db.Column(db.Integer, ForeignKey("student.id"))
     style=db.Column(db.Integer)
-    serial_No=db.Column(db.Integer)
+    serial_No=db.Column(db.Integer) 
     answer=db.Column(db.String(64))#选择题为ABCD，非选择题为图片路径
     tag=db.Column(db.String(64))#标签，用于学情诊断
     mark=db.Column(db.Integer)#得分
@@ -216,7 +214,7 @@ class student(db.Model):  # 学生
     user_infor = db.relationship("user",backref=db.backref("student",uselist=False))
     name = db.Column(db.String(64))
     class_id = db.Column(db.Integer, ForeignKey(class_info.id))
-    job_submission =  db.relationship("job_submission",backref=db.backref("student_job"))
+    
 
 class representative(db.Model):
      id = db.Column(db.Integer, autoincrement=True, primary_key=True)
