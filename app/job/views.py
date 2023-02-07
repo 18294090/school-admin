@@ -340,7 +340,8 @@ def upload_paper(id):
 def job_judge(id):
     job_=job.query.filter(job.id==id).first()
     n=0
-    judge.line=job_.line  
+    judge.line=job_.line
+    select=job.select 
     print(judge.line)
     img=judge.open(os.getcwd()+"/app"+job_.paper_url) 
     root=os.getcwd()+"/app/static/answer/"+str(id)
@@ -349,7 +350,8 @@ def job_judge(id):
             ep=judge.open2(img,os.path.join(dirpath, filepath))
             if judge.qr(img)==judge.qr(ep):
                 dst=judge.paper_ajust(img,ep)
-                r=judge.paper_split(dst,judge.line)
+                split=judge.paper_split(dst,select,judge.line)
+                number=judge.number_pos(split[0])
                 n+=1
     return(jsonify(n))
         

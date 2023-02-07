@@ -82,29 +82,41 @@ def paper_ajust(img,ep):
 
 
 def number_pos(pic): #查找号码定位点
-    d=ImageDraw.Draw(pic)
-    for i in range(10):
-        for j in range(10):
-            d.rectangle((28*n+i*n*4,16*n+j*2*n,30*n+n//2+i*n*4,17*n+j*2*n),outline="#00FF00",width=2)
+    img=pict(pic)
+    cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    pic=cv2.drawContours(pic,cnts,-1,(255,0,0),3)
+    pnt=[]
+    for i in cnts:
+        pnt.append(cv2.moments(i))
+    pnt1=[]
+    for M in pnt:  
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        pnt1.append((cX,cY))
+    result=""
+    if len(pnt1)==10:
+        
+        pnt1.sort(key=lambda x:x[0])
+        for i in pnt1:
+            result+=str((i[1]//n-7)//2)
+    return(result)
 
 #矫正完成后，对画面进行切割，分别切割出考号填涂区，选择题区，和非选择题区
 def paper_split(dst,s_n,line):
     num=dst[9*n:36*n,27*n:67*n]
-    select=dst[42*n:42*n+s_n//4*2*n,6*n:77*n]
+    select=dst[42*n:42*n+(s_n+3)//4*2*n,6*n:77*n]
     c=[]
     for i in range(len(line)-1):
         c.append(dst[line[i]*n:line[i+1]*n,n*6:n*77])
     return(num,select,c)
 
-def check_select(dst): #选择题阅卷，返回一个字典，{题目序号：选项}
-    
+def check_select(dst): #选择题阅卷，返回一个字典，{题目序号：选项}    
     s=pict(dst)
     cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     pic=cv2.drawContours(dst,cnts,-1,(255,0,0),3)
     pnt=[]
     for i in cnts:
         pnt.append(cv2.moments(i))
-
     pnt1=[]
     for M in pnt:  
         cX = int(M["m10"] / M["m00"])
