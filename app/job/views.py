@@ -87,8 +87,7 @@ def assign_job(id):
         if current_user.role.has_permission(Permission.job_grade):
             g =grade_info.query.filter(grade_info.academic_year>datetime.datetime.now().year)
         for i in g:
-            g1[i.id]=i.grade_name
-        
+            g1[i.id]=i.grade_name        
         return jsonify(class_,g1)
     if request.method=="POST":
         data=json.loads(request.form.get("list"))
@@ -110,7 +109,16 @@ def assign_job(id):
         except Exception:
             db.session.rollback()
         return("添加了%s个班级的作业" %n) 
-    
+
+@job_manage.route("/show_answer/<id>",methods=["POST","GET"])
+@login_required 
+@permission_required(Permission.job_publish)
+def show_answer(id):
+    if request.method=="GET":
+        an=job.query.filter(job.id==id).first().select_answer
+    print(an)
+    return jsonify(an)
+
 @job_manage.route("/question_statistics/",methods=["POST","GET"]) # 班级小题统计
 @login_required 
 @permission_required(Permission.job_publish)

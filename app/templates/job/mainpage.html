@@ -151,9 +151,7 @@
                         <td>
                            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">                               
                                 <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button>
-                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal1">设置答案</button>
-                                
-                                
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">查看答案</button> 
                                 <button type="button" class="btn btn-secondary" onclick="window.location.href='{{i.paper_url}}'">查看答题卡</button>
                                 <button type="button" class="btn btn-secondary"  onclick="judge({{i.id}})">阅卷</button>
                                 {%if count1[i.id]==0 and count[i.id]%}
@@ -191,10 +189,10 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Modal1 title</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h1 class="modal-title fs-5" id="exampleModalLabel">选择题答案</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" id='show_answer'>
       
       </div>
       <div class="modal-footer">
@@ -208,6 +206,28 @@
        
 <script  src="/static/build/js/jquery.min.js"></script>
 <script>
+    function get_answer(id){
+        $.ajax({
+                url: "/job/show_answer/"+String(id),// 提交到controller的url路径 
+                             //提交给flask后台必须有csrf认证
+                type: "GET", 
+                dataType: "json",    // 服务器端返回的数据类型
+                processData: false,//用于对data参数进行序列化处理 这里必须false
+                contentType: false, //必须
+                success: function(data) {
+                    $.each(data.split(" "),function(index,c){
+                        if(c){
+                            $("#show_answer").append(" "+c+"     ")
+                        }
+                        
+                        if((index+1)%5==0){
+                            $("#show_answer").append("<br>")
+                        }
+                    });
+                     
+                 }
+    })
+    }
     function assign_job(){
         var id=$("#job_class").attr("name");
         var values = [];
