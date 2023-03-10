@@ -39,8 +39,8 @@ def pict(gray):  # 图像处理，二值化
     # 二值化处理
     _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    binary_erosion =cv2.erode(thresh, kernel,iterations=1)
-    binary_dilation =cv2.dilate(binary_erosion, kernel,iterations=1)    
+    binary_erosion =cv2.erode(thresh, kernel,iterations=2)
+    binary_dilation =cv2.dilate(binary_erosion, kernel,iterations=4)    
     # 形态学操作，去除噪点和细节，填充小的白色区域    
     opening = cv2.morphologyEx(binary_dilation, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
@@ -90,20 +90,21 @@ def find_corners(img):
 
 def number_pos(pic): #识别号码
     img=pict(pic)
-    cv2.namedWindow("2",cv2.WINDOW_NORMAL)
-    cv2.imshow("2",img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+   
     cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    
     pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)
-        if area>300:
+        
+        if area>1000:
+            
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
             pnt1.append((cx, cy))
+    
     result=""
+    
     pnt1.sort(key=lambda x:x[0])
     if len(pnt1)==10:        
         for i in pnt1:
@@ -116,6 +117,10 @@ def number_pos(pic): #识别号码
 #矫正完成后，对画面进行切割，分别切割出考号填涂区，选择题区，和非选择题区
 def paper_split(dst,s_n,line):
     num=dst[16*n:36*n,27*n:67*n]
+    """cv2.namedWindow("2",cv2.WINDOW_NORMAL)
+    cv2.imshow("2",num)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""
     select=dst[43*n:43*n+(s_n+3)//4*2*n,6*n:77*n]
     c=[]
     for i in range(len(line)-1):
@@ -128,7 +133,7 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
     pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)
-        if area>300:
+        if area>1000:
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])

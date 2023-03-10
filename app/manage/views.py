@@ -87,7 +87,7 @@ def people_management():
                 flash("%s名学生分班信息已导入"%count2)
             if  count:
                 flash("成功导入学生%s名" %count)
-            try:                
+            try:                                                                 
                 db.session.commit()
                
             except Exception:

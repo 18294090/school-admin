@@ -41,8 +41,7 @@ def job_mg():
         search = True
     page = request.args.get(get_page_parameter(), type=int, default=1)
     start = (page-1)*10
-    end =page*10
-    
+    end =page*10    
     count={}
     count1={}
     g=[]
@@ -135,8 +134,7 @@ def question_statistics():
             .filter(job_detail.job_id == job_id, class_info.id == class_id).all()
         job_=job.query.filter(job.id==job_id).first()
         tags =json.loads(job_.context)
-        answers=job_.select_answer[:-1].split(" ")
-        
+        answers=job_.select_answer[:-1].split(" ")        
         groups = defaultdict(list)
         for detail in job_details:
             groups[detail.serial_No].append(detail)
@@ -168,15 +166,9 @@ def question_statistics():
                                 opts.MarkPointItem(value=f'{b_percent}%',coord=[correct_item,choices[correct_item]], name="正确率",itemstyle_opts=opts.ItemStyleOpts(color="#55ff37" if b_percent > 70 else "#dbff5e" if b_percent>60 else "#feaf2c" if  b_percent>50 else "red" ))
                             ]
                         ),)
-                .set_global_opts(title_opts=opts.TitleOpts(title=f'第 {serial_No}题：',subtitle=f'{tags[serial_No-1]}'))              
-                
+                .set_global_opts(title_opts=opts.TitleOpts(title=f'第 {serial_No}题：',subtitle=f'{tags[serial_No-1]}'))     
             )
-            
-           
-            
-            bar_charts.append(bar_chart)
-            
-        
+            bar_charts.append(bar_chart) 
         # 将图表转换为HTML字符串并返回给前端
         bar_html_list = [chart.render_embed() for chart in bar_charts]
         return json.dumps(bar_html_list)
@@ -246,8 +238,7 @@ def job_info(job_id):
             
             data.append(jt.filter(job_detail.serial_No==j+1).first())
             
-        js[i.id]=data
-    
+        js[i.id]=data    
     charts=bar.render_embed()
     dict={'id':job_id,"name":job_.job_name,"select":int(job_.select),"publish_time":job_.publish_time,"deadline":job_.deadline,"sum":sum_,"n_sub":f}
     return(render_template("job/job_info.html",dict=dict,jobs=jobs,classes_=classes_,class_=class_,js=js,charts=charts))
@@ -388,8 +379,7 @@ def job_judge(id):
     img=judge.open(os.getcwd()+"/app"+job_.paper_url)
     split=judge.paper_split(img,select,judge.line)
     root=os.getcwd()+"/app/static/answer/"+str(id)
-    tags = json.loads(job_.context)  
-    
+    tags = json.loads(job_.context)
     for dirpath, dirnames, filenames in os.walk(root): #遍历答题卷文件夹阅卷
         for filepath in filenames:
             ep=judge.open2(os.path.join(dirpath, filepath))
@@ -427,7 +417,6 @@ def job_judge(id):
                 j_stu.select_mark=se  #以下为学生作业统计
                 j_stu.mark+=se+j_stu.complete_mark
                 n+=1
-                
                 shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job_readed",str(id),"%s.jpg"%number))
             else:
                 print(number+"无该作业")
