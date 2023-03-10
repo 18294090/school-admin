@@ -38,9 +38,11 @@ def create_app(config_name):
     from .job import job_manage
     from .examination import examination
     from .manage import manage
+    from .pedagogical_analysis import pedagogical_analysis
     app.register_blueprint(main)
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
     app.register_blueprint(job_manage,url_prefix="/job")
     app.register_blueprint(examination,url_prefix="/exam")
     app.register_blueprint(manage,url_prefix="/manage")
+    app.register_blueprint(pedagogical_analysis,url_prefix='/p_analysis')
     return(app)

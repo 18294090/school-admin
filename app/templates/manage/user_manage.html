@@ -6,130 +6,88 @@
 {% from 'bootstrap/table.html' import render_table %}
 {% from 'bootstrap/form.html' import render_form %}
 {% from 'bootstrap/utils.html' import render_messages %}
-{%block main%}    
+{%block main%} 
+<div class="container-fluid">
+    <div class="row"><div class="col-md-12">{{render_messages()}} </div></div>  
     <div class="row">
-        <div class="col-md-12">
-			<div id="card-818869">
-				<div class="card">
-					<div class="card-header">
-						 <a class="card-link" data-toggle="collapse" data-parent="#card-818869" href="#card-element-458856">功能和筛选</a>
-					</div>
-					<div id="card-element-458856" class="collapse hide">
-						<div class="card-body">
-							<div class="row">
-                                <div class="col-md-12">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="btn-group" role="group">                        
-                                                <a id="modal-80" href="#modal-container-80" role="button" class="btn btn-primary" data-toggle="modal">添加教师用户</a>
-                                                <div class="modal fade" id="modal-container-80" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog" role="document">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="myModalLabel">
-                                                                    个别添加
-                                                                </h5> 
-                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                    <span aria-hidden="true">×</span>
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">		
-                                                                {{render_form(u,form_type="basic")}}
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                                                    关闭
-                                                                </button>
-                                                            </div>
-                                                        </div>	
-                                                    </div>	
-                                                </div>
-                                                <a id="modal-801" href="#modal-container-801" role="button" class="btn btn-primary" data-toggle="modal">批量添加教师</a>
-                                                <div class="modal fade" id="modal-container-801" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog" role="document">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="myModalLabel">
-                                                                    批量添加
-                                                                </h5> 
-                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                    <span aria-hidden="true">×</span>
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <a href='/download/add_teacher.xlsx'>点击下载模板文件</a>
-                                                                <br><br>																
-                                                                {{render_form(us1,form_type="basic")}}				
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                                                    关闭
-                                                                </button>
-                                                            </div>
-                                                        </div>														
-                                                    </div>													
-                                                </div>
-                                                <a id="modal-802" href="#modal-container-802" role="button" class="btn btn-primary" data-toggle="modal">添加学生</a>
-                                            
-                                                <div class="modal fade" id="modal-container-802" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog" role="document">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="myModalLabel">
-                                                                    添加学生
-                                                                </h5> 
-                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                    <span aria-hidden="true">×</span>
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <a href="/static/file/add_students.xlsx">点击下载模板文件</a>
-                                                                <br><br>																	
-                                                                {{render_form(us,form_type="basic")}}				
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                                                    关闭
-                                                                </button>
-                                                            </div>
-                                                        </div>														
-                                                    </div>													
-                                                </div>
-                                                <a id="modal-801" href="#modal-container-801" role="button" class="btn btn-primary" data-toggle="modal">升班</a>
-                                                <div class="modal fade" id="modal-container-801" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog" role="document">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title" id="myModalLabel">
-                                                                    升班
-                                                                </h5> 
-                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                    <span aria-hidden="true">×</span>
-                                                                </button>
-                                                            </div>
-                                                            <div class="modal-body">																	
-                                                                {{render_form(u,form_type="basic")}}				
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                                                    关闭
-                                                                </button>
-                                                            </div>
-                                                        </div>														
-                                                    </div>													
-                                                </div>
-                                                <button class="btn btn-primary" onclick="window.location.href='/manage/'">学习委员设定</button>	
-                                            </div>
-                                        </div>	
-                                    </div>
-                                </div>
-                            </div>
-						</div>
-					</div>
+    <div class="btn-group fixed-bottom" role="group">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+        个别添加教师
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop2">
+        批量添加教师
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop1">
+        批量添加学生
+        </button>
+        
+    </div>
+        <!-- Modal -->
+        <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">个别添加教师</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{render_form(u,form_type="basic")}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                        
+                    </div>
                 </div>
             </div>
-            
-		</div>
+        </div>
+
+       
+
+        <!-- Modal -->
+        <div class="modal fade" id="staticBackdrop1" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">批量添加学生</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <a href="/static/file/add_students.xlsx">点击下载模板文件</a>
+                        {{render_form(us,form_type="basic")}}	
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>	                                                      
+                                                           
+                                               												
+        
+
+        <!-- Modal -->
+        <div class="modal fade" id="staticBackdrop2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">批量添加教师</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <a href='/download/add_teacher.xlsx'>点击下载模板文件</a>
+                        {{render_form(us1,form_type="basic")}}	
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>                                                        			
+                                                            
+                                                
         <div class="col-md-12">
         <table class="table table-striped table-bordered">
             <thead>
@@ -176,7 +134,7 @@
                         {{j.username}}
                     </td>
                     <td>
-                        <a href="{%if j.role.role=='student'%}/manage/student/{{j.student.id}}{%else%}{%endif%}">{{j.realname}}</a>
+                        <a >{{j.realname}}</a>
                     </td>
                     <td>
                         {{j.role.role}}
@@ -197,9 +155,9 @@
                         {{j.status}}
                     </td>
                     <td>
-                        {%if j.role.role not in ["student","representative"]%}<a href="/manage/teacher/{{j.id}}"><input type="button"  class="btn-group-sm btn-primary" value="工作安排"></a>{%endif%}
+                        {%if j.role.role!="student"%}<a href="/manage/teacher/{{j.id}}"><input type="button"  class="btn-group-sm btn-primary" value="工作安排"></a>{%endif%}
                         <input type="button"  class="btn-group-sm btn-primary" value="状态设置">
-                        <a href="/auth/reset/{{j.id}}"><button class="btn-primary btn-group-sm" >重置密码</button></a>
+                       <button class="btn-primary btn-group-sm"  onclick="reset_password({{j.id}})">重置密码</button></a>
                     </td>	
                 </tr>
                 {%endfor%}
@@ -212,34 +170,28 @@
         {{ pagination.links }}
         </div>
     </div>
-    
-{{render_messages()}}    
+</div>     
+<script src="/static/build/js/jquery.min.js"></script>  
 <script type="text/javascript">
-    function changename(s){
-        /* 获得表格数据 */
-        var name = $(s).html();
-        /* 清空数据 */
-        $(s).html("");
-        /* 在td里面加一个表单 ,,并且添加失焦时间*/
-        $(s).parent().append("<input value='"+name+"'/>");
-        /* 通过父标签的子标签得到input表单 */
-        $(s).parent().children("input").attr("onblur","nameblur(this,'"+name+"')");
-        /* 通过focus主动触发，获得焦点 */
-        $(s).parent().children("input").focus();
-        /* 删掉原有的标签 */
-        $(s).remove();
+    function reset_password(id){
+       
+
+    $.ajax({
+      url: '/auth/reset/', // 替换为你的API接口URL
+      type: 'POST', // 请求类型
+      
+      data: {id: id,'csrf_token':'{{ csrf_token() }}'}, // 发送的数据
+      
+      success: function(data) {
+        // 请求成功后的处理逻辑
+        alert(data);
+      },
+      error: function(data) {
+        // 请求失败后的处理逻辑
+      console.log("密码修改失败，请联系管理员");
+      }
+    });
     }
-    /* 表单失焦事件 */
-    function nameblur(inp,name){
-        /* 判断表单内的值是否改变 */
-        var val = $(inp).val();
-        if(val != name){
-            alert("这里是发送异步请求，修改数据库操作");
-        }
-        /* 在td里面加回来span,值就是val*/
-        $(inp).parent().append("<span onclick='changename(this)'>"+val+"</span>");
-        /* 删除input标签 */
-        $(inp).remove();
-    }
+
 </script>
 {%endblock%}

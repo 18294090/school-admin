@@ -36,13 +36,13 @@ def genarate_select(n,n1,pic,x,y): #生成选择题，n1为题目数量，pic为
     y+=3*n
     font=ImageFont.truetype(f_url, n)
     end=y+(n1//4+1)*(n*2) 
-    draw.rectangle([x-n,y-n,pic.width-n*5,end],width=2,outline="#ff0000")
+    draw.rectangle([x-n,y-n,pic.width-n*5,end],width=2,outline="#000000")
     pos=[]
     for i in range(n1):
         draw.text((x,y),str(i+1)+".",fill="#000000",font=font)
         x+=2*n
         for j in range(4):
-            draw.text((x,y),char[j],fill="#ff0000",font=font)
+            draw.text((x,y),char[j],fill="#000000",font=font)
             x+=3*n                        
         x+=n
         if (i+1)%4==0:
@@ -56,7 +56,7 @@ def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列�
     font=ImageFont.truetype(f_url, int(n*1.5))
     draw.text((x,y),"二、填空题",fill="#000000",font=font)
     y+=3*n
-    draw.rectangle([x,y,pic.width-n*5,pic.height-n*5],width=2,outline="#ff0000")
+    draw.rectangle([x,y,pic.width-n*5,pic.height-n*5],width=2,outline="#000000")
     line.append(y//n)
     y+=3*n
     font=ImageFont.truetype(f_url, int(n*1.3))
@@ -80,7 +80,7 @@ def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列�
             y+=3*n
             x=9*n
         x=n*7
-        draw.line((x-n,y,pic.width-5*n,y),fill="#ff0000",width=2)
+        draw.line((x-n,y,pic.width-5*n,y),fill="#000000",width=2)
         line.append(y//n)
         y+=2*n
         n1+=1
@@ -91,16 +91,16 @@ def number_area(n,pic,x,y,n1): #产生学号填涂区，pic为image对象，x,y 
     font=ImageFont.truetype(f_url, n*2)
     draw.text((x+n*n1*4//2-3*n,y+n//2),"学  号",fill=0,font=font)
     for i in range(5):
-        draw.rectangle((x,y+7*n+n*4*i-n//2,x+n*n1*4,y+7*n+n*4*i+n+n//2),fill="#f4cdc9")
+        draw.rectangle((x,y+7*n+n*4*i-n//2,x+n*n1*4,y+7*n+n*4*i+n+n//2),fill="#f6f6f6")
         pass
-    draw.line((x,y+3*n,x+n*n1*4,y+3*n),fill="#ff0000",width=2)
-    draw.line((x,y+6*n+n//2,x+n*n1*4,y+6*n+n//2),fill="#ff0000",width=2)
+    draw.line((x,y+3*n,x+n*n1*4,y+3*n),fill="#000000",width=2)
+    draw.line((x,y+6*n+n//2,x+n*n1*4,y+6*n+n//2),fill="#000000",width=2)
     font=ImageFont.truetype(f_url, n)   
     for i in range(n1):
-        draw.line((x+i*n*4,y+3*n,x+i*n*4,n*36),width=2,fill="#ff0000")
+        draw.line((x+i*n*4,y+3*n,x+i*n*4,n*36),width=2,fill="#000000")
         for j in range(10):            
             draw.text((x+n+i*n*4,y+7*n+j*2*n),"[ "+str(j)+" ] ",fill="#000000",font=font)
-    draw.rectangle([x,y,x+n*n1*4,n*36],width=2,outline="#ff0000")
+    draw.rectangle([x,y,x+n*n1*4,n*36],width=2,outline="#000000")
     return
 
 def paper(subject,teacher,width,title,s_n,complete):
@@ -117,6 +117,7 @@ def paper(subject,teacher,width,title,s_n,complete):
     else:
         line=[]
     img=Image.open(os.getcwd()+"/app/job/paper/pic/"+"name.png")
+    img=img.convert('L')
     name_width=n*20
     img=img.resize((name_width,27*n))
     paper.paste(img,(n*6,n*9))

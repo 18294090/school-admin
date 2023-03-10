@@ -33,17 +33,20 @@ def logout():
     flash("你已成功退出系统")
     return(redirect(url_for('auth.login')))
 
-@auth.route("/reset/<id>")
+@auth.route("/reset/", methods=["POST", "GET"])
 @login_required
-def reset(id):
-    if current_user.id == int(id) or current_user.role == "admin":
-        u=user.query.filter(user.id==id).first()
-        u.password="123456"
-        db.session.flush()
-        db.session.commit()
-        return(redirect(url_for('auth.login')))
-    else:
-        return("你没有权限")
+def reset():
+    
+    if request.method=="POST":
+        id=request.form.get("id")        
+        if current_user.id == int(id) or current_user.role.role=="admin":
+            u=user.query.filter(user.id==id).first()
+            u.password="123456"
+            db.session.flush()
+            db.session.commit()
+            return("密码修改成功,默认密码123456")
+        else:
+            return("你没有权限")
 
 @auth.route("/ad")
 def ad():

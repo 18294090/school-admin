@@ -15,6 +15,7 @@ class role(db.Model):  # 角色表
     __tablename__ = "role"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     role = db.Column(db.String(16), unique=True)
+    
     default = db.Column(db.Boolean, default=False, index=True)
     permissions = db.Column(db.Integer)
 
@@ -36,22 +37,17 @@ class role(db.Model):  # 角色表
 
     def has_permission(self, perm):
         return(self.permissions & perm == perm)
-
-
-   
-
-
 class Permission:
-    job_publish= 1 # 作业的发布
-    job_submit = 2 # 作业的提交
-    job_assessment = 4 # 作业的评价
+    job_publish= 1 # 任教班级学习任务的发布
+    job_grade=2 # 全年级学习任务发布
+    student_assessment = 4 # 学生的综合考评
     job_info = 8 # 作业查询
     exam_publish = 16 # 考试发布
     exam_evaluation =32 # 考试评价
     class_info = 64 # 班级查询
     grade_info = 128 # 年级查询 
     teacher_info = 256 # 教师查询
-    admin = 511
+    admin = 512
 
 class user(UserMixin, db.Model):  # 用户表
     __table_args__ = {'extend_existing': True}
@@ -61,15 +57,59 @@ class user(UserMixin, db.Model):  # 用户表
     realname = db.Column(db.String(64))
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, ForeignKey("role.id"))
-    role = db.relationship("role",backref=db.backref("user", lazy="dynamic"))
+    role = db.relationship("role", backref=db.backref("users", lazy="dynamic"), uselist=False, lazy="joined")
     phone_number = db.Column(db.String(11))
     id_number = db.Column(db.String(18), unique=True)
     gender = db.Column(db.String(1))
     login_time = db.Column(db.DateTime)
     status = db.Column(db.String(64))
     job = db.relationship("job", order_by = "job.publish_time.desc()",backref=db.backref("user"))  #order_by用于排序，desc（）为降序
-    
     # 禁止读密码
+    @property
+    def password(self):
+        return ("密码字段不可读")  # 当调用密码字段时，返回错误信息
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+    def verify_password(self, password):
+        return(check_password_hash(self.password_hash, password))
+    
+    def can(self,perm):
+        return self.role is not None and self.role.has_permission(perm)
+    def is_administrator(self):
+        return(self.can(Permission.admin))
+class AnonymousUser(AnonymousUserMixin):
+    def can(self,permission):
+        return False
+    def is_administrator(self):
+        return False
+login_manager.anonymous_user=AnonymousUser
+
+class grade_info(db.Model):  # 年级信息
+    __tablename__ = "grade_info"
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    grade_name = db.Column(db.String(64), unique=True)
+    grade_master = db.Column(db.Integer, ForeignKey("user.id"))
+    academic_year =db.Column(db.Date)
+
+class class_info(db.Model):
+    __tablename__ = "class_info"
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    class_name = db.Column(db.String(64), unique=True)
+    grade_id = db.Column(db.Integer, db.ForeignKey("grade_info.id"))
+    grade = db.relationship('grade_info', backref=db.backref("classes"))
+    class_master = db.Column(db.Integer, db.ForeignKey("teacher.id"))
+    teacher =db.relationship("teacher",backref=db.backref("class_info"))
+    attribute = db.Column(db.String(64))
+    students = db.relationship('student', secondary='class_student', back_populates='classes')
+class student(db.Model):
+    __tablename__ = "student"
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    number = db.Column(db.String(64), index=True)
+    name = db.Column(db.String(64))
+    gender = db.Column(db.String(1))
+    classes = db.relationship('class_info', secondary='class_student', back_populates='students')
     @property
     def password(self):
         return ("密码字段不可读")  # 当调用密码字段时，返回错误信息
@@ -81,37 +121,12 @@ class user(UserMixin, db.Model):  # 用户表
     def verify_password(self, password):
         return(check_password_hash(self.password_hash, password))
 
-    def can(self,perm):
-        return self.role is not None and self.role.has_permission(perm)
-    def is_administrator(self):
-        return(self.can(Permission.admin))
-
-class AnonymousUser(AnonymousUserMixin):
-    def can(self,permission):
-        return False
-    def is_administrator(self):
-        return False
-login_manager.anonymous_user=AnonymousUser
-
-class grade_info(db.Model):  # 年级信息
-    __table_args__ = {'extend_existing': True}
-    __tablename__ = "grade_info"
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    grade_name = db.Column(db.String(64))
-    grade_master = db.Column(db.Integer, ForeignKey("user.id"))
-    academic_year =db.Column(db.Date)
-
-class class_info(db.Model):  # 班级信息
-    __table_args__ = {'extend_existing': True}
-    __tablename__ = "class_info"
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    class_name = db.Column(db.String(64), unique=True)
-    grade_id = db.Column(db.Integer, ForeignKey("grade_info.id"))
-    grade = db.relationship('grade_info',backref=db.backref("class_info"))
-    class_master = db.Column(db.Integer, ForeignKey("teacher.id"))
-    attribute = db.Column(db.String(64))
-    student = db.relationship('student', order_by="student.name",backref=db.backref("class_info"))
-    teacher =  db.relationship('teacher',backref=db.backref("class_info",uselist=False))
+class class_student(db.Model):
+    __tablename__ = "class_student"
+    class_id = db.Column(db.Integer, db.ForeignKey("class_info.id", ondelete='CASCADE'), primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("student.id", ondelete='CASCADE'), primary_key=True)
+    classes = db.relationship('class_info', backref=db.backref("class_student"))
+    students = db.relationship('student', backref=db.backref("class_student"))
 
 class teacher(db.Model):  # 教师信息
     __table_args__ = {'extend_existing': True}
@@ -120,7 +135,6 @@ class teacher(db.Model):  # 教师信息
     user_id = db.Column(db.Integer, ForeignKey("user.id"))
     subject = db.Column(db.String(64))
     user_info = db.relationship('user',backref=db.backref("teacher",uselist=False))
-    jobs = db.relationship('job',order_by = "job.publish_time.desc()",backref=db.backref("teacher"))
     representative = db.relationship('representative',backref=db.backref("teacher"))
 
 class teaching_information(db.Model):  # 教师任教信息
@@ -139,42 +153,71 @@ class job(db.Model):  # 作业
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_name = db.Column(db.String(64))
     publish_time = db.Column(db.DateTime)
-    publisher = db.Column(db.Integer, ForeignKey("user.id"))
+    publisher = db.Column(db.Integer, ForeignKey("user.id",))
     deadline = db.Column(db.Date)
     subject = db.Column(db.String(64))
-    teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
+    
     context = db.Column(db.Text)
     select =db.Column(db.Integer) #选择题数量
     s_m=db.Column(db.Integer)#选择题分数
+    select_answer=db.Column(db.Text)
     complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
     paper_url = db.Column(db.String(64))
     line = db.Column(db.String(64))
 
-class job_class(db.Model):  # 作业
+class job_class(db.Model):
     __table_args__ = {'extend_existing': True}
     __tablename__ = "job_class"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    class_id = db.Column(db.Integer, ForeignKey("class_info.id"))
+    class_id = db.Column(db.Integer, ForeignKey("class_info.id", ondelete='CASCADE'),nullable=False)
     class_info =db.relationship("class_info", foreign_keys=[class_id], backref=db.backref('job_class',lazy="dynamic", cascade="all, delete"))
-    job_id = db.Column(db.Integer, ForeignKey("job.id"))
+    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
     job = db.relationship("job",order_by="job.publish_time.desc()", foreign_keys=[job_id], backref=db.backref('job_class',lazy="dynamic", cascade="all, delete"),remote_side=[job_id])
-    submitted_rate=db.Column(db.Integer)
-    average=db.Column(db.Integer)
-    max=db.Column(db.Integer)
-    min=db.Column(db.Integer)
+    average=db.Column(db.Float,default=0)
+    max=db.Column(db.Float,default=0)
+    min=db.Column(db.Float,default=0)
+    submit_number=db.Column(db.Integer,default=0)
+
 class job_detail(db.Model):
     __table_args__ = {'extend_existing': True}
     __tablename__ = "job_detail"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    job_id = db.Column(db.Integer, ForeignKey("job.id",ondelete='CASCADE'))
-    job = db.relationship("job",order_by="job.publish_time.desc()", backref=db.backref('job_detail',lazy="dynamic", cascade="all, delete"))
-    student = db.Column(db.Integer, ForeignKey("student.id"))
-    style=db.Column(db.Integer)
+    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
+    job = db.relationship("job", order_by="job.publish_time.desc()", backref=db.backref('job_detail', lazy="dynamic", cascade="all, delete"))
+    student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)
+    stu =db.relationship("student", backref=db.backref("job_detail", lazy="dynamic", cascade="all, delete"), uselist=False)
     serial_No=db.Column(db.Integer) 
-    answer=db.Column(db.String(64))#选择题为ABCD，非选择题为图片路径
-    tag=db.Column(db.String(64))#标签，用于学情诊断
-    mark=db.Column(db.Integer)#得分
+    answer=db.Column(db.String(64))
+    tag=db.Column(db.String(64))
+    mark=db.Column(db.Float)
 
+class job_student(db.Model):
+    __table_args__ = {'extend_existing': True}
+    __tablename__ = "job_student"
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
+    job = db.relationship("job", order_by="job.publish_time.desc()", backref=db.backref('job_student', lazy="dynamic", cascade="all, delete"))
+    student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)
+    stu_ = db.relationship("student", backref=db.backref('job_student', lazy="dynamic", cascade="all, delete"), uselist=False)
+    select_mark=db.Column(db.Float)
+    complete_mark=db.Column(db.Float)
+    mark=db.Column(db.Float)
+
+class representative(db.Model):
+     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+     student_id = db.Column(db.Integer, ForeignKey("student.id"))
+     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
+     subject = db.Column(db.String(64))
+     student=db.relationship("student",backref=db.backref("representative",lazy="dynamic"))    
+"""class assessment(db.Model):  # 教师对学生的评价
+    __table_args__ = {'extend_existing': True}
+    __tablename__ = "assessment"
+    id= db.Column(db.Integer, autoincrement=True, primary_key=True)
+    student = db.Column(db.Integer, ForeignKey("student.id"))
+    teacher = db.Column(db.Integer, ForeignKey("teacher.id"))
+    time = db.Column(db.DateTime)
+    content = db.Column(db.Text)
+    mark =db.Column(db.Integer)"""
 class job_assessment:
     A=5
     B=4
@@ -182,8 +225,7 @@ class job_assessment:
     D=2
     E=1
     F=0
-
-class test(db.Model):  # 考试
+"""class test(db.Model):  # 考试
     __table_args__ = {'extend_existing': True}
     __tablename__ = "test"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -196,7 +238,6 @@ class test(db.Model):  # 考试
     publish_time = db.Column(db.DateTime)
     publisher = db.Column(db.Integer, ForeignKey("user.id"))
     publisher_info = db.relationship("user", backref=db.backref('publisher', lazy='dynamic'))
-
 class test_scores(db.Model):  # 考试成绩
     __table_args__ = {'extend_existing': True}
     __tablename__ = "test_scores"
@@ -204,34 +245,7 @@ class test_scores(db.Model):  # 考试成绩
     exma_id = db.Column(db.Integer, ForeignKey("test.id"))
     scores = db.Column(db.Integer)
     student = db.Column(db.Integer, ForeignKey("student.id"))
-    submit_time = db.Column(db.DateTime)
-    
-class student(db.Model):  # 学生
-    __table_args__ = {'extend_existing': True}
-    __tablename__ = "student"
-    id= db.Column(db.Integer, autoincrement=True, primary_key=True)
-    number = db.Column(db.String(64),ForeignKey("user.username"))
-    user_infor = db.relationship("user",backref=db.backref("student",uselist=False))
-    name = db.Column(db.String(64))
-    class_id = db.Column(db.Integer, ForeignKey(class_info.id))
-    
-
-class representative(db.Model):
-     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-     student_id = db.Column(db.Integer, ForeignKey("student.id"))
-     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
-     subject = db.Column(db.String(64))
-     student=db.relationship("student",backref=db.backref("representative",lazy="dynamic"))
-     
-class assessment(db.Model):  # 教师对学生的评价
-    __table_args__ = {'extend_existing': True}
-    __tablename__ = "assessment"
-    id= db.Column(db.Integer, autoincrement=True, primary_key=True)
-    student = db.Column(db.Integer, ForeignKey("student.id"))
-    teacher = db.Column(db.Integer, ForeignKey("teacher.id"))
-    time = db.Column(db.DateTime)
-    content = db.Column(db.Text)
-    mark =db.Column(db.Integer)
+    submit_time = db.Column(db.DateTime)"""
 
 subject={
     "语文" : "chinese",

@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{%block title%}
+<title>基本组织架构设</title>
+{%endblock%}
+{%block title1%}<h3>数据中心：<small>基本组织架构设</small></h3>{%endblock%}</span>
+{%block main%}
+{% from 'bootstrap/form.html' import render_form %}
+<style>#grade {
+  font-family: "Microsoft Yahei", sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+}</style>
+<div class="container-fluid">
+	<div class="row">
+	<div class="col-md-12" id="table-container">
+	<table class=" table table-striped table-hover">
+	<h2 style="text-align:center">全校班级表</h2>
+      <thead>
+        <tr>
+          <th>班级名称</th>
+          <th>班主任(双击可编辑)</th>
+          <th><div class="form-group">
+            <select class="form-control border-0" id="grade">
+
+              <option value="">所属年级(筛选)</option>
+              <option value=''>全部年级</option>
+              {%for i in grade%}
+              <option value='{{i.id}}'>{{i.grade_name}}</option>
+              {%endfor%}
+              <!-- 其他年级选项 -->
+  </select>
+</div>
+</th>
+          <th>毕业年份</th>
+          <th>班级人数</th>
+        </tr>
+      </thead>
+      <tbody id="class-list" >
+        {%for i in cla%}
+        <tr>
+        <td>{{i.class_name}}</td>
+        <td id="{{i.id}}-c_master" ondblclick="edit(this)">{%if i.teacher%}{{i.teacher.user_info.realname}}{%endif%}</td>
+        <td>{{i.grade.grade_name}}</td>
+        <td>{{i.grade.academic_year}}</td>
+        <td>{{i.students|length}}</td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+	</div>
+	</div>
+	<div class="row ">
+		
+      <div class="btn-group fixed-bottom" role="group">
+        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop" aria-controls="staticBackdrop" onclick="c1_show()">
+        创建行政班
+        </button>
+        <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop" aria-controls="staticBackdrop" onclick="c2_show()">
+        创建选考班
+        </button>
+        <button class="btn btn-primary" type="button" onclick="submit()">
+        提交班主任名单
+        </button>
+		  </div>
+    </div>
+	
+	
+
+	<div class="offcanvas offcanvas-start" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop" aria-labelledby="staticBackdropLabel">
+	<div class="offcanvas-header">
+	<h5 class="offcanvas-title" id="staticBackdropLabel">添加班级</h5>
+	
+	<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+	</div>
+	<div class="offcanvas-body">
+	<div>
+		<div class="container visually-hidden" id="c1" >
+      <h6>创建行政班</h6>
+        <div class="row mb-3">
+          
+          <label  for="gradenum">年级数量：</label>
+          <input  type="number" id="gradenum">
+          
+          </div>
+          <div class="row mb-3" id="classnum">
+          </div>
+          <button class="btn btn-primary" type="button" data-bs-dismiss="offcanvas" aria-label="Close" id="submit-btn" >
+              确定
+          </button>
+		</div>
+    <div class="container visually-hidden" id="c2">
+      <h6>个别添加</h6>
+        <div class="row mb-3">          
+          <label  for="name">班级名称：</label>
+          <input  type="text" id="name">          
+          </div>
+          <div class="row mb-3">
+            <label  for="year">毕业年份：</label>
+            <input  type="number" id="year">
+          </div>
+          <button class="btn btn-primary" type="button" data-bs-dismiss="offcanvas" aria-label="Close" id="submit1-btn" >
+            确定
+          </button>
+		</div>
+	</div>
+	</div>
+	</div>
+	
+</div>
+<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+<script>
+const csrf_token = '{{csrf_token()}}';
+ // 选中所有含有 class_master 的单元格
+  
+  function edit(td) {
+    $(this).text('');
+    const value = td.innerHTML;
+    td.innerHTML = `<input type="text" value="${value}" onblur="save(this)" />`;
+    td.querySelector('input').focus();
+  }
+  
+
+  function save(input) {
+    const value = input.value;
+    const td = input.parentNode;
+    td.innerHTML = value;
+  }
+// 绑定 input 的 blur 事件，当失去焦点时触发
+var cells = $('td[id$="-c_master"]');
+function submit() {
+  // 获取输入框的值和班级 ID
+  var data = {};
+  cells.each(function() {
+  var class_id = $(this).attr('id').split("-")[0];
+  var value = $(this).text();
+  if (value!='None' && value)
+    {data[class_id] = value;}
+});
+
+  console.log(data)
+  // 发送 AJAX 请求
+  $.ajax({
+    url: '/manage/update_class_master/',
+    method: 'POST',
+    data:JSON.stringify(data),
+    contentType: "application/json",
+     beforeSend: function(xhr, settings) {
+    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+      xhr.setRequestHeader("X-CSRFToken", csrf_token);
+    }
+  },
+    success: function(data) {
+      // 请求成功后更新表格
+      alert(data);
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      // 处理错误
+      console.log(textStatus, errorThrown);
+    }
+  });
+}
+const gradenum = document.getElementById("gradenum");
+const classnum = document.getElementById("classnum");
+function c1_show(){
+  
+  document.getElementById('c1').classList.remove('visually-hidden')
+  document.getElementById('c2').classList.add('visually-hidden')
+  
+}
+function c2_show(){
+  
+  document.getElementById('c1').classList.add('visually-hidden')
+  document.getElementById('c2').classList.remove('visually-hidden')
+  
+}
+gradenum.addEventListener("input", function() {
+  const num = gradenum.value;
+  const currentYear = new Date().getFullYear(); // 获取当前系统年份
+  classnum.innerHTML = "";
+  for (let i = 1; i <= num; i++) {
+    let label = document.createElement("label");
+    label.innerHTML = `${currentYear + i-1 }级班级数量:`; // 使用当前系统年份计算毕业年份
+    let input = document.createElement("input");
+    input.type = "number";
+    classnum.appendChild(label);
+    classnum.appendChild(input);
+  }
+  
+});
+
+const submitBtn = document.querySelector("#submit-btn");
+submitBtn.addEventListener("click", function() {
+  const inputs = document.querySelectorAll("#classnum input");
+  let data = [];
+  for (let i = 0; i < inputs.length; i++) {
+    const year = parseInt(inputs[i].previousSibling.innerHTML); // 获取年份标签内容
+    const num = parseInt(inputs[i].value); // 获取班级数量输入框内容
+    data.push({year, num}); // 将年份和班级数量打包成对象，放入数组中
+  }
+  console.log(data); // 打印数据，用于调试
+  // 将数据发送到后台
+  
+
+$.ajax({
+  url: "/manage/creat_classes/",
+  type: "POST",
+  data: JSON.stringify(data),
+  contentType: "application/json",
+  beforeSend: function(xhr, settings) {
+    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+      xhr.setRequestHeader("X-CSRFToken", csrf_token);
+    }
+  },
+  success: function(data) {
+    alert(data);
+    // 处理服务器响应
+  },
+  error: function(xhr, status, error) {
+    alert("系统返回错误，请检查输入数据是否正确");
+    // 处理错误
+  }
+});
+});
+$(document).ready(function() {
+  $('#submit1-btn').on('click', function() {
+    var name = $('#name').val(); // 获取班级名称
+    var year = $('#year').val(); // 获取毕业年份
+
+    $.ajax({
+      url: '/manage/create_class/', // 替换为你的API接口URL
+      type: 'POST', // 请求类型
+      dataType: 'json', // 数据类型
+      data: {name: name,'csrf_token':csrf_token, year: year}, // 发送的数据
+      
+      success: function(data) {
+        // 请求成功后的处理逻辑
+        console.log(data);
+      },
+      error: function(xhr, status, error) {
+        // 请求失败后的处理逻辑
+      console.log(xhr.responseText);
+      }
+    });
+  });
+});
+const selectGrade = document.querySelector("#grade");
+
+selectGrade.addEventListener("change", function() {
+  const gradeId = this.value; // 获取用户选择的年级 ID
+  $.ajax({
+    url: "/manage/structure/",
+    type: "POST",
+    data:  JSON.stringify({ grade_id: gradeId }),
+    contentType: "application/json",
+    beforeSend: function(xhr, settings) {
+      if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrf_token);
+      }
+    },
+    
+    success: function(response) {
+      console.log("gradeId");
+       $("#class-list").html($(response).find("#class-list").html());
+      },
+    
+    error: function(xhr, status, error) {
+      console.log("Error sending data:", error);
+      // 处理错误
+    }
+    })
+  });
+
+
+</script>
+
+{%endblock%}

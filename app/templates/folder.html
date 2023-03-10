@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{%block title%}<!DOCTYPE html>
+
+    <title>查看答题卷</title>
+{%endblock%}
+{%block main%}
+
+<body>
+    <h1>答题卷: {{ name }}</h1>
+    <ul>
+        {% for file in files %}
+            <li><a href="{{ url_for('static', filename=path + '/' + file) }}">{{ file }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+  
+
+
+{%endblock%}

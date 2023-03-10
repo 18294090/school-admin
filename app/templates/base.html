@@ -5,15 +5,12 @@
 {%block css%}
 
 {{bootstrap.load_css() }}
-
-
 {%endblock%}
 {%block title%}
 <title>网页标题</title>
 {%endblock%}
 </head>
 <body>
-
 <div class="container-fluid">
 	<div class="row">
 		<div class="col-md-12">
@@ -40,18 +37,24 @@
 							</li>
 							<li class="nav-item">
 								{%if current_user.role.role=="admin"%}
-								{{render_nav_item("manage.personnel_managementmanage","人员管理")}}
+								{{render_nav_item("manage.people_management","人员管理")}}
 								{%elif current_user.role.role=="teacher"%}
-								{{render_nav_item("manage.personnel_managementmanage","人员管理")}}
+								{{render_nav_item("manage.people_management","学生管理")}}
 								{%endif%}
 							</li>
 							{%if current_user.role.role=="admin"%}
-							<li class="nav-item">
-								{{render_nav_item("main.structure","组织结构")}}
-							</li>
+								<li class="nav-item dropdown">
+									<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										组织结构
+									</a>
+									<ul class="dropdown-menu">
+									<li><a class="dropdown-item" href="/manage/structure">班级设置</a></li>
+									<li><a class="dropdown-item" href="/manage/people_management">教学工作安排</a></li>
+									<li><hr class="dropdown-divider"></li>
+									<li><a class="dropdown-item" href="#">组织结构总览</a></li>
+									</ul>
+								</li>
 							{%endif%}
-
-							
 							<li class="nav-item">
 							<a class="nav-link disabled">待开发</a>
 							</li>

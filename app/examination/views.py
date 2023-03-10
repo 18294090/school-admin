@@ -1,5 +1,5 @@
 from flask import render_template, redirect, flash, request
-from ..models import grade_info, class_info, teacher, teaching_information, user, test,test_scores
+from ..models import grade_info, class_info, teacher, teaching_information, user
 from .. import db
 from .forms import publish
 from . import examination

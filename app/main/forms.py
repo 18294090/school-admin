@@ -1,6 +1,6 @@
 """网页视图上窗体的定义"""
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import PasswordField, SubmitField, SelectField, StringField, IntegerField
+from wtforms import PasswordField, SubmitField, SelectField, StringField, IntegerField,DateField
 from flask_wtf import FlaskForm
 from flask_wtf.file import DataRequired
 from flask_ckeditor import CKEditorField
@@ -28,13 +28,8 @@ class userlogin(FlaskForm):
 
 
 class school_settings(FlaskForm):
-    school = SelectField(label="请选择学段：",validators=[DataRequired('请选择标签')], render_kw={
-            'class': 'form-control'
-        },
-        choices=[(1, '小学'), (2, '初中'), (3, '高中')],
-        default=3,
-        coerce=int)
     grade = IntegerField(label="请输入年级数")
+    acdemic_year = DateField("请输入毕业年份")
     class_num = IntegerField(label="请输入每个年级的班级数")
     submit1 = SubmitField("确定")
 

@@ -6,99 +6,141 @@
 {% block main%}
 
 <div class="container-fluid ">
-    <div class="row">
-       
+    <div class="row">       
         <div class="col-4">
             <div class="card border-primary mb-4" style="max-width: 32rem;">
                 <div class="card-header">作业信息</div>
                 <div class="card-body text-primary" style="text-align: left;">
-                <form id="form" method="post">
-                  <input type="hidden" name="csrf_token" value="{{csrf_token()}}"/>
-                    <div class="mb-4" >
-                        <label for="title" class="form-label">请输入作业名称：</label>
-                        <input type="text" class="form-control" id="title" name="title" >
-                    </div>
-                    <div class="mb-4">
-                        <label for="number" class="form-label">选择题每题分值</label>
-                        <input type="text" class="form-control" id="number" name="number">
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label" for="select">选择题数量</label>
-                        <input type="text" class="form-control" id="select" name="select">
-                        
-                    </div>
-                   
-                    <div class="mb-4">
-                        <!-- Button trigger modal -->
-                    <button type="button" id="gen-com" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
-                       设置填空题
-                    </button>
-  
-                      <!-- Modal -->
-                      <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                          <div class="modal-content">
-                            <div class="modal-header">
+                  <form id="form" method="post">
+                    <input type="hidden" name="csrf_token" value="{{csrf_token()}}"/>
+                      <div class="mb-4" >
+                          <label for="title" class="form-label">请输入作业名称：</label>
+                          <input type="text" class="form-control" id="title" name="title" >
+                      </div>
+                      <div class="mb-4">
+                          <label for="number" class="form-label">选择题每题分值</label>
+                          <input type="text" class="form-control" id="number" name="number">
+                      </div>
+                      <div class="mb-4">
+                          <label class="form-label" for="select">选择题数量</label>
+                          <input type="text" class="form-control" id="select" name="select">
+                          
+                      </div>
+                    
+                      <div class="mb-4">
+                          <!-- Button trigger modal -->
+                        <button type="button" id="gen-com" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                          设置填空题
+                        </button>
+    
+                        <!-- Modal -->
+                        <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
 
-                              <h1 class="modal-title fs-5" id="staticBackdropLabel">填空题详情</h1>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                              <div class="mb-4" id="c">
-                                <label for="complete" class="form-label" >填空题大题数量</label>
-                                <input type="text" class="form-control" id="complete"  >
+                                <h1 class="modal-title fs-5" id="staticBackdropLabel">填空题详情</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="mb-4" id="c">
+                                  <label for="complete" class="form-label" >填空题大题数量</label>
+                                  <input type="text" class="form-control" id="complete" value=0 >
 
-                              </div>
-                              <div class="mb-4" id="c">
-                                <label for="complete" class="form-label" >填空题分值结构</label>
-                                <input type="text" class="form-control" id="c_mark" name="c_mark" placeholder="请输入每到大题的分值，中间用空格隔开">
+                                </div>
+                                <div class="mb-4" id="c">
+                                  <label for="complete" class="form-label" >填空题分值结构</label>
+                                  <input type="text" class="form-control" id="c_mark" name="c_mark"  title="请输入每到大题的分值，中间用空格隔开" value=0>
 
+                                </div>
+                                <div class="mb-4 border border-primary" id="sub_c">
+                                  
+                                </div>
                               </div>
-                              <div class="mb-4 border border-primary" id="sub_c">
-                                
+                              <div class="modal-footer">
+                                <button  type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>  
                               </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button  type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>  
                             </div>
                           </div>
                         </div>
+                      </div>  
+                      <div class="mb-4">
+                      <label class="form-label" for="datetimepicker4">选择上交截止日期</label>
+                      <input type="text" class="form-control datetimepicker-input" name="time" id="datetimepicker4" data-toggle="datetimepicker" data-target="#datetimepicker4"/>
                       </div>
-                    </div>  
-                     <div class="mb-4">
-                     <label class="form-label" for="datetimepicker4">选择上交截止日期</label>
-                    <input type="text" class="form-control datetimepicker-input" name="time" id="datetimepicker4" data-toggle="datetimepicker" data-target="#datetimepicker4"/>
-                    </div>
-                    <div class="mb-4">
-                    <label class="form-label" for="check_class">选择班级</label>
-                    
-                        {%if current_user.role.role=="teacher"%}
-                            {%for i in class_%}
-                            <div class="form-check form-check-inline" name="check_class">
-                                <input class="form-check-input" type="checkbox" name="cla" value="{{i.id}}" id="checkbox-{{i.id}}" checked>
-                                <label class="form-check-label" for="checkbox-{{i.id}}">
-                                    {{i.class_name}}
-                                </label>
-                              </div> 
-                            {%endfor%}
-                        {%elif current_user.role.role=="representative"%}
-                                 <div class="form-check form-check-inline" name="check_class">
-                                <input class="form-check-input" type="checkbox" name="cla" value="{{current_user.student.class_info.id}}" id="checkbox" checked>
-                                <label class="form-check-label" for="checkbox">
-                                    {{current_user.student.class_info.class_name}}
-                                </label>
+                      <div class="mb-4">
+                        <label class="form-label" for="check_class">选择班级</label>
+                        <div class="card">
+                          <div class="card-body">
+                            {%if current_user.role.has_permission(Permission.job_publish)%}
+                                {%for i in class_%}
+                                <div class="form-check form-check-inline" name="check_class">
+                                    <input class="form-check-input" type="checkbox" name="cla" value="{{i.id}}" id="checkbox-{{i.id}}" checked>
+                                    <label class="form-check-label" for="checkbox-{{i.id}}">
+                                        {{i.class_name}}
+                                    </label>
+                                  </div> 
+                                {%endfor%}
+                                <hr class="my-4">
+                                <div>
+                                <button id="checkAllBtn" type="button" class="btn btn-secondary btn-sm" >全选</button>
+                                <button id="uncheckAllBtn" type="button" class="btn btn-secondary btn-sm">清空</button>
                                 </div>
-                        {%endif%}                    
-                    </div>  
-                    <div class="mb-4">
-                    <label for="Textarea1" class="form-label">备注</label>
-                    <textarea class="form-control" id="Textarea1" name="context" rows="3"></textarea>
-                  </div>          
-                    <button type="button" class="btn btn-primary" id="s1" >生成答题卡</button>
-                </form>
-            </div>            
+                            {%elif current_user.role.role=="representative"%}
+                                    <div class="form-check form-check-inline" name="check_class">
+                                    <input class="form-check-input" type="checkbox" name="cla" value="{{current_user.student.class_info.id}}" id="checkbox" checked>
+                                    <label class="form-check-label" for="checkbox">
+                                        {{current_user.student.class_info.class_name}}
+                                    </label>
+
+                                    </div>
+                                    
+                            {%endif%}        
+                          </div>
+                        </div>
+                      </div>
+                        {%if current_user.role.has_permission(Permission.job_grade)%}
+                      <div class="mb-4">                      
+                          <label class="form-label" for="check_class">选择年级</label>
+                          <div class="card">
+                            <div class="card-body">
+                              {%for i in g%}
+                                <div class="form-check form-check-inline" name="check_class">
+                                    <input class="form-check-input" type="checkbox" name="grade" value="{{i.id}}" id="grade-{{i.id}}" checked>
+                                    <label class="form-check-label" for="grade-{{i.id}}">
+                                        {{i.grade_name}}
+                                    </label>
+                                </div> 
+                                {%endfor%}
+                            </div>
+                          </div>
+                      </div>  
+                        {%endif%} 
+                      
+                      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        设置选择题
+                      </button>
+                      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h1 class="modal-title fs-5" id="exampleModalLabel">在这里设置选择题的答案</h1>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" id="set-select">                            
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary "  data-bs-dismiss="modal" onclick="check()">确定</button>  
+                            </div>
+                          </div>
+                        </div>
+                      </div>         
+                      <button type="button" class="btn btn-primary visually-hidden"  id="s1" >生成答题卡</button>
+                  </form>
+                </div>            
+            </div>
         </div>
-        </div>
+
         <div class="col-8 text-center">
           <div id="btn-hidden" class="btn-group visually-hidden" role="group" aria-label="Basic example">
             <button type="button" class="btn btn-success" id="p" onclick="doPrint()" >打印答题卡</button>
@@ -108,17 +150,38 @@
           <div class="row border border-danger visually-hidden" id="paper-img">
           
           <!--startprint-->
-          <img src="{{url}}" class="img-fluid" id='img' alt="...">
+            <img src="{{url}}" class="img-fluid" id='img' alt="...">
           <!--endprint-->
           </div>         
         </div>
         
-  </div>
+    </div>
     
 </div>
 
 <script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
 <script>
+// 初始化tooltip组件
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+}) 
+$(function() {
+  // 全选按钮
+  $('#checkAllBtn').click(function() {
+    $('input[name="cla"]').prop('checked', true);
+  });
+  
+  // 清空按钮
+  $('#uncheckAllBtn').click(function() {
+    $('input[name="cla"]').prop('checked', false);
+  });
+});
+
+
+
+
+
 
 function doPrint() {   
     bdhtml=window.document.body.innerHTML;   
@@ -132,176 +195,241 @@ function doPrint() {
   $(function () {
       $('#datetimepicker4').datetimepicker({locale: 'zh-cn',format:"YYYY-MM-DD"});
   });
- 
-  
-const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
-  var c = document.getElementById("sub_c")
-  var complete = document.getElementById("complete")
-  var s1 = document.getElementById("s1")
-  var f4=false
-  var cancel =document.getElementById("cancel")
-  var confirm = true
-  var p =document.getElementById("p")
-  var id=0
-  list=[]                        
-  complete.onchange=function(){ 
-  c.innerHTML=""
-  if(Number(complete.value)>10||!/[0-9]$/.test(complete.value)){
-    complete.value=""
-    complete.placeholder="只能够输入10以下的数字"
-    complete.style.borderColor="red"
+var c = document.getElementById("sub_c")
+var complete = document.getElementById("complete")
+var s1 = document.getElementById("s1")
+var f4=false
+var cancel =document.getElementById("cancel")
+var confirm = true
+var p =document.getElementById("p")
+var id=0
+var select=document.getElementById("select")
+list=[]
+var answers=""
+var tags = [];
+function check(){   
+    var radios = document.querySelectorAll('input[type="radio"]');
+    
+    $("input[name^='tag']").each(function() {
+      tags.push($(this).val());
+    });
+    console.log(tags)
+    answers=""     
+    for (var i = 0; i < radios.length; i++) {
+      if (radios[i].checked) {
+        
+        var value = radios[i].value;
+        answers+=value+" ";
+      }
+    }
+    
+    if (radios.length/4*2!=answers.length){
+    alert("请完成答案设置")
+    }
+    else{$('#s1').removeClass("visually-hidden")}
+}
 
+select.onchange=function(){
+  const set_select=document.getElementById("set-select")
+  set_select.innerHTML=""
+  var s_n=Number(select.value)
+  var questions=[]
+  for(var i=1;i<=s_n;i++){
+    questions.push({
+      options: ['A', 'B', 'C', 'D'],
+    },)
   }
-  else{complete.style.removeProperty("border-color")                     
-  for (var i=1;i<=Number(complete.value);i++){                          
-    list[i]=document.createElement("input")
-    list[i].name="subtopic"
-    list[i].className="form-control form-control-sm"
-    list[i].placeholder="请输入第"+String(i)+"道填空题的小题结构";                        
-    c.appendChild(list[i])
-  }
-  }                      
-  }
-  
-  s1.onclick=function(){
-    var title=document.getElementById("title")
-    var number =document.getElementById("number")
-    var select =document.getElementById("select")
-    var subtopic = document.getElementsByName("subtopic")
-    var gen=document.getElementById("gen-com")
-    var classlist =document.getElementsByName("cla")
-    var tp=document.getElementById("datetimepicker4")
-    console.log(tp.value);
-    if(tp.value==""||tp.value==null||/^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(0[1-9]|1[1-9]|2[1-9])$/.test(tp.value)){
-      tp.value="",
-      tp.placeholder="日期格式不对，请重新选择"
-      tp.style.borderColor="red"
-      f0=false
-    }
-    else{tp.style.removeProperty("border-color");f0=true}
-      if(title.value.length<4){
-          title.value="",
-          title.placeholder=("标题长度不小于四个字符");
-          title.style.borderColor="red";
-          f1=false
-      }
-      else{title.style.removeProperty("border-color");f1=true}
-      if(!/[0-9]$/.test(number.value) || Number(number.value)>50){
-        number.value=""
-        number.placeholder="只能填不大于50的数字";
-        number.style.borderColor="red";
-        f2=false
-    }
-    else{number.style.removeProperty("border-color");f2=true}
-  
-    if(!/[0-9]$/.test(select.value) ||Number(select.value)>80){
-      select.value=""
-      select.placeholder=("只能填不大于80的数字");
-      select.style.borderColor="red";
-      f3=false
-    }
-    else{select.style.removeProperty("border-color");f3=true}
-    var n=0;
-    var sub=new Array();
-    var cla=new Array();
-    for(var i=0;i<subtopic.length;i++){
-      
-      if(!/^\d+(\s+\d+)*$/.test(subtopic[i].value)){
-        subtopic[i].value=""
-        subtopic[i].placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
-        subtopic[i].style.borderColor="red"
-      }
-      else{
-        sub[i]=subtopic[i].value;
-        n++;subtopic[i].style.removeProperty("border-color")}
-    }
-    for (var i=0;i<classlist.length;i++){
-      if (classlist[i].checked ){
-      cla.push(classlist[i].value)        
-      }
+questions.forEach((question, index) => {
+// 生成选项列表的HTML代码
+const optionsHtml = question.options.map((option) => {
+  return `
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="radio" name="question${index}" id="radio${index}-${option}" value="${option}"">
+    <label class="form-check-label" for="radio${index}-${option}">${option}</label>
+  </div>`;
+  }).join('');
 
+// 生成题目的HTML代码
+const questionHtml = `
+  <div class="mb-4">
+    
+    <ul>${index + 1}:${optionsHtml}</ul>
+    <div>
+      <label class="form-label" for="tag${index}">请输入该题标签</label>
+      <input class="form-control " type="text" name="tag${index}" id="tag${index}"  data-bs-toggle="tooltip" title="如有多个标签，请以空格隔开，标签用于说明题目知识点，类型，用于学情诊断">
+    </div>
+  </div>
+  
+`;
+
+// 添加题目的HTML代码到页面中
+set_select.insertAdjacentHTML('beforeend', questionHtml);
+});
+}
+
+complete.onchange=function(){ 
+c.innerHTML=""
+if(Number(complete.value)>10||!/[0-9]$/.test(complete.value)){
+  complete.value=""
+  complete.placeholder="只能够输入10以下的数字"
+  complete.style.borderColor="red"
+
+}
+else{complete.style.removeProperty("border-color")                     
+for (var i=1;i<=Number(complete.value);i++){                          
+  list[i]=document.createElement("input")
+  list[i].name="subtopic"
+  list[i].className="form-control form-control-sm"
+  list[i].placeholder="请输入第"+String(i)+"道填空题的小题结构";                        
+  c.appendChild(list[i])
+}
+}                      
+}
+
+s1.onclick=function(){
+  var title=document.getElementById("title")
+  var number =document.getElementById("number")
+  var select =document.getElementById("select")
+  var subtopic = document.getElementsByName("subtopic")
+  var gen=document.getElementById("gen-com")
+  var classlist =document.getElementsByName("cla")
+  var tp=document.getElementById("datetimepicker4")
+  var grade = document.getElementsByName("grade")
+  
+  if(tp.value==""||tp.value==null||/^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(0[1-9]|1[1-9]|2[1-9])$/.test(tp.value)){
+    tp.value="",
+    tp.placeholder="日期格式不对，请重新选择"
+    tp.style.borderColor="red"
+    f0=false
+  }
+  else{tp.style.removeProperty("border-color");f0=true}
+    if(title.value.length<4){
+        title.value="",
+        title.placeholder=("标题长度不小于四个字符");
+        title.style.borderColor="red";
+        f1=false
     }
-    var c_mark=document.getElementById("c_mark");
-    if (!/^\d+(\s+\d+)*$/.test(c_mark.value)){
-      c_mark.value=""
-      c_mark.placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
-      c_mark.style.borderColor="red"      
-  }else{n++
-  c_mark.style.removeProperty("border-color")}
-  if (n<subtopic.length+1){
-    gen.style.borderColor="red"
-    f4=false
+    else{title.style.removeProperty("border-color");f1=true}
+    if(!/[0-9]$/.test(number.value) || Number(number.value)>50){
+      number.value=""
+      number.placeholder="只能填不大于50的数字";
+      number.style.borderColor="red";
+      f2=false
   }
-  else{gen.style.removeProperty("border-color");f4=true}
-    if(f0&&f1&&f2&&f3&&f4){
-      $(function () {
-            var url ="/job/genarate_paper";
-            var sendData = {
-                'flag':1,
-                'title':title.value,
-                'number':number.value,
-                'select':select.value,
-                'subtopic':sub,
-                'c_mark':c_mark.value,
-                'csrf_token':'{{ csrf_token() }}',
-                'time':$('#datetimepicker4').val(),
-                'context':$('#Textarea1').val(),
-                "classlist":cla,
-            };           
-            $.ajax({
-                url:url,
-                type:'post',
-                data:sendData,
-                success:function (data) {
-                  
-                      if(data["status"]==0){                    
-                      $('#btn-hidden').removeClass("visually-hidden"),
-                      $('#paper-img').removeClass("visually-hidden"),
-                      $("#img").attr("src",data["url"])}
-                      else{
-                        for (var i = 1;i<=data["status"];i++){
-                          console.log("data[i]"),
-                          window.alert(data[i])
-                        }
-                      
-                        
-                      }
-                     
-                      
-                    } , 
-                error:function (error) {
-                    alert(error);
-                } 
-            })
-      })
+  else{number.style.removeProperty("border-color");f2=true}
+
+  if(!/[0-9]$/.test(select.value) ||Number(select.value)>80){
+    select.value=""
+    select.placeholder=("只能填不大于80的数字");
+    select.style.borderColor="red";
+    f3=false
   }
+  else{select.style.removeProperty("border-color");f3=true}
+  var n=0;
+  var sub=new Array();
+  var cla=new Array();
+  var g=new Array();
+  for(var i=0;i<subtopic.length;i++){
+    
+    if(!/^\d+(\s+\d+)*$/.test(subtopic[i].value)){
+      subtopic[i].value=""
+      subtopic[i].placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
+      subtopic[i].style.borderColor="red"
+    }
     else{
-      window.alert("数据输入错误，请检查")
-    }                        
-  };
+      sub[i]=subtopic[i].value;
+      n++;subtopic[i].style.removeProperty("border-color")}
+  }
+  for (var i=0;i<classlist.length;i++){
+    if (classlist[i].checked ){
+    cla.push(classlist[i].value)        
+    }
+  }
+  for(var i=0;i<grade.length;i++){
+    if (grade[i].checked ){
+    g.push(grade[i].value)        
+    }
+  }
+  var c_mark=document.getElementById("c_mark");
+  if (!/^\d+(\s+\d+)*$/.test(c_mark.value)){
+    c_mark.value=""
+    c_mark.placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
+    c_mark.style.borderColor="red"      
+}else{n++;
+c_mark.style.removeProperty("border-color")}
+if (n<subtopic.length+1){
+  gen.style.borderColor="red"
+  f4=false
+}
+else{gen.style.removeProperty("border-color");f4=true}
+  if(f0&&f1&&f2&&f3&&f4){
+    $(function () {
+          var url ="/job/genarate_paper";           
+          console.log(answers)
+          var sendData = {
+              'flag':1,
+              'title':title.value,
+              'number':number.value,
+              'select':select.value,
+              'subtopic':sub,
+              'c_mark':c_mark.value,
+              'answers':answers,
+              'csrf_token':'{{ csrf_token() }}',
+              'time':$('#datetimepicker4').val(),
+              
+              "classlist":cla,
+              'grade':g,
+              'tags':tags
+          };           
+          $.ajax({
+              url:url,
+              type:'post',
+              data:sendData,
+              success:function (data) {
+                if(data["status"]==0){                    
+                $('#btn-hidden').removeClass("visually-hidden"),
+                $('#paper-img').removeClass("visually-hidden"),
+                $("#img").attr("src",data["url"]),
+                alert("作业已发布，请选择打印答题卡或取消该作业")
+                }
+                else{
+                  for (var i = 1;i<=data["status"];i++){                          
+                    window.alert(data[i])
+                  }
+                }
+              } , 
+              error:function (error) {
+                  alert(error);
+              } 
+          })
+    })
+}
+  else{
+    window.alert("数据输入错误，请检查")
+  }                        
+};
 
 $("#cancel").click(function(){  
-    var url ="/job/genarate_paper";
-    var sendData = {
-        'flag':0,
-        'url':$('#img').attr('src'),
-        'csrf_token':'{{ csrf_token() }}'
-    };
-     $.ajax({
-            url:url,
-            type:'post',
-            data:sendData,
-            success:function (data) { 
-              console.log(data)                   
-                  alert(data)
-                $('#btn-hidden').addClass("visually-hidden" ) 
-                $('#paper-img').addClass("visually-hidden" ) 
-                } ,
-            error:function (error) {
-                alert(error);
-            },
-        });
+  var url ="/job/del/";
+  var sendData = {
+      'flag':0,
+      'url':$('#img').attr('src'),
+      'csrf_token':'{{ csrf_token() }}'
+  };
+    $.ajax({
+          url:url,
+          type:'post',
+          data:sendData,
+          success:function (data) { 
+                              
+                alert(data)
+              $('#btn-hidden').addClass("visually-hidden" ) 
+              $('#paper-img').addClass("visually-hidden" ) 
+              } ,
+          error:function (error) {
+              alert(error);
+          },
+      });
 })
 
 </script>

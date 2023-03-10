@@ -1,11 +1,17 @@
 import judge
 import cv2
-
-img=cv2.imread("/home/zh/web/intelligent-school/app/job/paper/paper.png")
-cv2.namedWindow("f",cv2.WINDOW_NORMAL)
-
-ep =judge.open2(img,"/home/zh/web/intelligent-school/app/job/paper/test.jpg")
-dst = judge.paper_ajust(img,ep)
-split=judge.paper_split(dst,30,[65,80])
-number=judge.number_pos(split[0])
-print(number)
+import os
+n=1
+img=judge.open(os.path.join(os.getcwd(),"app",'job','paper','1.png'))
+for  dirpath, dirnames, filenames in os.walk(os.path.join(os.getcwd(),"app","static",'answer','2')): #遍历答题卷文件夹阅卷
+    for filepath in filenames:
+        n+=1
+        if n==20:
+            break
+        ep=judge.open2(os.path.join(dirpath, filepath))
+        ep=judge.paper_ajust(img,ep)
+        split=judge.paper_split(ep,11,[70,80])
+        s=judge.check_select(split[1],8)
+        s = {k: s[k] for k in sorted(s)}
+        number=judge.number_pos(split[0])        
+        print(number,s)

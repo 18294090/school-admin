@@ -15,11 +15,12 @@
 						发布作业
 					</h5>
 					<p class="card-text">
-						发布作业，填写作业标题，截至时间等作业信息，并生成相应答题卡
+						1、发布作业，填写作业标题，截至时间等作业信息<br>
+                        2、确定选择题答案，及其对应知识点<br>
+                        3、生成打印相应答题卡<br>
 					</p>
 					<p>
 						<button type="button" onclick="document.location = '/job/genarate_paper'" class="btn btn btn-primary">发布</button></a>
-							
 							</p>
 						    </div>
 					</div>
@@ -29,13 +30,15 @@
 						<img class="card-img-top" alt="Bootstrap Thumbnail Second" src="https://www.layoutit.com/img/city-q-c-600-200-1.jpg" />
 						<div class="card-block">
 							<h5 class="card-title">
-								任教学科成绩查询
+								作业分析                               
 							</h5>
 							<p class="card-text">
-                                所任教学科的成绩查询
+                                1、年级报表<br>
+                                2、班级作业统计<br>
+                                3、学生个人分析报告<br>                                
 							</p>
 							<p>
-								<a class="btn btn-primary" href="#">成绩查询</a>
+								<a class="btn btn-primary" href="#">前往</a>
 							</p>
 						</div>
 					</div>
@@ -45,10 +48,10 @@
 						<img class="card-img-top" alt="Bootstrap Thumbnail Third" src="https://www.layoutit.com/img/sports-q-c-600-200-1.jpg" />
 						<div class="card-block">
 							<h5 class="card-title">
-								任教班级成绩查询
+								班级作业管理
 							</h5>
 							<p class="card-text">
-                                查询班级成绩
+                                查看班级作业情况（）
 							</p>
 							<p>
 								<a class="btn btn-primary" href="#"><i class="fa fa-bicycle"></i>Action</a>
@@ -62,24 +65,37 @@
 {% with messages = get_flashed_messages() %}
     {% if messages %}
           {% for message in messages %}
-          <div class="alert alert-dismissable alert-danger" id="message">
-				 
-							<button type="button" class="close" data-dismiss="alert" aria-hidden="true">
-								×
-							</button>
-							<h4>
-								警告
-							</h4> <strong>作业已过截止日期不能提交</strong> 
+        <div class="alert alert-dismissable alert-danger" id="message">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+                ×
+            </button>
+            <h4>
+                警告
+            </h4> <strong>作业已过截止日期不能提交</strong> 
 		</div>
           {% endfor %}
     {% endif %}
- {% endwith %}    
-{%if current_user.role.permissions>0%}
+ {% endwith %}
+ <div class="row">
+   <div class="col-4"></div>
+  <div class="col-4"> 
+<div class="d-flex align-items-center d-none" id="spinners" >
+  <strong>正在阅卷，请稍后...</strong>
+  <div class="spinner-grow spinner-grow-sm ms-auto  text-secondary" role="status" aria-hidden="true"></div>
+  <div class="spinner-grow spinner-grow-sm ms-auto  text-primary" role="status" aria-hidden="true"></div>
+  <div class="spinner-grow spinner-grow-sm ms-auto  text-success" role="status" aria-hidden="true"></div>
+  <div class="spinner-grow spinner-grow-sm ms-auto  text-info" role="status" aria-hidden="true"></div>
+  <div class="spinner-grow spinner-grow-sm ms-auto  text-light" role="status" aria-hidden="true"></div>
+</div>
+</div>
+<div class="col-4"></div>
+</div>
+
 
 <div class="row container-fluid">
     <div class="col-md-12">
-            <table class="table table-striped">
-                <thead>
+            <table class="table table-striped" style="text-align:center">
+                <thead class="table-dark">
                     <tr>
                         <th>
                             序号
@@ -100,14 +116,15 @@
                         <th>
                             发布者
                         </th>
-                        <th>
-                            责任教师
-                        </th>
+                       
                         <th>
                             上传答卷
                         </th>
                         <th>
-                            答卷份数
+                            待阅卷
+                        </th>
+                        <th>
+                            已阅卷
                         </th>
                         <th>
                             操作
@@ -116,25 +133,33 @@
                 </thead>
                 <tbody>
                     {%for i in jobs%}
-                    <tr>
-                        <td>{{ loop.index + pagination.skip }}</td>
+                    <tr style='vertical-align: middle;'>
+                        <td>{{loop.index + pagination.skip }}</td>
                         <td>{{i.job_name}}</td>
                         <td>{{i.subject}}</td>                        
                         <td>{{i.publish_time}}</td>
                         <td>{{i.deadline}}</td>
                         <td>{{i.user.realname}}</td>
-                        <td>{{i.teacher.user_info.realname}}</td>
+                        
                         <td> <div class="input-group">
                             <input type="file" class="form-control" id="inputGroupFile{{i.id}}" aria-describedby="inputGroupFileAddon04" aria-label="Upload" multiple accept=".png,.jpg,.bmp">
                             <button class="btn btn-outline-primary" type="button" id="inputGroupFileAddon04" onclick="upload_paper({{i.id}})">上传</button>
                             </div>
                         </td>
-                        <td id="c-{{i.id}}">{{count[i.id]}}</td>	
+                        <td id="c-{{i.id}}"><a href="{{'/answer/url'|replace("url",i.id)}}">{{count[i.id]}}</a></td>
+                        <td id="r-{{i.id}}">{{count1[i.id]}}</td>	
                         <td>
                            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example">                               
-                                <button type="button" class="btn btn-secondary">设置选择题</button>
-                                <button type="button" class="btn btn-secondary" onclick="window.location.href='{{i.paper_url}}'">查看答题卷</button>
-                                <button type="button" class="btn btn-secondary" onclick="judge({{i.id}})">开始阅卷</button>
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button>
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal1">设置答案</button>
+                                
+                                
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='{{i.paper_url}}'">查看答题卡</button>
+                                <button type="button" class="btn btn-secondary"  onclick="judge({{i.id}})">阅卷</button>
+                                {%if count1[i.id]==0 and count[i.id]%}
+                                <button type="button" class="btn btn-secondary" id="cancel-{{i.id}}" name="{{i.paper_url}}">删除</button>
+                                {%endif%}
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='/job/job_info/{{i.id}}'">作业详情</button>
                             </div>  
                         </td>
                     </tr>
@@ -143,9 +168,114 @@
             </table>
         {{ pagination.links }}
     </div>
+    <!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">选择要分配该作业的班级</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="job_class">
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick=assign_job()>确定</button>
+        
+      </div>
+    </div>
+  </div>
 </div>
-
+<!-- Modal1 -->
+<div class="modal fade" id="exampleModal1" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Modal1 title</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+      
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >确定</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+       
+<script  src="/static/build/js/jquery.min.js"></script>
 <script>
+    function assign_job(){
+        var id=$("#job_class").attr("name");
+        var values = [];
+        var markedCheckbox = document.getElementsByName("checks");
+        for (var checkbox of markedCheckbox) {
+        if (checkbox.checked) {
+            values.push(checkbox.value);
+        }
+        }
+        console.log(values)
+        $.ajax({
+                url: "/job/assign_job/"+String(id),    // 提交到controller的url路径 
+                             //提交给flask后台必须有csrf认证
+                type: "POST",                   
+                data: {
+                list:JSON.stringify(values),
+                csrf_token : '{{csrf_token()}}'
+                },
+                dataType: "json",    // 服务器端返回的数据类型
+                
+               
+                success: function(data) {
+                alert(data)
+                }
+                }
+                );
+    }
+   function get_class(id){
+    
+     $.ajax({
+                url: "/job/assign_job/"+String(id),    // 提交到controller的url路径 
+                             //提交给flask后台必须有csrf认证
+                type: "GET",                   
+                
+                dataType: "json",    // 服务器端返回的数据类型
+                
+                processData: false,//用于对data参数进行序列化处理 这里必须false
+                contentType: false, //必须
+                 success: function(data) {
+                $("#job_class").empty();
+                $("#job_class").attr("name", id);    
+                // 遍历字典的每个键值对
+                $.each(data[0], function(key, value) {
+                // 分割键字符串，得到id和name
+                var id = key.split("-")[0];
+                var name = key.split("-")[1];
+                // 创建一个新的div元素，添加form-check类
+                var div = $("<div class='form-check form-check-inline'></div>");
+                // 创建一个新的check元素，添加form-check-input类
+                var check = $("<input class='form-check-input' type='checkbox' name='checks' value='" + id + "' id='" + key + "'>");
+                // 根据值设置check的选中状态
+                if (value) {
+                    check.prop("checked", true);
+                }
+                // 创建一个新的label元素，添加form-check-label类，并设置for属性为id
+                var label = $("<label class='form-check-label' for='" + id + "'>" + name + "</label>");
+                // 将check和label添加到div中
+                div.append(check);
+                div.append(label);
+                // 将div添加到网页的某个容器中，比如id为container的div
+                
+                $("#job_class").append(div);
+                });
+                }
+     }
+                );
+            }
+            
 
     function anti(){
         var stu=document.getElementsByName("stu");
@@ -178,8 +308,7 @@
                 processData: false,//用于对data参数进行序列化处理 这里必须false
                 contentType: false, //必须
                 success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
-                    if (data) {    
-                        //跳转到系统首页
+                    if (data) {
                        alert(data[0]+"个文件上传成功")
                        file.value=""
                        var counttag=document.getElementById("c-"+String(id))
@@ -191,33 +320,12 @@
                 },
             });
     }
-    //以下是ajax异步传输数据
-    function del(id){
-        var data={"del":id};
-        var csrf_token="{{csrf_token()}}";
-        $.ajax({
-                url: "/job/del/",    // 提交到controller的url路径 
-                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
-                type: "POST",    // 提交方式
-                contentType: 'application/json; charset=UTF-8', //提交数据类型
-                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
-                dataType: "json",    // 服务器端返回的数据类型
-                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
-                    if (data) {    
-                        //跳转到系统首页
-                        alert(data)
-                        
-                        window.location.replace({{url_for('job.job_mg')}});
-                    } else {
-                        alert("删除作业失败")
-                    }
-                },
-            });
-    };    
+    
 
     function judge(id){
         var data={"judge":id};
         var csrf_token="{{csrf_token()}}";
+        showSpinners();  // 显示 Spinners
         $.ajax({
                 url: "/job/judge/"+String(id),    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
@@ -226,31 +334,68 @@
                 data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
                 dataType: "json",    // 服务器端返回的数据类型
                 success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
-                    if (data) {    
-                        //跳转到系统首页
-                        alert(data+"份试卷已阅")    
-                    } else {
-                        alert("阅卷失败")
+                    hideSpinners();  // 隐藏 Spinners
+                    if (data) {
+                       
+                        var readed=document.getElementById("r-"+String(id))
+                        var p_n=document.getElementById("c-"+String(id))
+                        readed.innerHTML=data
+                        p_n.innerHTML=p_n.value-data
+                        alert(data+"份试卷已阅")
+                        window.location()    
                     }
+                    else{alert("未进行阅卷，请检查答题卡")} 
                 },
+                error:function (error) {
+                     hideSpinners();
+                alert(error);}
             });
     };
     
-    function s_all(){
-        var stu=document.getElementsByName("stu");
-        for(var i=0;i<stu.length;i++){
-            stu[i].checked=true;
-        };
-        };
+ $("[id^='cancel']").click(function(e) {  
+    var url ="/job/del/";
+    var result = window.confirm("警告：删除该作业将删除所有上传的答题卡，以及有关该作业的所有信息，确定吗？");
+    if(result){
+        var button = $(e.target);
+  // 获取按钮的name属性
+    var url1 = button.attr("name");
+    var sendData = {
+        
+        'flag':0,
+        'url':url1,
+        'csrf_token':'{{ csrf_token() }}'
+    };
+     $.ajax({
+            url:url,
+            type:'post',
+            data:sendData,
+            success:function (data) { 
+                                
+                  alert(data)
+                  location.reload()
+               
+                } ,
+            error:function (error) {
+                alert(error);
+            },
+        });
+    }
+})
 
+function showSpinners() {
+  $("#spinners").removeClass('d-none');
+}
+
+// 隐藏 Spinners
+function hideSpinners() {
+  $("#spinners").addClass('d-none');
+}
 
 </script>
-<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
-               
 
 
-{%endif%}        
-{%endblock%}
+
+{%endblock%}               
 
 
 

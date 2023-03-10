@@ -7,46 +7,60 @@
 {% from 'bootstrap/form.html' import render_form %}
 {% from 'bootstrap/utils.html' import render_messages %}
 {%block main%}
-<h4>{{teacher.teacher.subject}}老师:{{teacher.realname}}任教情况:</h4>
+
+<div class='container-fluid'>
+    <div class="row">
+        <div class="col-md-10">
+            <h4>{{teacher.teacher.subject}}老师:{{teacher.realname}}任教情况:</h4>
+        </div>
+        <div class="col-md-2" >
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" {%if teacher.role.role=="教研组长"%}checked{%endif%}>
+                <label class="form-check-label" for="flexCheckDefault">
+                   <h5>教研组长</h5>
+                </label>
+            </div>
+        </div>
+    </div>
 <form method="post">
 <input type="hidden" name="csrf_token" value="{{csrf_token()}}"/><!添加crsf_token保护>
 
-班主任：<select name="class_master">
-
-<option selected >{%if teacher.teacher.class_info%}{{teacher.teacher.class_info.class_name}}{%else%}无{%endif%}</option>
-{%for i in c%}
-<option value="{{i.id}}">{{i.class_name}}</option>
-{%endfor%}
-
-</select>
-<div id="card-269540">
-    {%for i in g%}
-        <div class="card">
-            <div class="card-header">
-                <a class="card-link" data-toggle="collapse" data-parent="#card-269540" href="#card-element-{{i.id}}">{{i.grade_name}}</a>
-            </div>
-            <div id="card-element-{{i.id}}" class="collapse show">
-                <div class="card-body">
-                    {%for j in c%}
-                        {%if j.grade_id==i.id%}
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="cla" value="{{j.id}}" id="checkbox-{{j.id}}" {%if j.id in teaching_information%}checked{%endif%}>
-                            <label class="form-check-label" for="checkbox-{{j.id}}">
-                                {{j.class_name}}
-                            </label>
-                        </div>
-                        {%endif%}
-                    {%endfor%}        
+    <div class="btn btn-group">
+        {%for i in g%}
+        
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample-{{i.id}}" aria-expanded="false" aria-controls="collapseExample-{{i.id}}">
+            {{i.grade_name}}
+        </button>
+    
+        {%endfor%}
+    </div>
+        {%for i in g%}
+        <div class="collapse" id="collapseExample-{{i.id}}">
+        <div class="card card-body">
+        <div>
+             {%for j in c%}
+                {%if j.grade_id==i.id%}
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="cla" value="{{j.id}}" id="checkbox-{{j.id}}" {%if j.id in teaching_information%}checked{%endif%}>
+                    <label class="form-check-label" for="checkbox-{{j.id}}">
+                        {{j.class_name}}
+                    </label>
                 </div>
-            </div>
-        </div>
-    {%endfor%}
-    <span class="btn btn-primary" onclick="cls()">全部清除</span>  
-<button class="btn btn-primary" type="submit">提交</button>    
+                {%endif%}
+            {%endfor%} 
+        </div> 
+    </div>
+</div>
+        
+{%endfor%}
+    <div class="btn btn-group fixed-bottom">
+    <span class="btn btn-secondary" onclick="cls()">全部清除</span>  
+    <button class="btn btn-primary" type="submit">提交</button> 
+    </div>   
 </div>
 </form>
-
-
+</div>
+<script src="/static/build/js/jquery.min.js"></script>
 <script> 
 function cls(){
     var chk=document.getElementsByName("cla");
@@ -56,5 +70,24 @@ function cls(){
         }
     }
 }
+$(document).ready(function() {
+  $("#flexCheckDefault").change(function() {
+    var status = this.checked; // 获取check状态
+    var id='{{teacher.id}}'
+    $.ajax({
+      url: "/manage/teaching_team_leader/", // 后台处理请求的URL
+      method: "POST",
+      data: {status: status,            
+            id:id,
+            csrf_token : '{{csrf_token()}}'}, // 传递的数据
+      success: function(response) {
+        console.log("请求成功");
+      },
+      error: function() {
+        console.log("请求失败");
+      }
+    });
+  });
+});
 </script>
 {%endblock%}
