@@ -90,13 +90,16 @@ def find_corners(img):
 
 def number_pos(pic): #识别号码
     img=pict(pic)
-   
+    """cv2.namedWindow("2",cv2.WINDOW_NORMAL)
+    cv2.imshow("2",img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""
     cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    
     pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)
         
-        if area>1000:
+        if area>500:
             
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
@@ -117,14 +120,11 @@ def number_pos(pic): #识别号码
 #矫正完成后，对画面进行切割，分别切割出考号填涂区，选择题区，和非选择题区
 def paper_split(dst,s_n,line):
     num=dst[16*n:36*n,27*n:67*n]
-    """cv2.namedWindow("2",cv2.WINDOW_NORMAL)
-    cv2.imshow("2",num)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()"""
+    
     select=dst[43*n:43*n+(s_n+3)//4*2*n,6*n:77*n]
     c=[]
     for i in range(len(line)-1):
-        c.append(dst[line[i]*n:line[i+1]*n,n*6:n*77])
+        c.append(dst[line[i]*n:line[i+1]*n,n*6:n*50])
     return(num,select,c)
 
 def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号：选项} 
@@ -144,6 +144,8 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
         row=int((i[1]//n+1)/2)
         col=(i[0]//n-1)
         order=(row)*4+col//15+1
+        if order>m:
+            continue
         s=(col%15-2)//3
         if s<=3:
             if order in pnt:

@@ -4,8 +4,11 @@
 <TITLE></TITLE>
 {%endblock%}
 {% block main%}
+<div class="container-fluid">
 
-     <img src={{url_for("static",filename=url)}} class="img-fluid" alt="...">
 
+<div class="d-grid gap-2"><button class="btn btn-secondary" onclick=window.location.href="/job/show_file/{{url}}">下载</button></div>
 
+<div class="d-flex justify-content-center"><iframe srcdoc="{{ html }}" width="100%" height="600"></iframe></div>
+</div>
 {%endblock%}

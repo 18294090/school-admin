@@ -52,6 +52,7 @@ def genarate_select(n,n1,pic,x,y): #生成选择题，n1为题目数量，pic为
 
 def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列表，存储每个小题几个空[[1,2],[1,1,1]],x,y 为位置，n1为题号
     line=[]
+    flag=True
     draw=ImageDraw.Draw(pic)
     font=ImageFont.truetype(f_url, int(n*1.5))
     draw.text((x,y),"二、填空题",fill="#000000",font=font)
@@ -81,10 +82,13 @@ def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列�
             x=9*n
         x=n*7
         draw.line((x-n,y,pic.width-5*n,y),fill="#000000",width=2)
-        line.append(y//n)
-        y+=2*n
-        n1+=1
-    return(line)
+        if y//n>114:
+            flag=False
+        else:
+            line.append(y//n)
+            y+=2*n
+            n1+=1
+    return(line,flag)
 
 def number_area(n,pic,x,y,n1): #产生学号填涂区，pic为image对象，x,y 为填涂区左上角顶点坐标，n1为号码个数
     draw=ImageDraw.Draw(pic)    
@@ -112,8 +116,9 @@ def paper(subject,teacher,width,title,s_n,complete):
     font=ImageFont.truetype(f_url, n*3)
     d.text(((paper.width-n*3*len(title))//2,n*5),title,fill=0,font=font)
     pos=genarate_select(n,s_n,paper,x,y)
+    flag=True
     if len(complete):
-        line = generate_completion(n,paper,complete,n*6,pos[0]+n*2,pos[1]+1)
+        line,flag = generate_completion(n,paper,complete,n*6,pos[0]+n*2,pos[1]+1)
     else:
         line=[]
     img=Image.open(os.getcwd()+"/app/job/paper/pic/"+"name.png")
@@ -124,4 +129,4 @@ def paper(subject,teacher,width,title,s_n,complete):
     number_area(n,paper,n*27,n*9,10)
     qr_paste(subject+"-"+title+"-"+teacher,paper,(paper.width-n*16,n*15),n*12)
     p_name=os.getcwd()+"/app/static/paper/excercise/"+teacher+"-"+str(time.time())+".png"
-    return((line,paper))
+    return((line,paper,flag))

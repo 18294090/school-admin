@@ -37,14 +37,13 @@
   </div>
   <div class="col-1">
    <select class="form-select" id="class-select">
-    
         {% for cls in classes_ %}
             <option value="{{ cls.class_info.id }}">{{ cls.class_info.class_name }}</option>
         {% endfor %}
     </select>
   </div>
    <div class="col-md-10" id="infor">
-            <span class="d-block p-2 bg-primary text-white"> 《{{dict["name"]}}》 <small>未交：{{dict["n_sub"]}}人| 作业总分：{{dict["sum"]}}   | 平均分：{{class_.average}}| 最高分：{{class_.max}} | 最低分：{{class_.min}}</small></span>
+            <span class="d-block p-2 bg-primary text-white"> 《{{dict["name"]}}》 <small>上交：{{j_c.submit_number}}人| 作业总分：{{dict["sum"]}}   | 平均分：{{j_c.average}}| 最高分：{{j_c.max}} | 最低分：{{j_c.min}}</small></span>
         </div>
 </div>
 
@@ -54,7 +53,9 @@
             <th>
                 序号
             </th>
-             
+             <th>
+                学号
+            </th>
             <th>
                 姓名
             </th>
@@ -78,7 +79,9 @@
             <td>
                {{ loop.index}}
             </td>
-            
+            <td>
+               <a href="{{ url_for('static', filename='job_readed/'+i.job_id|string+'/'+i.stu_.number+'.jpg') }}">{{ i.stu_.number}}</a>
+            </td>
              <td>
             {{i.stu_.name}}
              
@@ -96,10 +99,10 @@
             </td>    
             </td>
             <td>
-            {%if i.select_mark!=None%}{{i.complete_mark}}{%endif%}
+            {%if i.complete_mark!=None%}{{i.complete_mark}}{%endif%}
             </td>
             <td>
-            {%if i.select_mark!=None%}{{i.mark}}{%endif%}
+            {%if i.mark!=None%}{{i.mark}}{%endif%}
             </td>
         </tr>
         {%endfor%}

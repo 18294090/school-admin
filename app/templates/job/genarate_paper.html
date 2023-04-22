@@ -26,19 +26,16 @@
                           <input type="text" class="form-control" id="select" name="select">
                           
                       </div>
-                    
                       <div class="mb-4">
                           <!-- Button trigger modal -->
                         <button type="button" id="gen-com" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
                           设置填空题
                         </button>
-    
                         <!-- Modal -->
                         <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                           <div class="modal-dialog">
                             <div class="modal-content">
                               <div class="modal-header">
-
                                 <h1 class="modal-title fs-5" id="staticBackdropLabel">填空题详情</h1>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                               </div>
@@ -46,15 +43,20 @@
                                 <div class="mb-4" id="c">
                                   <label for="complete" class="form-label" >填空题大题数量</label>
                                   <input type="text" class="form-control" id="complete" value=0 >
-
                                 </div>
-                                <div class="mb-4" id="c">
-                                  <label for="complete" class="form-label" >填空题分值结构</label>
-                                  <input type="text" class="form-control" id="c_mark" name="c_mark"  title="请输入每到大题的分值，中间用空格隔开" value=0>
-
+                                 <div class="row" for="sub_c">
+                                 <div class="col-2"></div>
+                                    <div class="col-4">
+                                      <label for="structure" style="text-align:center">设置题目结构</label>
+                                    </div>
+                                    <div class="col-3">
+                                      <label for="score">设置分值</label>
+                                    </div>
+                                    <div class="col-3">
+                                      <label for="difficulty">选择难度</label>
+                                    </div>
                                 </div>
-                                <div class="mb-4 border border-primary" id="sub_c">
-                                  
+                                <div class="mb-4 " id="sub_c"  data-bs-toggle="tooltip" data-bs-placement="top" title="请设置每道填空题的结构和分值，设置填空题结构方法如下：用数字表示每道小题有几个空，小题和小题间用空格隔开。如：2 3 2表示有三个小题，第一题两空，第二题3空，第三题2空。选择题分值为一个数字表示大题的总分"> 
                                 </div>
                               </div>
                               <div class="modal-footer">
@@ -65,9 +67,8 @@
                         </div>
                       </div>  
                       <div class="mb-4">
-                      <label class="form-label" for="datetimepicker4">选择上交截止日期</label>
-                      <input type="text" class="form-control datetimepicker-input" name="time" id="datetimepicker4" data-toggle="datetimepicker" data-target="#datetimepicker4"/>
-                      </div>
+                          <label for="formFile" class="form-label">上传试题卷</label>
+                          <input class="form-control" type="file" id="formFile" accept=".txt,.pdf,.doc,.docx">
                       <div class="mb-4">
                         <label class="form-label" for="check_class">选择班级</label>
                         <div class="card">
@@ -106,7 +107,7 @@
                             <div class="card-body">
                               {%for i in g%}
                                 <div class="form-check form-check-inline" name="check_class">
-                                    <input class="form-check-input" type="checkbox" name="grade" value="{{i.id}}" id="grade-{{i.id}}" checked>
+                                    <input class="form-check-input" type="checkbox" name="grade" value="{{i.id}}" id="grade-{{i.id}}">
                                     <label class="form-check-label" for="grade-{{i.id}}">
                                         {{i.grade_name}}
                                     </label>
@@ -140,7 +141,7 @@
                 </div>            
             </div>
         </div>
-
+        </div>
         <div class="col-8 text-center">
           <div id="btn-hidden" class="btn-group visually-hidden" role="group" aria-label="Basic example">
             <button type="button" class="btn btn-success" id="p" onclick="doPrint()" >打印答题卡</button>
@@ -149,9 +150,9 @@
 
           <div class="row border border-danger visually-hidden" id="paper-img">
           
-          <!--startprint-->
-            <img src="{{url}}" class="img-fluid" id='img' alt="...">
-          <!--endprint-->
+            <!--startprint-->
+              <img src="{{url}}" class="img-fluid" id='img' alt="...">
+            <!--endprint-->
           </div>         
         </div>
         
@@ -160,12 +161,15 @@
 </div>
 
 <script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
+
 <script>
+
 // 初始化tooltip组件
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new bootstrap.Tooltip(tooltipTriggerEl)
-}) 
+//var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+//var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+//  return new bootstrap.Tooltip(tooltipTriggerEl)
+//})
+
 $(function() {
   // 全选按钮
   $('#checkAllBtn').click(function() {
@@ -210,10 +214,16 @@ var tags = [];
 function check(){   
     var radios = document.querySelectorAll('input[type="radio"]');
     
-    $("input[name^='tag']").each(function() {
+    var selects = $("select[name='tag']");
+    // 遍历每个select元素，并将它们的值添加到数组中
+    selects.each(function() {
       tags.push($(this).val());
     });
-    console.log(tags)
+    var selects = $("select[name='c-diff']");
+    // 遍历每个select元素，并将它们的值添加到数组中
+    selects.each(function() {
+      tags.push($(this).val());
+    });
     answers=""     
     for (var i = 0; i < radios.length; i++) {
       if (radios[i].checked) {
@@ -255,8 +265,11 @@ const questionHtml = `
     
     <ul>${index + 1}:${optionsHtml}</ul>
     <div>
-      <label class="form-label" for="tag${index}">请输入该题标签</label>
-      <input class="form-control " type="text" name="tag${index}" id="tag${index}"  data-bs-toggle="tooltip" title="如有多个标签，请以空格隔开，标签用于说明题目知识点，类型，用于学情诊断">
+      <select class="form-select" name="tag" aria-label="选择难度">
+      {%for i in difficult%}
+      <option value={{i.id}}  >{{i.difficult}}</option>
+      {%endfor%}
+      </select>
     </div>
   </div>
   
@@ -275,14 +288,23 @@ if(Number(complete.value)>10||!/[0-9]$/.test(complete.value)){
   complete.style.borderColor="red"
 
 }
-else{complete.style.removeProperty("border-color")                     
-for (var i=1;i<=Number(complete.value);i++){                          
-  list[i]=document.createElement("input")
-  list[i].name="subtopic"
-  list[i].className="form-control form-control-sm"
-  list[i].placeholder="请输入第"+String(i)+"道填空题的小题结构";                        
-  c.appendChild(list[i])
-}
+else{
+  complete.style.removeProperty("border-color")
+  var label1=$
+
+    for (var i=1;i<=Number(complete.value);i++){ 
+        var row = $("<div class='row'></div>");
+        var lable=$('<label class="col-1">'+i+':</label>')
+        var input1 = $("<input type='text' class='col-5' name='subtopic' id='structure' className='form-control form-control-sm' />");
+        var input2 = $("<input type='text' class='col-3' name='c_mark' id='c_mark'/>");
+        var select = $("<select class='col-3' name='c-diff' id='difficulty'> {%for i in difficult%}<option value={{i.id}}  >{{i.difficult}}</option>{%endfor%}</select>");
+        row.append(lable)
+        row.append(input1);
+        row.append(input2);
+        row.append(select);
+        $("#sub_c").append(row);
+
+    }
 }                      
 }
 
@@ -293,12 +315,12 @@ s1.onclick=function(){
   var subtopic = document.getElementsByName("subtopic")
   var gen=document.getElementById("gen-com")
   var classlist =document.getElementsByName("cla")
-  var tp=document.getElementById("datetimepicker4")
+  var tp=document.getElementById("formFile")
   var grade = document.getElementsByName("grade")
   
-  if(tp.value==""||tp.value==null||/^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(0[1-9]|1[1-9]|2[1-9])$/.test(tp.value)){
+  if(tp.value==""||tp.value==null){
     tp.value="",
-    tp.placeholder="日期格式不对，请重新选择"
+    
     tp.style.borderColor="red"
     f0=false
   }
@@ -326,23 +348,38 @@ s1.onclick=function(){
   }
   else{select.style.removeProperty("border-color");f3=true}
   var n=0;
+  var n1=0
   var sub=new Array();
+  var c_marks=new Array()
   var cla=new Array();
   var g=new Array();
+  var c_mark=document.getElementsByName("c_mark");
   for(var i=0;i<subtopic.length;i++){
-    
+    var value = Number(c_mark[i].value);
+  if (Number.isInteger(value) && value >= 0 && value <= 99) {    
+       c_marks[i]=value
+      n1++;c_mark[i].style.removeProperty("border-color")    
+    }
+    else
+    {
+      c_mark[i].value=""
+      c_mark[i].placeholder="只能够输入数字"
+      c_mark[i].style.borderColor="red"  
+    }
     if(!/^\d+(\s+\d+)*$/.test(subtopic[i].value)){
       subtopic[i].value=""
       subtopic[i].placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
       subtopic[i].style.borderColor="red"
     }
-    else{
+    else
+    {
       sub[i]=subtopic[i].value;
       n++;subtopic[i].style.removeProperty("border-color")}
   }
+  
   for (var i=0;i<classlist.length;i++){
     if (classlist[i].checked ){
-    cla.push(classlist[i].value)        
+    cla.push((classlist[i].value))        
     }
   }
   for(var i=0;i<grade.length;i++){
@@ -350,41 +387,39 @@ s1.onclick=function(){
     g.push(grade[i].value)        
     }
   }
-  var c_mark=document.getElementById("c_mark");
-  if (!/^\d+(\s+\d+)*$/.test(c_mark.value)){
-    c_mark.value=""
-    c_mark.placeholder="只能够输入0-9的数字和空格，例如：2 3 1"
-    c_mark.style.borderColor="red"      
-}else{n++;
-c_mark.style.removeProperty("border-color")}
-if (n<subtopic.length+1){
+
+if (n<subtopic.length || n1<subtopic.length){
   gen.style.borderColor="red"
   f4=false
+  console.log(n,n1,subtopic.length+1)
 }
 else{gen.style.removeProperty("border-color");f4=true}
   if(f0&&f1&&f2&&f3&&f4){
     $(function () {
-          var url ="/job/genarate_paper";           
-          console.log(answers)
-          var sendData = {
-              'flag':1,
-              'title':title.value,
-              'number':number.value,
-              'select':select.value,
-              'subtopic':sub,
-              'c_mark':c_mark.value,
-              'answers':answers,
-              'csrf_token':'{{ csrf_token() }}',
-              'time':$('#datetimepicker4').val(),
-              
-              "classlist":cla,
-              'grade':g,
-              'tags':tags
-          };           
+      
+          var url ="/job/create_paper";           
+          var formData =new FormData();
+          formData.append("file",tp.files[0])
+          formData.append('flag',1)
+          formData.append('title',title.value)
+          formData.append('number',number.value)
+          formData.append('select',select.value)
+          formData.append('subtopic',JSON.stringify(sub))
+          formData.append('c_mark',JSON.stringify(c_marks))
+          formData.append('answers',answers)
+          formData.append("classlist",JSON.stringify(cla))
+          formData.append('grade',JSON.stringify(g))
+          formData.append('tags',JSON.stringify(tags))
+          var csrf_token="{{csrf_token()}}";
           $.ajax({
               url:url,
               type:'post',
-              data:sendData,
+                 // 服务器端返回的数据类型
+              headers:{"X-CSRFToken":csrf_token},
+              cache: false,//上传文件无需缓存
+              data: formData,
+              contentType: false,
+              processData: false,
               success:function (data) {
                 if(data["status"]==0){                    
                 $('#btn-hidden').removeClass("visually-hidden"),

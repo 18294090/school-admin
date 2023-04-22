@@ -155,7 +155,7 @@
                         {{j.status}}
                     </td>
                     <td>
-                        {%if j.role.role!="student"%}<a href="/manage/teacher/{{j.id}}"><input type="button"  class="btn-group-sm btn-primary" value="工作安排"></a>{%endif%}
+                        {%if j.role.has_permission(1)%}<a href="/manage/teacher/{{j.id}}"><input type="button"  class="btn-group-sm btn-primary" value="工作安排"></a>{%endif%}
                         <input type="button"  class="btn-group-sm btn-primary" value="状态设置">
                        <button class="btn-primary btn-group-sm"  onclick="reset_password({{j.id}})">重置密码</button></a>
                     </td>	

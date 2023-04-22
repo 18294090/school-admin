@@ -1,7 +1,7 @@
 """数据库模型文件，在这里定义数据库模型，一个模型对应一张数据表"""
 from sqlalchemy.orm import backref
 from app import db
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey,func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin,AnonymousUserMixin
 from . import login_manager
@@ -40,14 +40,8 @@ class role(db.Model):  # 角色表
 class Permission:
     job_publish= 1 # 任教班级学习任务的发布
     job_grade=2 # 全年级学习任务发布
-    student_assessment = 4 # 学生的综合考评
-    job_info = 8 # 作业查询
-    exam_publish = 16 # 考试发布
-    exam_evaluation =32 # 考试评价
-    class_info = 64 # 班级查询
-    grade_info = 128 # 年级查询 
-    teacher_info = 256 # 教师查询
-    admin = 512
+    job_submit = 4 # 作业提交
+    admin = 8 # 管理权限
 
 class user(UserMixin, db.Model):  # 用户表
     __table_args__ = {'extend_existing': True}
@@ -68,13 +62,11 @@ class user(UserMixin, db.Model):  # 用户表
     @property
     def password(self):
         return ("密码字段不可读")  # 当调用密码字段时，返回错误信息
-
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
     def verify_password(self, password):
         return(check_password_hash(self.password_hash, password))
-    
     def can(self,perm):
         return self.role is not None and self.role.has_permission(perm)
     def is_administrator(self):
@@ -103,6 +95,7 @@ class class_info(db.Model):
     teacher =db.relationship("teacher",backref=db.backref("class_info"))
     attribute = db.Column(db.String(64))
     students = db.relationship('student', secondary='class_student', back_populates='classes')
+
 class student(db.Model):
     __tablename__ = "student"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -154,9 +147,8 @@ class job(db.Model):  # 作业
     job_name = db.Column(db.String(64))
     publish_time = db.Column(db.DateTime)
     publisher = db.Column(db.Integer, ForeignKey("user.id",))
-    deadline = db.Column(db.Date)
-    subject = db.Column(db.String(64))
-    
+    question_paper = db.Column(db.String(64))
+    subject = db.Column(db.String(64))    
     context = db.Column(db.Text)
     select =db.Column(db.Integer) #选择题数量
     s_m=db.Column(db.Integer)#选择题分数
@@ -164,6 +156,11 @@ class job(db.Model):  # 作业
     complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
     paper_url = db.Column(db.String(64))
     line = db.Column(db.String(64))
+    #作业和班级的关系，一个作业可以有多个班级，一个班级可以有多个作业，删除作业时，job_class表中的数据也会被删除，而删除job_class表中的数据时，不会影响作业表
+    job_class = db.relationship("job_class",  back_populates="job",cascade="all, delete")
+    job_detail = db.relationship("job_detail",  back_populates="job",cascade="all, delete")
+    job_student = db.relationship("job_student",  back_populates="job",cascade="all, delete")
+    
 
 class job_class(db.Model):
     __table_args__ = {'extend_existing': True}
@@ -171,11 +168,12 @@ class job_class(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     class_id = db.Column(db.Integer, ForeignKey("class_info.id", ondelete='CASCADE'),nullable=False)
     class_info =db.relationship("class_info", foreign_keys=[class_id], backref=db.backref('job_class',lazy="dynamic", cascade="all, delete"))
+    #job_id为指向job表的外键，删除job_class表中的数据时，不会影响作业表
     job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
-    job = db.relationship("job",order_by="job.publish_time.desc()", foreign_keys=[job_id], backref=db.backref('job_class',lazy="dynamic", cascade="all, delete"),remote_side=[job_id])
-    average=db.Column(db.Float,default=0)
-    max=db.Column(db.Float,default=0)
-    min=db.Column(db.Float,default=0)
+    job = db.relationship("job", order_by="job.publish_time.desc()",back_populates="job_class")
+    average=db.Column(db.Float(precision=2),default=0)
+    max=db.Column(db.Float(precision=2),default=0)
+    min=db.Column(db.Float(precision=2),default=0)
     submit_number=db.Column(db.Integer,default=0)
 
 class job_detail(db.Model):
@@ -183,32 +181,38 @@ class job_detail(db.Model):
     __tablename__ = "job_detail"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
-    job = db.relationship("job", order_by="job.publish_time.desc()", backref=db.backref('job_detail', lazy="dynamic", cascade="all, delete"))
+    job = db.relationship("job", back_populates="job_detail")
     student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)
     stu =db.relationship("student", backref=db.backref("job_detail", lazy="dynamic", cascade="all, delete"), uselist=False)
     serial_No=db.Column(db.Integer) 
     answer=db.Column(db.String(64))
     tag=db.Column(db.String(64))
-    mark=db.Column(db.Float)
+    mark=db.Column(db.Float(precision=2))
 
 class job_student(db.Model):
     __table_args__ = {'extend_existing': True}
     __tablename__ = "job_student"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
-    job = db.relationship("job", order_by="job.publish_time.desc()", backref=db.backref('job_student', lazy="dynamic", cascade="all, delete"))
+    job = db.relationship("job", order_by="job.publish_time.desc()",back_populates="job_student")    
     student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)
     stu_ = db.relationship("student", backref=db.backref('job_student', lazy="dynamic", cascade="all, delete"), uselist=False)
-    select_mark=db.Column(db.Float)
-    complete_mark=db.Column(db.Float)
-    mark=db.Column(db.Float)
+    select_mark=db.Column(db.Float(precision=2))
+    complete_mark=db.Column(db.Float(precision=2))
+    mark=db.column_property(func.coalesce(select_mark, 0) + func.coalesce(complete_mark, 0))
+
+class difficult(db.Model):
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    difficult =  db.Column(db.String(32))
+    context = db.Column(db.String(128))
 
 class representative(db.Model):
      id = db.Column(db.Integer, autoincrement=True, primary_key=True)
      student_id = db.Column(db.Integer, ForeignKey("student.id"))
      teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
      subject = db.Column(db.String(64))
-     student=db.relationship("student",backref=db.backref("representative",lazy="dynamic"))    
+     student=db.relationship("student",backref=db.backref("representative",lazy="dynamic"))
+
 """class assessment(db.Model):  # 教师对学生的评价
     __table_args__ = {'extend_existing': True}
     __tablename__ = "assessment"
@@ -218,6 +222,7 @@ class representative(db.Model):
     time = db.Column(db.DateTime)
     content = db.Column(db.Text)
     mark =db.Column(db.Integer)"""
+
 class job_assessment:
     A=5
     B=4
@@ -225,6 +230,7 @@ class job_assessment:
     D=2
     E=1
     F=0
+
 """class test(db.Model):  # 考试
     __table_args__ = {'extend_existing': True}
     __tablename__ = "test"

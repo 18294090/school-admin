@@ -15,9 +15,9 @@
 	<div class="row">
 		<div class="col-md-12">
 			{%block nav%}
-			<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top ">
+			<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top ">
 				<div class="container-fluid">
-					<a class="navbar-brand" href="#">Navbar</a>
+					<a class="navbar-brand" href="#">导航</a>
 					<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="navbar-toggler-icon"></span>
 					</button>
@@ -33,7 +33,7 @@
 								{{render_nav_item("job.job_mg","作业")}}
 							</li>
 							<li class="nav-item">
-								{{render_nav_item("examination.main","测验")}}
+								
 							</li>
 							<li class="nav-item">
 								{%if current_user.role.role=="admin"%}
@@ -59,10 +59,7 @@
 							<a class="nav-link disabled">待开发</a>
 							</li>
 						</ul>
-						<form class=" d-flex" role="search">
-							<input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-							<button class="btn btn-outline-light" type="submit">search</button>
-						</form>
+						
 					</div>
 					<div class="collapse navbar-collapse justify-content-right">
 							<ul class="navbar-nav ms-auto ">
@@ -77,17 +74,14 @@
 									</a>
 									<ul class="dropdown-menu">
 										<li><a class="dropdown-item" href="{{url_for('auth.personal_details')}}">修改个人信息</a></li>
-										<li><a class="dropdown-item" href="/auth/reset/{{current_user.id}}">修改密码</a></li>
+										<li><a class="dropdown-item" href="">修改密码</a></li>
 										<li><hr class="dropdown-divider"></li>
 										<li><a class="dropdown-item" href="#"></a></li>
 									</ul>
-								</li>
-										
+								</li>	
 							</ul>
 					</div>
-			
     			</div>
-
 			</nav>
 		</div>
 	</div>

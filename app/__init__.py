@@ -8,6 +8,7 @@ from flask_wtf import CSRFProtect
 from flask_login import LoginManager
 from flask_datepicker import datepicker
 import os
+import json
 
 login_manager = LoginManager()  # flask-loginm模块进行登录管理
 login_manager.login_view = "auth.login"
@@ -17,6 +18,8 @@ bootstrap = Bootstrap5()
 db = SQLAlchemy()
 
 csrf = CSRFProtect()  # 跨站攻击保护
+def from_json(value):
+    return json.loads(value)
 
 
 def create_app(config_name):
@@ -32,13 +35,14 @@ def create_app(config_name):
     csrf.init_app(app)
     login_manager.init_app(app)
     datepicker(app)
-    
+    app.jinja_env.filters["from_json"]=from_json
     from .main import main
     from .auth import auth as auth_blueprint
     from .job import job_manage
     from .examination import examination
     from .manage import manage
     from .pedagogical_analysis import pedagogical_analysis
+    
     app.register_blueprint(main)
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
     app.register_blueprint(job_manage,url_prefix="/job")
