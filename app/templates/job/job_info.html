@@ -42,8 +42,18 @@
         {% endfor %}
     </select>
   </div>
-   <div class="col-md-10" id="infor">
-            <span class="d-block p-2 bg-primary text-white"> 《{{dict["name"]}}》 <small>上交：{{j_c.submit_number}}人| 作业总分：{{dict["sum"]}}   | 平均分：{{j_c.average}}| 最高分：{{j_c.max}} | 最低分：{{j_c.min}}</small></span>
+  <div class="col-1">
+    <label for="mod">选择显示模式:</label>
+  </div>
+  <div class="col-1">
+    <select class="form-select" id="mod">       
+            <option value="0">总分排名模式</option>
+            <option value="1">防作弊模式</option>       
+    </select>
+  </div>
+
+   <div class="col-md-8" id="infor">
+            <span class="d-block p-2 bg-primary text-white"> 《{{dict["name"]}}》 <small>未交：{{dict.n_sub}}人| 作业总分：{{dict["sum"]}}   | 平均分：{{j_c.average}}| 最高分：{{j_c.max}} | 最低分：{{j_c.min}}</small></span>
         </div>
 </div>
 
@@ -74,40 +84,37 @@
         </tr>
     </thead>
     <tbody>
-        {%for i in jobs%}
+        {%for i in df.index%}
         <tr>
             <td>
                {{ loop.index}}
             </td>
             <td>
-               <a href="{{ url_for('static', filename='job_readed/'+i.job_id|string+'/'+i.stu_.number+'.jpg') }}">{{ i.stu_.number}}</a>
+              <a href="{{ url_for('static', filename='job_readed/'+dict["id"]|string+'/'+js[i][0]|string+'.jpg') }}">{{js[i][0]}}</a>
             </td>
              <td>
-            {{i.stu_.name}}
-             
+            {{js[i][1]}}
             </td>
             {%for j in range(dict['select'])%}
-            
-            
-
-            
-            <td {%if  js[i.id][j].mark==2%}style="background-color: #8aff8a;"{%elif not js[i.id][j-1]%}{%else%}style="background-color: #ff6868;"{%endif%}>{%if js[i.id][j-1]%}{{js[i.id][j].answer}}{%endif%}</td>
-           
+            <td {%if js[i][j+2].mark==2%}style="background-color: #8aff8a;"{%elif not js[i][j+2]%}{%else%}style="background-color: #ff6868;"{%endif%}>{%if js[i][j+2]%}{{js[i][j+2].answer}}{%endif%}</td>
             {%endfor%}           
             <td>
-                 {%if i.select_mark!=None%}{{i.select_mark}}{%endif%}
+                {%if df.at[i,dict['select']]!=None%}{{df.at[i,dict['select']]}}{%endif%}
             </td>    
             </td>
             <td>
-            {%if i.complete_mark!=None%}{{i.complete_mark}}{%endif%}
+                {%if df.at[i,dict['select']+1]!=None%}{{df.at[i,dict['select']+1]}}{%endif%}
             </td>
             <td>
-            {%if i.mark!=None%}{{i.mark}}{%endif%}
+                {{df.at[i,dict['select']+2]}}
             </td>
         </tr>
         {%endfor%}
     </tbody>
 </table>
+<div id="heatmap">
+{{heat|safe}}
+</div>
       </div>
     </div>
   </div>
@@ -156,10 +163,11 @@ $(document).ready(function() {
     $("#class1-select").on("change", function() {
         getData();
     });
-
     function getData() {
         // 获取选中的班级ID
         var class_id = $("#class1-select").val();
+
+        
         // 发送ajax请求
         $.ajax({
             type: "POST",
@@ -196,10 +204,19 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
-    $("#class-select").change(function(event) {
+  gettable();
+  });
+$("#class-select").change(function(event) {
+  gettable()
+        });
+$("#mod").change(function(event) {
+  gettable()
+});
+  function gettable(){         
         // 获取选中的班级ID
-        var class_id = $(this).val();
-
+        var class_id = $("#class-select").val();
+        var mod=$("#mod").val();
+        
         // 发送ajax请求
         $.ajax({
             type: "POST",
@@ -207,19 +224,21 @@ $(document).ready(function() {
             data: {
                 class_id: class_id,
                 job_id:{{dict["id"]}},
+                mod:mod,
                 'csrf_token':'{{ csrf_token() }}',
             },
             success: function(response) {
                  $("#table").html($(response).find("#table").html());
                  $("#infor").html($(response).find("#infor").html());
+                  $("#heatmap").html($(response).find("#heatmap").html());
 
             },
             error: function(error) {
                 console.log(error);
             }
-        });
-    });
-});
+        });}
+ 
+
 
 </script>
 {%endblock%}

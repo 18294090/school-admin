@@ -9,13 +9,14 @@ from flask_login import LoginManager
 from flask_datepicker import datepicker
 import os
 import json
+from flask_migrate import Migrate
 
 login_manager = LoginManager()  # flask-loginm模块进行登录管理
 login_manager.login_view = "auth.login"
 ckeditor = CKEditor()  # 富文本编辑器插件
 bootstrap = Bootstrap5()
-
 db = SQLAlchemy()
+
 
 csrf = CSRFProtect()  # 跨站攻击保护
 def from_json(value):
@@ -42,7 +43,7 @@ def create_app(config_name):
     from .examination import examination
     from .manage import manage
     from .pedagogical_analysis import pedagogical_analysis
-    
+    migrate = Migrate(app, db)
     app.register_blueprint(main)
     app.register_blueprint(auth_blueprint, url_prefix="/auth")
     app.register_blueprint(job_manage,url_prefix="/job")

@@ -80,18 +80,18 @@
     {% endif %}
  {% endwith %}
  <div class="row">
-   <div class="col-4"></div>
-  <div class="col-4"> 
-<div class="d-flex align-items-center d-none" id="spinners" >
-  <strong>正在阅卷，请稍后...</strong>
-  <div class="spinner-grow spinner-grow-sm ms-auto  text-secondary" role="status" aria-hidden="true"></div>
-  <div class="spinner-grow spinner-grow-sm ms-auto  text-primary" role="status" aria-hidden="true"></div>
-  <div class="spinner-grow spinner-grow-sm ms-auto  text-success" role="status" aria-hidden="true"></div>
-  <div class="spinner-grow spinner-grow-sm ms-auto  text-info" role="status" aria-hidden="true"></div>
-  <div class="spinner-grow spinner-grow-sm ms-auto  text-light" role="status" aria-hidden="true"></div>
-</div>
-</div>
-<div class="col-4"></div>
+    <div class="col-4"></div>
+    <div class="col-4"> 
+    <div class="d-flex align-items-center d-none" id="spinners" >
+    <strong>正在阅卷，请稍后...</strong>
+    <div class="spinner-grow spinner-grow-sm ms-auto  text-secondary" role="status" aria-hidden="true"></div>
+    <div class="spinner-grow spinner-grow-sm ms-auto  text-primary" role="status" aria-hidden="true"></div>
+    <div class="spinner-grow spinner-grow-sm ms-auto  text-success" role="status" aria-hidden="true"></div>
+    <div class="spinner-grow spinner-grow-sm ms-auto  text-info" role="status" aria-hidden="true"></div>
+    <div class="spinner-grow spinner-grow-sm ms-auto  text-light" role="status" aria-hidden="true"></div>
+    </div>
+    </div>
+    <div class="col-4"></div>
 </div>
 
 
@@ -152,22 +152,21 @@
                         <td>
                            <div class="btn-group btn-group-sm" role="group" aria-label="Basic example"> 
                                 <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                操作
+                                    操作
                                 </button> 
-                                 <ul class="dropdown-menu">
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button> 
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='paper/excercise/'+i.paper_url) }}'">查看答题卡</button>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="judge({{i.id}})">选择题阅卷</button>
-                                {%if i.complete|from_json|length>0%}
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="c_judge({{i.id}})">填空题阅卷</button>
-                                {%endif%}
-                                {%if count1[i.id]==0 and count[i.id]==0%}
-                                <button type="button" class="btn btn-secondary dropdown-item" id="cancel-{{i.id}}" name="{{i.paper_url}}">删除</button>
-                                {%endif%}
-                                </ul>                             
-                                
+                                <ul class="dropdown-menu">
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button>
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button> 
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='paper/excercise/'+i.paper_url) }}'">查看答题卡</button>
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button>
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">选择题阅卷</button>
+                                    {%if i.complete|from_json|length>0%}
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="c_judge({{i.id}})">填空题阅卷</button>
+                                    {%endif%}
+                                    {%if count1[i.id]==0 and count[i.id]==0%}
+                                    <button type="button" class="btn btn-secondary dropdown-item" id="cancel-{{i.id}}" name="{{i.paper_url}}">删除</button>
+                                    {%endif%}
+                                </ul>
                             </div>  
                         </td>
                     </tr>
@@ -449,34 +448,7 @@
             else {
                 alert("Unknown content type: " + contentType); } 
             }
-    function judge(id){
-        var data={"judge":id};
-        var csrf_token="{{csrf_token()}}";
-        showSpinners();  // 显示 Spinners
-        $.ajax({
-                url: "/job/judge/"+String(id),    // 提交到controller的url路径 
-                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
-                type: "POST",    // 提交方式
-                contentType: 'application/json; charset=UTF-8', //提交数据类型
-                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
-                dataType: "json",    // 服务器端返回的数据类型
-                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
-                    hideSpinners();  // 隐藏 Spinners
-                    if (data) {                       
-                        var readed=document.getElementById("r-"+String(id));
-                        var p_n=document.getElementById("c-"+String(id));
-                        readed.innerHTML=data;
-                        p_n.innerHTML=Number(p_n.value)-Number(data);
-                        alert(data+"份试卷已阅");
-                        window.location()  ;  
-                    }
-                    else{alert("未进行阅卷，请检查答题卡")} 
-                },
-                error:function (error) {
-                     hideSpinners();
-                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
-            });
-    };
+
     
  $("[id^='cancel']").click(function(e) {  
     var url ="/job/del/";
@@ -505,17 +477,8 @@
     }
 })
 
-function showSpinners() {
-  $("#spinners").removeClass('d-none');
-}
-
-// 隐藏 Spinners
-function hideSpinners() {
-  $("#spinners").addClass('d-none');
-}
-</script>
-{%endblock%}               
-
+</script>      
+{%endblock%}
 
 
 

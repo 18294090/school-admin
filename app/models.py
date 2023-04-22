@@ -1,9 +1,10 @@
 """数据库模型文件，在这里定义数据库模型，一个模型对应一张数据表"""
 from sqlalchemy.orm import backref
 from app import db
-from sqlalchemy import ForeignKey,func
+from sqlalchemy import ForeignKey,func,CheckConstraint,case
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin,AnonymousUserMixin
+from sqlalchemy.ext.hybrid import hybrid_property
 from . import login_manager
 
 @login_manager.user_loader
@@ -14,9 +15,8 @@ class role(db.Model):  # 角色表
     __table_args__ = {'extend_existing': True}
     __tablename__ = "role"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    role = db.Column(db.String(16), unique=True)
+    role = db.Column(db.String(16), unique=True)    
     
-    default = db.Column(db.Boolean, default=False, index=True)
     permissions = db.Column(db.Integer)
 
     def __init__(self, **kwargs):
@@ -79,12 +79,15 @@ class AnonymousUser(AnonymousUserMixin):
 login_manager.anonymous_user=AnonymousUser
 
 class grade_info(db.Model):  # 年级信息
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "grade_info"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     grade_name = db.Column(db.String(64), unique=True)
     grade_master = db.Column(db.Integer, ForeignKey("user.id"))
-    academic_year =db.Column(db.Date)
-
+    academic_year =db.Column(db.Integer)
+    __table_args__ = (
+        CheckConstraint('year >= 1900 AND year <= 2100', name='check_year'),)
+    
 class class_info(db.Model):
     __tablename__ = "class_info"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -160,7 +163,16 @@ class job(db.Model):  # 作业
     job_class = db.relationship("job_class",  back_populates="job",cascade="all, delete")
     job_detail = db.relationship("job_detail",  back_populates="job",cascade="all, delete")
     job_student = db.relationship("job_student",  back_populates="job",cascade="all, delete")
-    
+
+#数据表abnormal_job用于存储阅卷中的异常卷，如考号未正确识别，或者考号重复，或选择题多选，漏选，或者填空题多填，少填，选择题题目数量与作业不符，填空题题目数量与作业不符等    
+class abnormal_job(db.Model):
+    __tablename__ = "abnormal_job"
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
+    job = db.relationship("job", backref=db.backref("abnormal_job", lazy="dynamic"))
+    reason = db.Column(db.String(64))
+    paper = db.Column(db.String(64))
+    student_id = db.Column(db.String(20),nullable=True)
 
 class job_class(db.Model):
     __table_args__ = {'extend_existing': True}
@@ -197,10 +209,31 @@ class job_student(db.Model):
     job = db.relationship("job", order_by="job.publish_time.desc()",back_populates="job_student")    
     student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)
     stu_ = db.relationship("student", backref=db.backref('job_student', lazy="dynamic", cascade="all, delete"), uselist=False)
+    submit_time=db.Column(db.DateTime)
     select_mark=db.Column(db.Float(precision=2))
     complete_mark=db.Column(db.Float(precision=2))
-    mark=db.column_property(func.coalesce(select_mark, 0) + func.coalesce(complete_mark, 0))
+    @hybrid_property
+    def mark (self):
+        if self.select_mark == None and self.complete_mark == None:
+           return None
+        elif self.select_mark == None and self.complete_mark != None:
+            return self.complete_mark
+        elif self.select_mark != None and self.complete_mark == None:
+            return self.select_mark
+        else:
+            return self.select_mark + self.complete_mark
 
+    @mark.expression
+    def mark (cls):
+        return case (
+            [
+                ((cls.select_mark == None) & (cls.complete_mark == None), None),
+                ((cls.select_mark == None) & (cls.complete_mark != None), cls.complete_mark),
+                ((cls.select_mark != None) & (cls.complete_mark == None), cls.select_mark),
+            ],
+            else_=cls.select_mark + cls.complete_mark
+        )
+    
 class difficult(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     difficult =  db.Column(db.String(32))

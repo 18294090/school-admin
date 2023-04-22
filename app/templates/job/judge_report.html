@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{%block head%}
+{%block title%}<title>阅卷报告</title>{%endblock%}     
+{%endblock%}
+{% block main%}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4"> 
+            <div class="d-flex align-items-center d-none" id="spinners" >
+                <strong>正在阅卷，请稍后...</strong>
+                <div class="spinner-grow spinner-grow-sm ms-auto  text-secondary" role="status" aria-hidden="true"></div>
+                <div class="spinner-grow spinner-grow-sm ms-auto  text-primary" role="status" aria-hidden="true"></div>
+                <div class="spinner-grow spinner-grow-sm ms-auto  text-success" role="status" aria-hidden="true"></div>
+                <div class="spinner-grow spinner-grow-sm ms-auto  text-info" role="status" aria-hidden="true"></div>
+                <div class="spinner-grow spinner-grow-sm ms-auto  text-light" role="status" aria-hidden="true"></div>
+            </div>
+        </div>
+        <div class="col-4"></div>
+    </div>
+    <!--以下为阅卷报告，在card上显示-->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-title"><h4 style="text-align:center">阅卷报告</h4> </div>
+                <div class="card-body">
+                    <div class="row">
+                    <div class="col"><h6 style="color:#9e9e9e">作业名称：</h6><h4><strong id="name"></strong></h4></div>
+                        <div class="col"><h6 style="color:#9e9e9e">本次阅卷：</h6><h4><strong id="s_num"></strong></h4></div>
+                          
+                    </div>
+                    <div class="row">
+                        <div class="col"><h6 style="color:#9e9e9e">总共阅卷：</h6><h4><strong id="t_num"></strong></h4></div>
+                        <div class="col"><h6 style="color:#9e9e9e">异常卷：</h6><h4><strong id="d_num"></strong></h4></p></div>    
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+    </div>
+    <!--以下为异常卷列表-->
+    <br>
+    <div class="row">
+        <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <table class="table table-striped" style="text-align:center">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>序号</th>
+                            <th>异常原因</th>
+                            <th>试卷</th>
+                            <th>学号</th>
+                            <th>处理</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>    
+        </div>
+    </div>
+</div>
+<script  src="/static/build/js/jquery.min.js"></script>
+<script>   
+   //页面载入时，调用阅卷函数，显示spinners，阅卷完成后，隐藏spinners
+    $(document).ready(function(){
+        judge({{id}});
+    });
+    function refresh_table(data,id){
+        var s_num=document.getElementById("s_num");
+        var d_num=document.getElementById("d_num");
+        var t_num=document.getElementById("t_num");
+        var name=document.getElementById("name");
+        name.innerHTML=data["name"];
+        s_num.innerHTML=data["s_num"];
+        d_num.innerHTML=data["d_num"];
+        t_num.innerHTML=data["total"];
+        var tbody=document.getElementById("tbody"); 
+        tbody.innerHTML="";                   
+        for(i=0;i<data["d_num"];i++){
+            tr=document.createElement("tr");
+            td=document.createElement("td");
+            td.innerHTML=i+1;
+            tr.appendChild(td);
+            td=document.createElement("td");
+            td.innerHTML=data["d_list"][i][0];
+            tr.appendChild(td);
+            td=document.createElement("td");
+            a=document.createElement("a");
+            a.href="/static/abnormal_paper/"+String(id)+"/"+String(data["d_list"][i][1]);
+            a.innerHTML=data["d_list"][i][1];
+            td.appendChild(a);
+            tr.appendChild(td);
+            td=document.createElement("td");
+            td.innerHTML=data["d_list"][i][2];
+            tr.appendChild(td); 
+            td = document.createElement("td");
+            //按钮用于处理异常卷，点击该按钮，跳转到处理异常卷的页面
+            button = document.createElement("button");
+            button.className = "btn btn-primary";
+            button.innerHTML = "处理";
+            var url="/job/abnormal/"+String(id)+":"+data["d_list"][i][1].split(".")[0];
+            console.log(url);
+            button.onclick = function(){
+                window.location.href = url;
+            }
+            td.appendChild(button);
+            tr.appendChild(td);
+            tbody.append(tr);
+        }
+    }
+    function judge(id){
+        var data={"judge":id};
+        var csrf_token="{{csrf_token()}}";
+        showSpinners();  // 显示 Spinners
+        $.ajax({
+                url: "/job/judge/"+String(id),    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
+                    hideSpinners();  // 隐藏 Spinners                                          
+                    refresh_table(data,id);
+                },
+                error:function (error) {
+                        hideSpinners();
+                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
+            });
+    };
+    function showSpinners() {
+    $("#spinners").removeClass('d-none');
+    }
+
+    // 隐藏 Spinners
+    function hideSpinners() {
+    $("#spinners").addClass('d-none');
+    } 
+</script>
+{%endblock%}         

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{%block head%}
+{%block title%}<title>异常处理</title>{%endblock%}     
+{%endblock%}
+{%block main%}
+<div class= "container">
+    <div class= "row">
+        <div class= "col-md-6">
+            <!-- 异常试卷图像,图像大小适合屏幕-->
+            <h4>源图像</h4>
+            <img class="img-responsive img-fluid" src= "/static/abnormal_paper/{{job.id}}/{{abnormal.paper}}" alt= "Responsive image">
+        </div>
+        <div class= "col-md-6">
+            <h4>分割后图像</h4>
+            <!-- 异常试卷图像,图像大小适合屏幕，处理后端传来的splits图像列表，分别将其显示出来，splits元素为使用base64得到的图像字符串-->
+            {%for split in splits%}
+            <div class="row">
+            <img class="img-responsive img-fluid" src= "data:image/jpg;base64,{{split}}" alt= "Responsive image">
+            </div>
+            {%endfor%}
+
+
+        </div>
+         <div class= "col-md-4">
+            <!-- 处理异常信息的form -->
+            <div class="card shadow">
+           <form>
+            {%if abnormal.reason in ["学号扫描不正确"]%}
+            <!-- input，用来输入正确的学号 -->
+            <div class="form-group">
+                <label for="InputNum">请输入正确的学号</label>
+                <input type="text" class="form-control" id="InputNum" placeholder="学号">
+            </div>
+            {%endif%}
+            
+            </form> 
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{%endblock%}
