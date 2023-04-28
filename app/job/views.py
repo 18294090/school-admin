@@ -56,12 +56,15 @@ def job_mg():
         
         jobs = job.query.filter(job.subject==current_user.teacher.subject).order_by(job.publish_time.desc()).slice(start,end)
         g=grade_info.query.filter(grade_info.academic_year>=datetime.datetime.now().year).order_by(grade_info.academic_year.desc()).all()      
-    elif  current_user.role.has_permission(Permission.job_publish):        
-        jobs=job.query.join(job_class)\
-            .join(class_info).join(teaching_information)\
-            .filter(job.subject==current_user.teacher.subject)\
-            .filter(or_(job.publisher==current_user.id,teaching_information.teacher_id==current_user.teacher.id))\
-                .order_by(job.publish_time.desc()).slice(start,end)
+    elif  current_user.role.has_permission(Permission.job_publish):
+        try:        
+            jobs=job.query.join(job_class)\
+                    .join(class_info).join(teaching_information)\
+                    .filter(job.subject==current_user.teacher.subject)\
+                    .filter(or_(job.publisher==current_user.id,teaching_information.teacher_id==current_user.teacher.id))\
+                        .order_by(job.publish_time.desc()).slice(start,end)
+        except Exception:
+            return(render_template("404.html",error="没有任教班级"))
     #class__=current_user.teacher.teaching_information.order_by(teaching_information.class_id.asc())   
     pagination = Pagination(page=page, total=len(job.query.all()), bs_version=4, search=search, record_name='job')
     for i in jobs:            
