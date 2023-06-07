@@ -1,96 +1,61 @@
 {% extends "base.html" %}
 {%block title%}<title>作业分析</title>{%endblock%}
 {%block main%}
+<link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
 <div class="container-fluid">
   <!--以下为时间选择器-->
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label for="start-date" class="form-label">请选择开始日期</label>
             <input type="date" id="start-date" class="form-control">
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label for="end-date" class="form-label">请选择结束日期</label>
             <input type="date" id="end-date" class="form-control" >
         </div>
-    </div>
-    <br>
-        <div class="row">
-        <!-- 第一个区域 -->
-         <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col "><h6 style="color:#9e9e9e">应交作业数：</h6><h4><strong>100</strong></h4></div>
-                        <div class="col text-danger"><h6>未交作业数：</h6><h4><strong>98</strong></h4></p></div>
-                        
-                        
-                    </div>
-                    
-                    <p class="card-text">完成率：<div class="progress">
-                        <div class="progress-bar" role="progressbar" style="width: 98%;" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100">98%</div>
-                    </div></p>
-                    
-                </div>
-            </div>
-        </div>
-
-        <!-- 第二个区域 -->
         <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col"><h6 style="color:#9e9e9e">最高正确率：</h6><h4><strong>100</strong></h4></div>
-                        <div class="col"><h6 style="color:#9e9e9e">最低正确率：</h6><h4><strong>98</strong></h4></p></div>
-                        
-                        
-                    </div>
-                    
-                    <p class="card-text">平均正确率：<div class="progress">
-                        <div class="progress-bar" role="progressbar" style="width: 98%;" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100">98%</div>
-                    </div></p>
-                    
-                </div>
-            </div>
+           
         </div>
-
-        <!-- 第三个区域 -->
-         <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col "><h6 style="color:#9e9e9e">客观题得分率：</h6><h4><strong>100</strong></h4></div>
-                        <div class="col"><h6 style="color:#9e9e9e">主观题得分率：</h6><h4 ><strong>98</strong></h4></p></div>                       
-                    </div>
-                </div>
-            </div>
-        </div>         
     </div>
     <br>
-    <!-- 第二行 -->
-     <div class="row"> 
-        <div class="col-md-6">
+    <div class="row">
+        <!-- 第一个区域 -->
+        <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-body">
-                    <div class="row">
-                    <div class="col "><h6 style="color:#9e9e9e">不同难度正确率：</h6></div>
-                        
-                    </div>
-                    
-                   
-                    
+                <div class="card-body" id="bar" style="align-self: center;">
+                    {{chart|safe}}                    
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-body">
+                <div class="card-body " style="align-self: center">
+                    <!--右上角有一个select，用于选择班级-->
                     <div class="row">
-                        <div class="col"><h6 style="color:#9e9e9e">近期作业情况：</h6></div>
+                        <div class="col-md-9">
+                        </div>
+                        <div class="col-md-2 ">
+                            <label for="class" class="form-label">请选择班级</label>
+                            <select class="form-select" id="class">
+                                <option selected value="">全部</option>
+                                {%for i in classes%}
+                                <option value="{{i.id}}">{{i.class_name}}</option>
+                                {%endfor%}
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-bottom " style="align-self: right;" >
+                            
+                            
+                           <button type ='button' class="btn  text-nowrap btn-sm visually-hidden" id="btn1" ><i class="bi-file-earmark-person" style="font-size: 1rem; ">学生个人作业统计</i></button>
+                        </div>
                         
                     </div>
-                    
-                   
-                    
+                    <div class="row" id="line" >
+                     {{chart2|safe}}
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,9 +71,80 @@
     today.setDate(today.getDate() - 7);
     todayStr = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0") + "-" + today.getDate().toString().padStart(2, "0");
     document.getElementById("start-date").value = todayStr;
+    // 为日期选择器绑定change事件，当日期发生变化时，使用ajax技术，用post方法向服务器发送开始时间start和和结束时间end，获取数据
+    
+
+
 </script>
+<script src={{url_for('static',filename="build/js/echarts.min.js")}}></script>
 <script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
-<script type="text/javascript" src="/static/build/js/moment-with-locales.js"></script>
-<script type="text/javascript" src="/static/build/js/tempusdominus-bootstrap-4.min.js" ></script>                                           
-<link rel="stylesheet" href="/static/build/css/tempusdominus-bootstrap-4.min.css"/>	
+<script>
+    
+// Bind change event to date pickers
+$('#start-date, #end-date').change(function() {
+    // Get selected start and end dates
+    let startDate = $('#start-date').val();
+    let endDate = $('#end-date').val();
+    let id=$('#class').val();
+    //csrf_token
+    let csrf_token = "{{ csrf_token() }}";
+    // Send POST request to server with start and end dates
+    $.ajax({
+        type: 'POST',
+        url: '/job/job_analyse',
+        headers: {
+            'X-CSRFToken': csrf_token
+        },
+        data: {
+            start: startDate,
+            end: endDate,
+            id:id
+        },
+        success: function(data) {
+           //后台返回的是网页，将网页中的id为bar的div的内容替换为后台返回的内容中id为bar的div的内容
+            $('#bar').html($(data).find('#bar').html());
+            $('#line').html($(data).find('#line').html());
+            
+
+        },
+        error: function() {
+            console.log('Error retrieving data');
+        }
+    });
+});
+//班级选择器，当选择班级时，向后台发送班级id，后台返回的是网页，将网页中的id为line的div的内容替换为后台返回的内容中id为line的div的内容
+$(document).on('change', "#class", function(){
+    let startDate = $('#start-date').val();
+    let endDate = $('#end-date').val();
+    let id=$('#class').val();
+    let csrf_token = "{{ csrf_token() }}";
+    //如果id的值为空，则删除btn对象的的visually-hidden类，否则添加visually-hidden类
+    if(id==''){
+        $('#btn1').addClass('visually-hidden');        
+    }else{
+        $('#btn1').removeClass('visually-hidden');
+         //给btn1对象添加onclick属性，当点击btn时，跳转到job/class/id页面
+        $('#btn1').attr('onclick',"location.href='/job/class/"+id+"'");
+    }
+    $.ajax({
+        type: 'POST',
+        url: '/job/job_analyse',
+        headers: {
+            'X-CSRFToken': csrf_token
+        },
+        data: {
+            start:startDate,
+            end:endDate,
+            id:id
+        },
+        success: function(data) {
+            $('#line').html($(data).find('#line').html());
+        },
+        error: function() {
+            console.log('Error retrieving data');
+        }
+    });
+})
+
+</script>
 {%endblock%}

@@ -1,2 +1,167 @@
 {% extends "base.html" %}
-{%block title%}<title>{{class_.class_name}}作业情况统计</title>{%endblock%}
+{%block title%}<title>{{class_.class_name}}学生作业情况</title>{%endblock%}
+{%block main%}
+<link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
+<div class="container-fluid">
+ <!--以下为时间选择器-->
+    <div class="row">
+        <div class="col-md-4">
+            <label for="start-date" class="form-label">请选择开始日期</label>
+            <input type="date" id="start-date" class="form-control">
+        </div>
+        <div class="col-md-4">
+            <label for="end-date" class="form-label">请选择结束日期</label>
+            <input type="date" id="end-date" class="form-control" >
+        </div>
+        <!--以下为应交作业数，垂直靠下显示-->
+
+        <div class="col-md-4" style="align-self: flex-end;">
+        <h3>
+           <label for="jobs" class="form-label">时段内应交作业数：</label>
+            <span id="jobs">{{jobs}}</span>
+          </div>
+         </h3>
+    </div>
+    <br>
+    <!--以下为作业情况-->
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped table-hover" id="table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>未交作业</th>
+                        <th>完成率</th>
+                        <th>作业得分率</th>                       
+                    </tr>
+                </thead>
+                <tbody id="tbody">
+                    <!--df为后台传来的dataframe对象，包含name列，应交作业，未交作业，作业得分率-->
+                    {%for index,row in df.iterrows()%}
+                    <tr onclick="personal('{{row["number"]}}')">
+                        <td>{{loop.index}}</td>                        
+                        <td>{{row["number"]}}</td>
+                        <td>{{row["name"]}}</td>
+                        <td>{{row["未交作业"]}}</td>
+                        <!--完成率=（应交作业-未交作业）/应交作业,使用bootstrap5进度条显示完成率-->
+                        <td>
+                            <div class="progress">{%if jobs!=0%}
+                                {%set rate=(jobs-row["未交作业"])/jobs*100%}
+                                {%else%}
+                                {%set rate=0%}
+                                {%endif%}
+                                <div class="progress-bar {%if rate>90%}bg-success{%elif rate>80%}bg-info{%elif rate>70%}bg-warnning{%else%}bg-danger{%endif%}" role="progressbar" style="width: {{rate}}%;" aria-valuenow="{{rate}}" aria-valuemin="0" aria-valuemax="100">{{rate|round(1) }}%</div>
+                            </div>
+                        </td>
+                        <td>{{row["平均得分率"]}}</td>
+                    </tr>
+                    {%endfor%}
+                </tbody>
+            </table>
+        </div>
+        <!--以下为bootstrap modal,大小为800*600-->
+
+
+        <div class="modal modal-xl  " tabindex="-1" >
+            <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">个人作业详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" >
+                <div id="chart"></div>
+                </div>
+                <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+            </div>
+        </div>
+</div>
+<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+<script src={{url_for('static',filename="build/js/echarts.min.js")}}></script>
+
+<script>
+let today = new Date();
+// 格式化为yyyy-mm-dd的字符串
+let todayStr = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0") + "-" + today.getDate().toString().padStart(2, "0");
+// 将当前日期赋值给日期选择器
+document.getElementById("end-date").value = todayStr;
+// 将当前日期的前7天赋值给日期选择器
+today.setDate(today.getDate() - 7);
+todayStr = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0") + "-" + today.getDate().toString().padStart(2, "0");
+document.getElementById("start-date").value = todayStr;
+// 为日期选择器绑定change事件，当日期发生变化时，使用ajax技术，用post方法向服务器发送开始时间start和和结束时间end，获取数据
+   
+// Bind change event to date pickers
+$('#start-date, #end-date').change(function() {
+    // Get selected start and end dates
+    let startDate = $('#start-date').val();
+    let endDate = $('#end-date').val();    
+    //csrf_token
+    let csrf_token = "{{ csrf_token() }}";
+    // Send POST request to server with start and end dates
+    $.ajax({
+        type: 'POST',
+        url: '/job/class/'+{{class_.id}},
+        headers: {
+            'X-CSRFToken': csrf_token
+        },
+        data: {
+            start: startDate,
+            end: endDate,
+
+        },
+        success: function(data) {
+           //后台返回的是网页，将网页中的id为bar的div的内容替换为后台返回的内容中id为bar的div的内容
+            $('#table').html($(data).find('#table').html());
+            $('#jobs').html($(data).find('#jobs').html());
+        },
+        error: function() {
+            console.log('Error retrieving data');
+        }
+    });
+});    
+
+function personal(number){
+    $('.modal').modal('show');
+    //使用ajax技术，向后台发送学号，获取该学生的作业情况
+    let csrf_token = "{{ csrf_token() }}";
+    
+    $.ajax({
+        type: 'POST',
+        url: '/job/personal/'+number,
+       
+        headers: {
+            'X-CSRFToken': csrf_token
+        },
+        data: {
+            start: $('#start-date').val(),
+            end: $('#end-date').val(),
+        },
+        
+        success: function(data) {
+            $('#modal-title').html("从 "+$('#start-date').val()+' 到 '+$('#end-date').val());
+            //后台返回data为pyecharts图表的对象将图表渲染到modal中
+                $(".modal-body").html(data);
+                let chartdiv=document.getElementById('chart');
+                let line = echarts.init(chartdiv);
+                line.setOption(JSON.parse(data));
+                line.resize();
+
+           
+           
+            
+        },
+        error: function() {
+            console.log('Error retrieving data');
+        }
+    });
+}
+</script>
+
+{%endblock%}

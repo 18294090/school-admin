@@ -15,7 +15,7 @@ from ..decorators import permission_required
 import json
 from werkzeug.utils import secure_filename
 import shutil
-from pyecharts.charts import Bar,Pie,HeatMap
+from pyecharts.charts import Bar,Pie,HeatMap,Line
 from pyecharts import options as opts
 from collections import defaultdict
 from pyecharts.globals import SymbolType
@@ -284,7 +284,7 @@ def job_info(job_id):
     #c_mark是列表，求c_mark的和
     c_sum=sum(c_mark)
     sum_=job_.select*job_.s_m+c_sum
-    f = len([j.select_mark for j in jobs if j.select_mark==None])
+    f = len([j.mark for j in jobs if j.select_mark==None])
     class_names = [data.class_info.class_name for data in cla]
     max_scores = [data.max for data in cla]
     min_scores = [data.min for data in cla if data !=None]
@@ -300,7 +300,7 @@ def job_info(job_id):
             markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="《{}》各班级分数对比".format(job_.job_name)),
+            title_opts=opts.TitleOpts(title="《{}》".format(job_.job_name)),
             tooltip_opts=opts.TooltipOpts(trigger="axis"),
             xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-15)),
             yaxis_opts=opts.AxisOpts(min_=0, max_=sum_),
@@ -352,7 +352,7 @@ def job_info(job_id):
             b=0
             for i in range(len(similarity)):
                 for j in range(i+1,len(similarity)):
-                    if similarity.iloc[i,j]>0.98:
+                    if similarity.iloc[i,j]>0.99:
                         similar_pairs.append([a,b,similarity.iloc[i,j]])
                         x.append(js[similarity.index[i]][1])
                         y.append(js[similarity.columns[j]][1])
@@ -398,82 +398,93 @@ def show_file(filename):
 @login_required 
 @permission_required(Permission.job_publish)
 def create_paper():
-    if request.method == "POST":
-        flag=request.form.get("flag")
-        if flag=="1":
-            title=request.form.get("title")
-            if job.query.filter(job.job_name==title).first():
-                return("已存在该作业")
-            number = request.form.get("number")
-            select = request.form.get("select")
-            subtopic =request.form.get("subtopic")
-            subtopic=json.loads(subtopic)
-            c_mark=json.loads(request.form.get("c_mark"))            
-            teacher = current_user.realname
-            publish_time=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
-            publisher=current_user.id            
-            file=request.files.get("file")            
-           #deadline =datetime.datetime.strptime(deadline,"/%Y/%m/%d")             
-            g=request.form.get("grade") 
-            g=json.loads(g)           
-            if current_user.role.has_permission(Permission.job_publish): 
-                teacher = current_user.teacher.id
-                subject=current_user.teacher.subject
-            s_answer=request.form.get("answers")            
-            tags=request.form.get("tags")
-            tags=json.loads(tags)
-            r=creat_paper.paper(subject,current_user.realname,2000,title,int(select),subtopic)
-            url =str(teacher)+"-"+str(time.time())+".png"
-            path=os.path.join(os.getcwd(),"app","static","paper","excercise",url)
-            data={}
-            data["status"]=0
-            if not r[-1]:
-                data["status"]=1                
-                data["1"]="生成答题卡失败，题目过多，超出卷面"
-                return(data)                  
-            r[1].save(path) 
-            path=os.path.join(os.getcwd(),"app","static","paper","question_paper",subject) 
-            if not os.path.exists(path): 
-                os.makedirs(path)            
-            file_ext = file.filename.rsplit('.', 1)[1] # 获取文件扩展名
-            filename = title +"."+ file_ext
-            path=os.path.join(path,filename)
-            file.save(path)
-            job_submit = job(job_name=title,publish_time=publish_time,publisher=publisher,question_paper=filename,subject=subject,select_answer=s_answer,context=json.dumps(tags),paper_url=url,s_m=int(number),complete=json.dumps(c_mark),line=json.dumps(r[0]),select=int(select))
-            db.session.add(job_submit)
-            db.session.flush()
-            path=os.path.join(os.getcwd(),"app","static","answer",str(job_submit.id))
-            path1=os.path.join(os.getcwd(),"app","static","job_readed",str(job_submit.id))
-            if not os.path.exists(path):
-                os.makedirs(path)
-            if not os.path.exists(path1):
-                os.makedirs(path1)
-            if g:
-                class_list=db.session.query(class_info).join(grade_info).filter(grade_info.id.in_(g)).filter(class_info.attribute=="行政班").all()    
-            else:          
-                class_list=db.session.query(class_info).filter(class_info.id.in_(json.loads(request.form.get("classlist")))).all()
-            print(json.loads(request.form.get("classlist")))
-            if class_list:  # 作业布置 
-                for i in class_list:                    
-                    check_job=job_class.query.join(job,job_class.job).filter(job.job_name==title,job_class.class_id==i.id,job.subject==current_user.teacher.subject).first()  #避免重复布置相同作业
-                    if check_job:
-                        data["status"]+=1
-                        data["%s" %data["status"]]="%s班已经有名为《%s》的作业！" %(check_job.class_info.class_name,title)
-                    else:
-                        job_publish = job_class(class_id=i.id,job_id=job_submit.id)
-                        db.session.add(job_publish)
-                        db.session.flush()
-                        for j in i.students:
-                            j_stu=job_student(job_id=job_submit.id,student=j.number)
-                            db.session.add(j_stu)
-                            db.session.flush()
-                db.session.commit()
-            else:
-                db.session.commit()
-                data["status"]+=1
-                data["%s" %data["status"]]="没有设置班级"
-            data["url"]="/static/paper/excercise/"+url
+    data={}
+    data["status"]=0
+    if request.method == "POST":        
+        title=request.form.get("title") 
+               
+        if job.query.filter(job.job_name==title).first():
+            
+            
+            data["status"]+=1
+            data["%s" %data["status"]]="已存在该作业"
             return(data)
+        number = request.form.get("number")        
+        select = request.form.get("select")
+        subtopic =request.form.get("subtopic")
+        subtopic=json.loads(subtopic)
+        c_mark=json.loads(request.form.get("c_mark"))            
+        teacher = current_user.realname
+        publish_time=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
+        publisher=current_user.id            
+        file=request.files.get("file")            
+        #deadline =datetime.datetime.strptime(deadline,"/%Y/%m/%d")             
+        g=request.form.get("grade") 
+        g=json.loads(g)
+        print(g,title)
+                  
+        if current_user.role.has_permission(Permission.job_publish): 
+            teacher = current_user.teacher.id
+            subject=current_user.teacher.subject
+        s_answer=request.form.get("answers")            
+        tags=request.form.get("tags")
+        tags=json.loads(tags)
+        r=creat_paper.paper(subject,current_user.realname,2000,title,int(select),subtopic)
+        url =str(teacher)+"-"+str(time.time())+".png"
+        path=os.path.join(os.getcwd(),"app","static","paper","excercise",url)       
+        
+        if not r[-1]:
+            data["status"]=1                
+            data["1"]="生成答题卡失败，题目过多，超出卷面"
+            return(data)                  
+        r[1].save(path) 
+        path=os.path.join(os.getcwd(),"app","static","paper","question_paper",subject) 
+        if not os.path.exists(path): 
+            os.makedirs(path)            
+        file_ext = file.filename.rsplit('.', 1)[1] # 获取文件扩展名
+        filename = title +"."+ file_ext
+        path=os.path.join(path,filename)
+        file.save(path)
+        job_submit = job(job_name=title,publish_time=publish_time,publisher=publisher,question_paper=filename,subject=subject,select_answer=s_answer,context=json.dumps(tags),paper_url=url,s_m=int(number),complete=json.dumps(c_mark),line=json.dumps(r[0]),select=int(select))
+        db.session.add(job_submit)
+        db.session.flush()
+        path=os.path.join(os.getcwd(),"app","static","answer",str(job_submit.id))
+        path1=os.path.join(os.getcwd(),"app","static","job_readed",str(job_submit.id))
+        if not os.path.exists(path):
+            os.makedirs(path)
+        if not os.path.exists(path1):
+            os.makedirs(path1)
+        if g:
+            class_list=db.session.query(class_info).join(grade_info).filter(grade_info.id.in_(g)).filter(class_info.attribute=="行政班").all()    
+        else:          
+            class_list=db.session.query(class_info).filter(class_info.id.in_(json.loads(request.form.get("classlist")))).all()
+        print(json.loads(request.form.get("classlist")))
+        if class_list:  # 作业布置 
+            for i in class_list:                    
+                check_job=job_class.query.join(job,job_class.job).filter(job.job_name==title,job_class.class_id==i.id,job.subject==current_user.teacher.subject).first()  #避免重复布置相同作业
+                if check_job:
+                    data["status"]+=1
+                    data["%s" %data["status"]]="%s班已经有名为《%s》的作业！" %(check_job.class_info.class_name,title)
+                else:
+                    job_publish = job_class(class_id=i.id,job_id=job_submit.id)
+                    db.session.add(job_publish)
+                    db.session.flush()
+                    for j in i.students:
+                        j_stu=job_student(job_id=job_submit.id,student=j.number)
+                        db.session.add(j_stu)
+                        db.session.flush()
+            
+        else:
+            
+            data["status"]+=1
+            data["%s" %data["status"]]="没有设置班级"
+        data["url"]="/static/paper/excercise/"+url
+        db.session.commit()
+        
+    else:
+        data["status"]+=1
+        data["%s" %data["status"]]="没有提交作业数据"
+    return(data)
 
 @job_manage.route("/genarate_paper",methods=["POST","GET"])  #
 @login_required 
@@ -550,7 +561,7 @@ def job_judge(id):
     if not os.path.exists(abnormal_path):
         os.makedirs(abnormal_path)
     for dirpath, dirnames, filenames in os.walk(root): #遍历答题卷文件夹阅卷
-        try:
+        #try:
             for filepath in filenames:
                 ep=judge.open2(os.path.join(dirpath, filepath))
                 ep=judge.paper_ajust(img,ep)
@@ -582,13 +593,14 @@ def job_judge(id):
                         db.session.add(abnormal1)
                         db.session.flush()
                         continue"""
-                    s=judge.check_select(split[1],select) #选择题阅卷
+                    if job_.select!=0:
+                        s=judge.check_select(split[1],select) #选择题阅卷
                     if len(s)<select:
-                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
-                        abnormal=abnormal_job(job_id=id,reason="选择题扫描不正确",paper=filepath,student_id=number)
+                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),number+".jpg"))
+                        abnormal=abnormal_job(job_id=id,reason="选择题扫描不正确",paper=number+".jpg",student_id=number)
                         db.session.add(abnormal)
                         db.session.flush()
-                    se=0           
+                    se=0
                     for key in s:
                         if key>len(answers):
                             continue
@@ -626,9 +638,9 @@ def job_judge(id):
                     abnormal=abnormal_job(job_id=id,reason="该学生没有本作业任务",paper=filepath,student_id=number)
                     db.session.add(abnormal)
                     db.session.flush()
-        except Exception as e:
-            print(e)
-            return("阅卷失败，联系管理员")
+        #except Exception as e:
+            #print(e)
+            #return("阅卷失败，联系管理员")
     j_cla=job_class.query.filter(job_class.job_id==int(id)).all()  #阅卷完成后统计作业情况，查询被布置了此作业的所有班级
     #分别统计每个班的作业情况，包括提交人数，平均分，最高分，最低分，标准差
     for j in j_cla:
@@ -688,8 +700,7 @@ def cpl_judge():
                 .filter(class_info.id==teaching_information.class_id)\
                 .filter(teaching_information.teacher_id==current_user.teacher.id)\
                 .filter(job_detail.serial_No>select,job_detail.mark==None)\
-                .first()
-        
+                .order_by(job_detail.serial_No).first()
         if j_detail:
             print(j_detail.student)
             paper =os.path.join(os.getcwd(),"app","static","job_readed",str(id),j_detail.student+".jpg")
@@ -707,7 +718,6 @@ def cpl_judge():
                 response = {'image': img_b64,'No':j_detail.serial_No,'mark':json.loads(j.complete)[j_detail.serial_No-j.select-1],'id':j_detail.id,'name':stu}
                 response['Content-Type'] = 'image/png'
                 return jsonify(response)
-                             
             else:
                 paper1=os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),j_detail.student+".jpg")
                 if os.path.exists(paper1):
@@ -837,7 +847,86 @@ def func1():
 @login_required
 @permission_required(Permission.job_publish)
 def job_analyse():
-    return render_template("job/job_analyse.html")
+    t_info=teaching_information.query.join(class_info).filter(teaching_information.teacher_id==current_user.teacher.id).all()
+    classes=[c.class_info for c in t_info]
+    end=datetime.date.today()
+    start=end-datetime.timedelta(days=7)
+    id=None
+    if request.method=="POST":
+        start=request.form.get("start")
+        end= request.form.get("end")
+        id = request.form.get("id")
+        print(start,end,id)
+    #job_class表中，存储了某班级，某作业的情况，包括作业的平均分，标准差，完成率，找出时间段内，所任教班级的任教学科作业的平均分，完成率，标准差，以pyecharts柱形图呈现
+    class_names = [c.class_name for c in classes]
+    avg_scores=[]
+    completion_rates=[]
+    std_devs=[]
+    for i in classes:
+        job_classes = job_class.query.join(job).filter(job_class.class_id==i.id,job.subject==current_user.teacher.subject,job_class.date.between(start,end)).all()
+        if job_classes:
+            avg_scores.append(round(sum([c.average/job.query.filter(job.id==c.job_id).first().total for c in job_classes])/len(job_classes)*100,2))
+            completion_rates.append(round(sum([c.submit_number/len(class_student.query.filter(class_student.class_id==c.class_id).all()) for c in job_classes])/len(job_classes)*100,2))
+            std_devs.append(round(sum([c.std for c in job_classes])/len(job_classes),2))
+        else:
+            avg_scores.append(0)
+            completion_rates.append(0)
+            std_devs.append(0)
+    bar = (
+        Bar()
+        .add_xaxis(class_names)
+        .add_yaxis("平均得分率", avg_scores)
+        .add_yaxis("完成率", completion_rates)
+        .add_yaxis("标准差", std_devs)
+        .set_global_opts(title_opts=opts.TitleOpts(title="班级作业对比")) 
+        #x轴的数据旋转角度
+    )
+    #查找出所有在所选时间段内，布置给所任教班级的所任教学科的作业，布置时间数据在job_class表date字段中，job_class数据表为作业布置数据表,以布置时间排序
+     
+    jobs=job.query.join(job_class).filter(job_class.class_id.in_([c.id for c in classes]),job.subject==current_user.teacher.subject,job_class.date.between(start,end)).order_by(job_class.date).all()
+    #将作业的平均分，完成率，标准差，以pyecharts折线图呈现
+    job_names=[j.job_name for j in jobs]
+    avg_scores=[]
+    completion_rates=[]
+    std_devs=[]
+    for j in jobs:
+        if id:#如果前端传来了班级id，则统计该班级的作业信息，否则，统计所有班级的作业信息
+            job_class_=job_class.query.filter(job_class.job_id==j.id,job_class.class_id==int(id)).first()
+            if job_class_:
+                avg_scores.append(round(job_class_.average/j.total*100,2))
+                completion_rates.append(round(job_class_.submit_number/len(class_student.query.filter(class_student.class_id==job_class_.class_id).all())*100,2))
+                std_devs.append(round(job_class_.std,2))
+            else:   
+                avg_scores.append(0)
+                completion_rates.append(0)
+                std_devs.append(0)
+        else:
+            job_classes=job_class.query.filter(job_class.job_id==j.id).all()
+            if job_classes:
+                if sum([c.submit_number for c in job_classes]):
+                    avg_scores.append(round(sum([c.average/j.total*c.submit_number for c in job_classes])/sum([c.submit_number for c in job_classes])*100,2))               
+                    completion_rates.append(round(sum([c.submit_number for c in job_classes] )/sum([len(class_student.query.filter(class_student.class_id==c.class_id).all()) for c in job_classes])*100,2))
+                    std_devs.append(round(sum([c.std for c in job_classes])/len(job_classes),2))
+                else:
+                    completion_rates.append(0)
+                    avg_scores.append(0)
+                    std_devs.append(0)
+            else:
+                avg_scores.append(0)
+                completion_rates.append(0)
+                std_devs.append(0)
+    
+    line = (
+        Line( )#图表宽度为页面的一半
+        .add_xaxis(job_names)
+        .add_yaxis("平均得分率", avg_scores)
+        .add_yaxis("完成率", completion_rates)
+        .add_yaxis("标准差", std_devs)
+        .set_global_opts(title_opts=opts.TitleOpts(title="所选时段内作业情况变化趋势图"),xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-15)),)
+        
+    )
+
+    return render_template("job/job_analyse.html", classes=classes, chart=bar.render_embed(),chart2=line.render_embed())
 
 @job_manage.route("/modify_mark/<id>",methods=["POST","GET"]) #修改选择题成绩，当选择题分数设置错误，需要整体修改时运行该函数
 @login_required
@@ -891,7 +980,6 @@ def modify(id):
         path=os.path.join(os.getcwd(),"app/static/abnormal_paper",str(id),a.paper)
         print(path)
         if os.path.exists(path):
-            
             if a.student_id:
                 os.rename(path,os.path.join(os.getcwd(),"app/static/abnormal_paper",str(id),a.student_id+".jpg"))
                 a.paper=a.student_id+".jpg"
@@ -900,3 +988,79 @@ def modify(id):
     db.session.commit()
     return(str(n))
         
+@job_manage.route("/class/<id>",methods=["POST","GET"]) #将异常卷的文件名以学号命名
+@login_required
+@permission_required(Permission.job_publish)
+def student_info(id):
+    end=datetime.datetime.now()
+    start=end-datetime.timedelta(days=7)
+    if request.method=="POST":
+        start=request.form.get("start")
+        end=request.form.get("end")        
+    t_info=teaching_information.query.filter(teaching_information.class_id==id,teaching_information.teacher_id==current_user.teacher.id).first()
+    if not t_info:
+        return("您没有权限查看该班级的学生信息")
+    class_=db.session.query(class_info).filter(class_info.id==id).first()
+    stu=student.query.join(class_student,student.id==class_student.student_id).filter(class_student.class_id==id).all()
+    #查找时间段内,所任教学科布置给该班级的学生的作业
+    job_=job.query.join(job_class).filter(job.subject==current_user.teacher.subject,job_class.class_id == id,job_class.date.between(start,end)).all()
+    table=[]
+    for s in stu:
+        dict={}
+        dict["name"]=s.name
+        dict["number"]=s.number
+        dict["未交作业"]=job_student.query.filter(job_student.job_id.in_([i.id for i in job_]),job_student.student==s.number,job_student.mark==None).count()
+        #平均得分率为每个作业的得分，除以该作业的总分，再求平均值，每个作业的总分在job表中的total字段
+        scores = []
+        for j in job_:
+            job_student_ = job_student.query.filter(job_student.job_id==j.id, job_student.student==s.number).first()
+            if job_student_.mark and j.total:
+                scores.append(job_student_.mark / j.total)
+        dict["平均得分率"] = round(sum(scores) / len(scores)*100,2) if scores else 0
+        table.append(dict)
+    df=pd.DataFrame(table)
+    #根据平均得分率降序排序
+    df=df.sort_values(by="平均得分率",ascending=False)
+    return(render_template("/job/class.html",class_=class_,df=df,jobs=len(job_)))
+
+@job_manage.route("/personal/<number>",methods=["POST","GET"]) 
+@login_required
+@permission_required(Permission.job_publish)
+def student_charts(number):
+    start=datetime.datetime.now()-datetime.timedelta(days=7)
+    end=datetime.datetime.now()
+    if request.method=="POST":
+        start=request.form.get("start")
+        end=request.form.get("end")
+    #查找学生所处班级    
+    class_=class_info.query.join(class_student).join(student).filter(student.number==number).first()
+    job_=job.query.join(job_class).filter(job.subject==current_user.teacher.subject,job_class.class_id == class_.id,job_class.date.between(start,end)).all()
+    job_names=[j.job_name for j in job_]
+    scores=[]
+    average=[]
+    name=student.query.filter(student.number==number).first().name
+    for j in job_:
+        job_student_=job_student.query.filter(job_student.job_id==j.id,job_student.student==number).first()
+        if job_student_.mark:
+            scores.append(round(job_student_.mark/j.total*100,2))            
+        else:
+            scores.append(0)
+        job_class_=job_class.query.filter(job_class.job_id==j.id,job_class.class_id==class_.id).first()            
+        average.append(round(job_class_.average/j.total*100,2))
+    line=(Line( init_opts=opts.InitOpts(width="100%", height="500px"))
+        .add_xaxis(job_names)
+        .add_yaxis("得分率",scores)
+        .add_yaxis("班级平均得分率",average)
+        .set_global_opts(title_opts=opts.TitleOpts(title=name+"作业得分情况"),toolbox_opts=opts.ToolboxOpts(),
+        xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-20)),
+            yaxis_opts=opts.AxisOpts(min_=0, max_=100)
+        )
+        )            
+    #line图表渲染，通过ajax传送给前
+    return (line.render_embed())
+
+@job_manage.route("/test",methods=["POST","GET"]) 
+@login_required
+@permission_required(Permission.job_publish)
+def test():
+    return(render_template("/job/paper.html"))

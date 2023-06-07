@@ -120,10 +120,15 @@ def paper_split(dst,s_n,line):
     select=dst[43*n:43*n+(s_n+3)//4*2*n,6*n:77*n]
     c=[]
     for i in range(len(line)-1):
-        c.append(dst[line[i]*n:line[i+1]*n,n*6:n*50])
+        c.append(dst[line[i]*n:line[i+1]*n,n*6:n*70])
     return(num,select,c)
 
 def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号：选项} 
+    pnt1=[]
+    pnt={}
+    #如果dst为空图像，返回一个空字典
+    if dst.shape[0]==0:
+        return(pnt)    
     s=pict(dst)
     cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     """dst=cv2.drawContours(dst, cnts, -1, (0, 0, 255), 3)
@@ -131,7 +136,6 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
     cv2.imshow("2",dst)
     cv2.waitKey(0)
     cv2.destroyAllWindows()"""
-    pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)
         if area>1000:
@@ -139,7 +143,7 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
             pnt1.append((cx, cy))
-    pnt={}
+    
     ans=["A","B","C","D"]
     for i in pnt1:
         row=int((i[1]//n+1)/2)
