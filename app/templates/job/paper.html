@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_field %}
+{%block title%}
+<TITLE>作业</TITLE>
+<style>
+    .card {
+      width: 210mm; /* A4纸的尺寸 */
+      height: 297mm;
+      margin: 0 auto;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+  
+    .black-square {
+      width: 5.12mm;
+      height: 5.12mm;
+      background-color: #000;
+      margin: 5.12mm;
+    }
+   
+  </style>
+{%endblock%}
+{% block main%}
+<link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
+<!DOCTYPE html>
+
+<body>
+<div class='container'>
+  <div class='row'>
+    <div class="card d-flex flex-column col-8">
+    <!--以下为bootstrap自适应图片-->
+     <img class=
+
+
+    </div>    
+    <div class="form-container col">
+    <!-- 右边的表单内容 -->
+
+    </div>
+  </div>
+</div>  
+</body>
+
+{%endblock%}
