@@ -39,9 +39,9 @@ def pict(gray):  # 图像处理，二值化
     # 二值化处理
     _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    binary_erosion =cv2.erode(thresh, kernel,iterations=2)
+    binary_erosion =cv2.erode(thresh, kernel,iterations=2)#腐蚀
     binary_dilation =cv2.dilate(binary_erosion, kernel,iterations=4)    
-    # 形态学操作，去除噪点和细节，填充小的白色区域    
+    # 形态学操作，去除噪点和细节，填充小的白色区域
     opening = cv2.morphologyEx(binary_dilation, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
     return(closing)
@@ -90,10 +90,7 @@ def find_corners(img):
 
 def number_pos(pic): #识别号码
     img=pict(pic)
-    """cv2.namedWindow("2",cv2.WINDOW_NORMAL)
-    cv2.imshow("2",img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()"""
+    
     cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    
     pnt1=[]
     for cnt in cnts:
@@ -120,7 +117,6 @@ def number_pos(pic): #识别号码
 #矫正完成后，对画面进行切割，分别切割出考号填涂区，选择题区，和非选择题区
 def paper_split(dst,s_n,line):
     num=dst[16*n:36*n,27*n:67*n]
-    
     select=dst[43*n:43*n+(s_n+3)//4*2*n,6*n:77*n]
     c=[]
     for i in range(len(line)-1):
@@ -130,6 +126,11 @@ def paper_split(dst,s_n,line):
 def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号：选项} 
     s=pict(dst)
     cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    """dst=cv2.drawContours(dst, cnts, -1, (0, 0, 255), 3)
+    cv2.namedWindow("2",cv2.WINDOW_NORMAL)
+    cv2.imshow("2",dst)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""
     pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)

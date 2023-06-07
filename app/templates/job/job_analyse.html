@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{%block title%}<title>作业分析</title>{%endblock%}
+{%block main%}
+<div class="container-fluid">
+  <!--以下为时间选择器-->
+    <div class="row">
+        <div class="col-md-6">
+            <label for="start-date" class="form-label">请选择开始日期</label>
+            <input type="date" id="start-date" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label for="end-date" class="form-label">请选择结束日期</label>
+            <input type="date" id="end-date" class="form-control" >
+        </div>
+    </div>
+    <br>
+        <div class="row">
+        <!-- 第一个区域 -->
+         <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col "><h6 style="color:#9e9e9e">应交作业数：</h6><h4><strong>100</strong></h4></div>
+                        <div class="col text-danger"><h6>未交作业数：</h6><h4><strong>98</strong></h4></p></div>
+                        
+                        
+                    </div>
+                    
+                    <p class="card-text">完成率：<div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 98%;" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100">98%</div>
+                    </div></p>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二个区域 -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col"><h6 style="color:#9e9e9e">最高正确率：</h6><h4><strong>100</strong></h4></div>
+                        <div class="col"><h6 style="color:#9e9e9e">最低正确率：</h6><h4><strong>98</strong></h4></p></div>
+                        
+                        
+                    </div>
+                    
+                    <p class="card-text">平均正确率：<div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 98%;" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100">98%</div>
+                    </div></p>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- 第三个区域 -->
+         <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col "><h6 style="color:#9e9e9e">客观题得分率：</h6><h4><strong>100</strong></h4></div>
+                        <div class="col"><h6 style="color:#9e9e9e">主观题得分率：</h6><h4 ><strong>98</strong></h4></p></div>                       
+                    </div>
+                </div>
+            </div>
+        </div>         
+    </div>
+    <br>
+    <!-- 第二行 -->
+     <div class="row"> 
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row">
+                    <div class="col "><h6 style="color:#9e9e9e">不同难度正确率：</h6></div>
+                        
+                    </div>
+                    
+                   
+                    
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col"><h6 style="color:#9e9e9e">近期作业情况：</h6></div>
+                        
+                    </div>
+                    
+                   
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ <script>
+    let today = new Date();
+  // 格式化为yyyy-mm-dd的字符串
+  let todayStr = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0") + "-" + today.getDate().toString().padStart(2, "0");
+  // 将当前日期赋值给日期选择器
+  document.getElementById("end-date").value = todayStr;
+    // 将当前日期的前7天赋值给日期选择器
+    today.setDate(today.getDate() - 7);
+    todayStr = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0") + "-" + today.getDate().toString().padStart(2, "0");
+    document.getElementById("start-date").value = todayStr;
+</script>
+<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/build/js/moment-with-locales.js"></script>
+<script type="text/javascript" src="/static/build/js/tempusdominus-bootstrap-4.min.js" ></script>                                           
+<link rel="stylesheet" href="/static/build/css/tempusdominus-bootstrap-4.min.css"/>	
+{%endblock%}

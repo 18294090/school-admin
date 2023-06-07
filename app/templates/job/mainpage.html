@@ -5,66 +5,66 @@
 {%endblock%}
 {% block main%}
 <div class="container-fluid">
-<div class="col-md-12">
 	<div class="row">
 		<div class="col-md-4">
-			<div class="card">
+			<div class="card" style="height: 180px">
 				<div class="card-block">
 					<h5 class="card-title">
 						发布作业
 					</h5>
-					<p class="card-text">
-						1、发布作业，填写作业标题，截至时间等作业信息<br>
-                        2、确定选择题答案，及其对应知识点<br>
-                        3、生成打印相应答题卡<br>
-					</p>
-					<p>
-						<button type="button" onclick="document.location = '/job/genarate_paper'" class="btn btn btn-primary">发布</button></a>
-                    <div class=" d-flex" role="search">
-							<input class="form-control me-2" type="search" id="search" placeholder="请输入要查找的作业名称" aria-label="Search">
-							<button class="btn btn-primary" onclick="search_job()">查找作业</button>
-					</div>
-                    </p>
-						    </div>
+                        <p class="card-text">
+                            1、发布作业，填写作业标题，截至时间等作业信息<br>
+                            2、确定选择题答案，及其对应知识点<br>
+                            3、生成打印相应答题卡<br>
+                        </p>
+                        <p>
+                            <button type="button" onclick="document.location = '/job/genarate_paper'" class="btn btn btn-primary">发布</button></a>
+                        </p>
 					</div>
 				</div>
-				<div class="col-md-4">
+			</div>
+            <div class="col-md-4">
+                <div class="card" style="height: 180px">
+                    
+                    <div class="card-block">
+                        <h5 class="card-title">
+                            作业分析                               
+                        </h5>
+                        <p class="card-text">
+                            1、年级报表<br>
+                            2、班级作业统计<br>
+                            3、学生个人分析报告<br>                                
+                        </p>
+                        <p>
+                            <a class="btn btn-primary" href="/job/job_analyse">前往</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+				<div class="col-md-4" style="height: 180px">
 					<div class="card">
-						
 						<div class="card-block">
 							<h5 class="card-title">
-								作业分析                               
+								补交作业
 							</h5>
 							<p class="card-text">
-                                1、年级报表<br>
-                                2、班级作业统计<br>
-                                3、学生个人分析报告<br>                                
-							</p>
+                                上传答卷，不需要区分作业
+							
+                                <div class=" d-flex input-group">
+                                    <input type="file" class="form-control" id="inputGroupFile1" aria-describedby="inputGroupFileAddon" aria-label="Upload" multiple accept=".png,.jpg,.bmp">
+                                    <button class="btn btn-outline-primary" type="button" id="inputGroupFileAddon" onclick="upload_paper1()">上传</button>
+                                </div>
+                            </p>    
 							<p>
-								<a class="btn btn-primary" href="#">前往</a>
-							</p>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-4">
-					<div class="card">
-						
-						<div class="card-block">
-							<h5 class="card-title">
-								班级作业管理
-							</h5>
-							<p class="card-text">
-                                查看班级作业情况（）
-							</p>
-							<p>
-								<a class="btn btn-primary" href="#"><i class="fa fa-bicycle"></i>Action</a>
+								<a class="btn btn-primary"onclick="judge1()"><i class="fa fa-bicycle"></i>阅卷</a>
 							</p>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-</div>
+
+<br>
+
 {% with messages = get_flashed_messages() %}
     {% if messages %}
           {% for message in messages %}
@@ -79,6 +79,15 @@
           {% endfor %}
     {% endif %}
  {% endwith %}
+<div class="row">
+    <div class="col-12">    
+        <div class=" d-flex input-group" role="search">
+            <input class="form-control me-2" type="search" id="search" placeholder="请输入要查找的作业名称" aria-label="Search">
+            <button class="btn btn-primary" onclick="search_job()">查找作业</button>
+        </div>
+    </div>
+</div>
+
  <div class="row">
     <div class="col-4"></div>
     <div class="col-4"> 
@@ -95,7 +104,7 @@
 </div>
 
 
-<div class="row container-fluid">
+
     <div class="col-md-12">
             <table class="table table-striped" style="text-align:center">
                 <thead class="table-primary">
@@ -159,10 +168,12 @@
                                     <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button> 
                                     <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='paper/excercise/'+i.paper_url) }}'">查看答题卡</button>
                                     <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button>
-                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">选择题阅卷</button>
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick=judge({{i.id}}) >选择题阅卷</button>
                                     {%if i.complete|from_json|length>0%}
                                     <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="c_judge({{i.id}})">填空题阅卷</button>
                                     {%endif%}
+                                    <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">查看阅卷报告</button>
+                                    
                                     {%if count1[i.id]==0 and count[i.id]==0%}
                                     <button type="button" class="btn btn-secondary dropdown-item" id="cancel-{{i.id}}" name="{{i.paper_url}}">删除</button>
                                     {%endif%}
@@ -247,7 +258,6 @@
                 processData: false,//用于对data参数进行序列化处理 这里必须false
                 contentType: false, //必须
                 success: function(data) {
-                    
                     $.each(data.split(" "),function(index,c){
                         if(c){
                             $("#show_answer").append(c+" ")
@@ -282,8 +292,6 @@
             values.push([checkbox.value,false]);
         }
         }
-        
-        
         $.ajax({
                 url: "/job/assign_job/"+String(id),    // 提交到controller的url路径 
                              //提交给flask后台必须有csrf认证
@@ -305,10 +313,8 @@
      $.ajax({
                 url: "/job/assign_job/"+String(id),    // 提交到controller的url路径 
                              //提交给flask后台必须有csrf认证
-                type: "GET",                   
-                
+                type: "GET", 
                 dataType: "json",    // 服务器端返回的数据类型
-                
                 processData: false,//用于对data参数进行序列化处理 这里必须false
                 contentType: false, //必须
                  success: function(data) {
@@ -337,8 +343,7 @@
                 $("#job_class").append(div);
                 });
                 }
-     }
-                );
+     });
             }
             
 
@@ -386,10 +391,8 @@
                 },
             });
     };
-     
     function set_mark(id,m){
         data={"id":id,"mark":m}
-        
         var csrf_token="{{csrf_token()}}";
         $.ajax({
                 url: "/job/set_cpl_mark/",    // 提交到controller的url路径 
@@ -398,17 +401,13 @@
                 contentType: 'application/json; charset=UTF-8', //提交数据类型
                 data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
                 dataType: "json",    // 服务器端返回的数据类型
-                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
-                    
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值    
                     c_judge(data)
                 },
                 error:function (error) {
                 console.log("cuowu")  
                 alert(error);}
             });
-
-
-        
     } 
     function c_judge(id){       
         var csrf_token="{{csrf_token()}}"; 
@@ -431,19 +430,19 @@
                 $("#txt").text(response); 
                 } 
             else if (contentType.includes("application/json")) {
-                $("#txt").text("作者:"+response.name+" 题号："+response.No+" 总分："+response.mark);
-                var img = $("<img>").attr("src", "data:image/png;base64," + response.image);
-                img.attr("class","img-fluid") 
-                img.attr("alt","Image")
-                
-                $("#image").html(img);
-                $("#btn-group").empty();
-                for(var i=0;i<Number(response.mark)+1;i++){
-                var btn=$("<button>").text(i);
-                btn.attr("class",'btn btn-primary')
-                btn.attr("onclick","set_mark("+response.id+","+String(i)+")")
-                $("#btn-group").append(btn);
-                }
+                    $("#txt").text("作者:"+response.name+" 题号："+response.No+" 总分："+response.mark);
+                    var img = $("<img>").attr("src", "data:image/png;base64," + response.image);
+                    img.attr("class","img-fluid") 
+                    img.attr("alt","Image")
+                    
+                    $("#image").html(img);
+                    $("#btn-group").empty();
+                    for(var i=0;i<Number(response.mark)+1;i++){
+                    var btn=$("<button>").text(i);
+                    btn.attr("class",'btn btn-primary')
+                    btn.attr("onclick","set_mark("+response.id+","+String(i)+")")
+                    $("#btn-group").append(btn);
+                    }
                 } 
             else {
                 alert("Unknown content type: " + contentType); } 
@@ -476,6 +475,54 @@
         });
     }
 })
+ function judge(id){
+        var data={"judge":id};
+        var csrf_token="{{csrf_token()}}";
+        showSpinners();  // 显示 Spinners
+        $.ajax({
+                url: "/job/judge/"+String(id),    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
+                    hideSpinners();  // 隐藏 Spinners                                          
+                    window.location.href="/job/judge_report/"+String(id);
+                },
+                error:function (error) {
+                        hideSpinners();
+                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
+            });
+    };
+    function judge1(){
+       
+        var csrf_token="{{csrf_token()}}";
+        showSpinners();  // 显示 Spinners
+        $.ajax({
+                url: "/job/judge1/",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},//提交给flask后台必须有csrf认证
+                type: "POST",// 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: "",  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
+                    hideSpinners();  // 隐藏 Spinners                                          
+                    refresh_table(data,id);
+                },
+                error:function (error) {
+                        hideSpinners();
+                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
+            });
+    };
+    function showSpinners() {
+    $("#spinners").removeClass('d-none');
+    }
+
+    // 隐藏 Spinners
+    function hideSpinners() {
+    $("#spinners").addClass('d-none');
+    } 
 
 </script>      
 {%endblock%}

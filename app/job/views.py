@@ -26,9 +26,6 @@ import mammoth
 import itertools
 import random
 import numpy as np
-
-
-
 @job_manage.route("/",methods=["POST","GET"]) # 作业管理主页教师页面为作业情况，学生页面为学生个人信息
 @login_required 
 def job_mg():
@@ -99,8 +96,6 @@ def search_job(name):
         count1[i.id]=len(os.listdir(b))
     return(render_template("job/mainpage.html", p=p,pagination =pagination,jobs=jobs,count=count,count1=count1,Permission=Permission,subjects=["语文","数学","外语","政治","历史","地理","物理","化学","生物","通用技术","信息技术"]))
 
-    
-
 @job_manage.route("/stu/<id>",methods=["POST","GET"]) # 学生个人作业情况
 def stu_job(id):
     jobs=job_detail.query.filter(job_detail.student==id).all()
@@ -143,7 +138,7 @@ def assign_job(id):
             else:
                 if j_c:
                     db.session.delete(j_c)
-                    j_s=job_student.query.join(student).join(class_student).join(class_info).filter(job_student.job_id==id).filter(class_info.id==int(i[0]) ).all()
+                    j_s=job_student.query.join(student).join(class_student).join(class_info).filter(job_student.job_id==id).filter(class_info.id==int(i[0])).filter(job_student.submit_time==None).all()
                     for j in j_s:
                         db.session.delete(j)
                     db.session.flush()
@@ -186,10 +181,17 @@ def question_statistics():
         for serial_No, details in groups.items():
             if serial_No<=job_.select:
                 choices = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+                choices_={'A':"",'B':"",'C':"",'D':""}
+                
                 for detail in details:
+                    
                     choices[detail.answer[0]] += 1
+                    #将每个选项的选择人员名单存入choices_字典中
+                    choices_[detail.answer[0]]+=" "+detail.stu.name
+                    if len(choices_[detail.answer[0]].split())%2==0:
+                        choices_[detail.answer[0]]+="<br>"
                 x_data = ['A', 'B', 'C', 'D']
-                item_colors = []            
+                item_colors = []
                 correct_item =  answers[serial_No-1]
                 for i in x_data:
                     if i == correct_item:
@@ -201,15 +203,21 @@ def question_statistics():
                 b_percent = round(b_num / total_num*100, 1)
                 bar_chart = (
                     Bar(init_opts=opts.InitOpts(width='150px', height='300px')) #设置图表大小
-                    .add_xaxis(x_data)
-                    .add_yaxis("", [choices["A"],choices["B"],choices["C"],choices["D"]],color='#004080',
+                    .add_xaxis(x_data)                   
+                    .add_yaxis(f'第 {serial_No}题：', [{'value':choices["A"],'text':choices_["A"]},{'value':choices["B"],'text':choices_["B"]},{'value':choices["C"],'text':choices_["C"]},{'value':choices["D"],'text':choices_["D"]}],color='#004080',
                             markpoint_opts=opts.MarkPointOpts(
                                 data=[                    
                                     opts.MarkPointItem(value=f'{b_percent}%',coord=[correct_item,choices[correct_item]], name="正确率",itemstyle_opts=opts.ItemStyleOpts(color="#55ff37" if b_percent > 70 else "#dbff5e" if b_percent>60 else "#feaf2c" if  b_percent>50 else "red" ))
                                 ]
-                            ),)
-                    .set_global_opts(title_opts=opts.TitleOpts(title=f'第 {serial_No}题：',subtitle=f'{difficult.query.filter(difficult.id==tags[serial_No-1]).first().difficult}'))              
-                )
+                            ),
+                            
+                            )  
+                    #当鼠标移到柱形图的柱体上时，显示柱体表示的选项的选择人员名单，选择人员名单数据在choices_字典中,提示框大小设置为自适应换行
+                    
+                    .set_global_opts(title_opts=opts.TitleOpts(subtitle=f'{difficult.query.filter(difficult.id==tags[serial_No-1]).first().difficult}'),
+                                    tooltip_opts=opts.TooltipOpts(trigger="axis",formatter= JsCode("function (params) { return params[0].data.text;}")),       
+                                    )
+                    )
             else:                
                 mark=int(json.loads(job_.complete)[serial_No-job_.select-1])
                 bins=[x for x in range(0,mark+1,2)]
@@ -231,15 +239,11 @@ def question_statistics():
                         Pie(init_opts=opts.InitOpts(width='150px', height='300px'))
                         .add('', list(zip(score_counts.index.tolist(), score_percentages)))
                         .set_global_opts(title_opts=opts.TitleOpts(title=f'第 {serial_No}题：',subtitle=f'{difficult.query.filter(difficult.id==tags[serial_No-1]).first().difficult}'),legend_opts=opts.LegendOpts(pos_right='right'))
-                        .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {d}%"))
-)
+                        .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {d}%")))
             bar_charts.append(bar_chart)
         # 将图表转换为HTML字符串并返回给前端
         bar_html_list = [chart.render_embed() for chart in bar_charts]
         return json.dumps(bar_html_list)
-
-        
-    
 
 def job_sub(submist_list):
     pass
@@ -280,7 +284,7 @@ def job_info(job_id):
     #c_mark是列表，求c_mark的和
     c_sum=sum(c_mark)
     sum_=job_.select*job_.s_m+c_sum
-    f = len([job.select_mark for job in jobs if job.select_mark==None])
+    f = len([j.select_mark for j in jobs if j.select_mark==None])
     class_names = [data.class_info.class_name for data in cla]
     max_scores = [data.max for data in cla]
     min_scores = [data.min for data in cla if data !=None]
@@ -291,7 +295,6 @@ def job_info(job_id):
         .add_yaxis("最高分", max_scores)
         .add_yaxis("最低分", min_scores)
         .add_yaxis("平均分", avg_scores)
-        
         .set_series_opts(
             label_opts=opts.LabelOpts(is_show=False),
             markline_opts=opts.MarkLineOpts(data=[opts.MarkLineItem(type_="average")]),
@@ -343,17 +346,23 @@ def job_info(job_id):
             similarity=df2.corr(method='pearson')
 
             #将相似度矩阵转换为列表，每个元素是一个三元组，表示行索引，列索引，相似度
+            x=[]
+            y=[]
+            a=0
+            b=0
             for i in range(len(similarity)):
                 for j in range(i+1,len(similarity)):
-                    if similarity.iloc[i,j]>0.8:
-                        similar_pairs.append([i,j,similarity.iloc[i,j]])
+                    if similarity.iloc[i,j]>0.98:
+                        similar_pairs.append([a,b,similarity.iloc[i,j]])
+                        x.append(js[similarity.index[i]][1])
+                        y.append(js[similarity.columns[j]][1])
+                        a+=1
+                        b+=1
 
             #根据相似度，创建热力图,x轴为学生，y轴为学生，颜色越深，相似度越高，similarity的index为学生学号，columns为学生学号，values为相似度
         
-            x=[js[n][1] for n in similarity.index]
-            y=[js[n][1] for n in similarity.columns]
             c = (#图像大小为页面大小
-                HeatMap(init_opts=opts.InitOpts(width="100%",height="1200px"))
+                HeatMap(init_opts=opts.InitOpts(width="100%",height="600px"))
                 .add_xaxis(x)
                 .add_yaxis("相似度", y, similar_pairs)
                 .set_global_opts(
@@ -366,7 +375,7 @@ def job_info(job_id):
             heat=c.render_embed()
     charts=bar.render_embed()
     dict={'id':job_id,"name":job_.job_name,"select":int(job_.select),"publish_time":job_.publish_time,"sum":sum_,"n_sub":f}
-    return(render_template("job/job_info.html",dict=dict,classes_=classes_,class_=class_,js=js,df=df,j_c=j_c,charts=charts,heat=heat))
+    return(render_template("job/job_info.html",answers=job_.select_answer.split(" "),dict=dict,classes_=classes_,class_=class_,js=js,df=df,j_c=j_c,charts=charts,heat=heat))
 
 @job_manage.route("/show_paper/<url>",methods=["POST","GET"])
 @login_required 
@@ -482,7 +491,6 @@ def genarate_paper():
     if current_user.role.has_permission(Permission.job_grade):
         pass
     g=grade_info.query.all()
-               
     return(render_template("job/genarate_paper.html",g=g,difficult=diff,class_=class_,Permission=Permission))
 
 @job_manage.route("/del/",methods=["POST"])
@@ -554,55 +562,65 @@ def job_judge(id):
                     abnormal=abnormal_job(job_id=id,reason="学号扫描不正确",paper=filepath)
                     db.session.add(abnormal)
                     db.session.flush()
-                    continue     
+                    continue    
                 j_stu=job_student.query.filter(job_student.job_id==int(id),job_student.student==number).first()
                 if j_stu: #判断该生是否有作业任务，若无，不作阅卷处理
                     #判断是否重复阅卷，即j_stu.select_mark是否为空
-                    if j_stu.select_mark:
+                    """if j_stu.select_mark:
                         #将重复的未阅答卷移动到异常文件夹
                         shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
                         abnormal=abnormal_job(job_id=id,reason="该学号重复",paper=filepath,student_id=number)
                         #将重复的已阅答卷移动到异常文件夹
-                        shutil.move(os.path.join(os.getcwd(),"app","static","job_readed",str(id),str(number)+".jpg"), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
+                        shutil.move(os.path.join(os.getcwd(),"app","static","job_readed",str(id),str(number)+".jpg"), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),str(number)+".jpg"))
                         abnormal1=abnormal_job(job_id=id,reason="该学号重复",paper=str(number)+".jpg",student_id=number)
                         #删除重复的阅卷记录
                         job_detail.query.filter(job_detail.job_id==int(id),job_detail.student==number).delete()
-                        job_student.query.filter(job_student.job_id==int(id),job_student.student==number).delete()
+                        js=job_student.query.filter(job_student.job_id==int(id),job_student.student==number).first()
+                        js.select_mark=None
+                        js.completion_mark=None                        
                         db.session.add(abnormal)
                         db.session.add(abnormal1)
                         db.session.flush()
-                        continue     
+                        continue"""
                     s=judge.check_select(split[1],select) #选择题阅卷
-                    print(number,s)
                     if len(s)<select:
                         shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
                         abnormal=abnormal_job(job_id=id,reason="选择题扫描不正确",paper=filepath,student_id=number)
                         db.session.add(abnormal)
                         db.session.flush()
-                        continue             
                     se=0           
                     for key in s:
                         if key>len(answers):
                             continue
-                        if job_detail.query.filter(job_detail.student==number,job_detail.job_id==int(id),job_detail.serial_No==key).first():    
-                            continue
-                        else:                        
+                        jt=job_detail.query.filter(job_detail.student==number,job_detail.job_id==int(id),job_detail.serial_No==key).first()
+                        if jt:    
+                            jt.answer=s[key]
+                            if s[key]==answers[key-1]:
+                                jt.mark=job_.s_m
+                                se+=jt.mark
+                            else:
+                                jt.mark=0
+                        else:
                             mark=0
                             if s[key]==answers[key-1]:
                                 mark=job_.s_m
-                                se+=2
+                                se+=mark
                             jt=job_detail(job_id=int(id),student=number,serial_No=key,answer=s[key],mark=mark,tag=tags[key-1])
-                        db.session.add(jt)
-                        db.session.flush()
+                            db.session.add(jt)
+                            db.session.flush()
                     for i in range(len(json.loads(job_.complete))): #生成填空题阅卷信息
                         No=select+i+1
-                        jt=job_detail(job_id=int(id),student=number,serial_No=No,answer='F',tag=tags[No-1])
-                        db.session.add(jt)
-                        db.session.flush()
-                    j_stu.select_mark=se #更新选择题成绩           
+                        jt=job_detail.query.filter(job_detail.student==number,job_detail.job_id==int(id),job_detail.serial_No==No).first()
+                        if not jt:
+                            jt=job_detail(job_id=int(id),student=number,serial_No=No,answer='F',tag=tags[No-1])
+                            db.session.add(jt)
+                            db.session.flush()
+                    j_stu.select_mark=se #更新选择题成绩 
+                    j_stu.submit_time=datetime.datetime.now() #更新提交时间          
                     n+=1
-                                    
-                    shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job_readed",str(id),"%s.jpg"%number))
+                    #如果当前文件仍存在，移到已阅文件夹
+                    if os.path.exists(os.path.join(dirpath, filepath)):
+                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job_readed",str(id),"%s.jpg"%number))
                 else:
                     shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
                     abnormal=abnormal_job(job_id=id,reason="该学生没有本作业任务",paper=filepath,student_id=number)
@@ -612,17 +630,25 @@ def job_judge(id):
             print(e)
             return("阅卷失败，联系管理员")
     j_cla=job_class.query.filter(job_class.job_id==int(id)).all()  #阅卷完成后统计作业情况，查询被布置了此作业的所有班级
-    for i in j_cla: #遍历所有班级，依次统计
-        class_=class_info.query.filter(class_info.id==i.class_id).first()
-        j_stu = db.session.query(job_student).filter(job_student.job_id==int(id),job_student.student.in_([s.number for s in class_.students])).all()
-        
-        if j_stu:
-            marks = [j.mark for j in j_stu if j.mark != None]
-            i.submit_number = len(marks)
-            if len(marks)!=0:
-                i.average = sum(marks) / len(marks)
-                i.max = max(marks)
-                i.min = min(marks)
+    #分别统计每个班的作业情况，包括提交人数，平均分，最高分，最低分，标准差
+    for j in j_cla:
+        #job_student有外键student连接到student表，class_student表有外键class_id连接到class_info表,student_id连接到student表,运用join连接查询，获取每个班级的学生作业情况
+        # 如果值为空，则设置为0     
+        average=db.session.query(func.avg(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #平均分
+        submit_number=job_student.query.filter(job_student.job_id==int(id),job_student.mark!=None).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id).count() #提交人数
+        max=db.session.query(func.max(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #最高分
+        min=db.session.query(func.min(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #最低分
+        std=db.session.query(func.stddev(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #标准差
+        if average:
+            j.average=average
+        if submit_number:
+            j.submit_number=submit_number
+        if max:
+            j.max=max
+        if min:
+            j.min=min
+        if std:
+            j.std=std
         db.session.flush()
     try:
         db.session.commit()
@@ -630,7 +656,7 @@ def job_judge(id):
         db.session.rollback()
         return("阅卷失败")
     #找出异常卷信息表abnromal_job中的所有student_id为空白的记录或用户所任教班级中学生的异常阅卷记录，任教信息在表teaching_information中,学生分班信息在class_student中
-    d_judge=abnormal_job.query.filter(or_(abnormal_job.student_id==None,abnormal_job.student_id.in_(db.session.query(class_student.student_id).filter(class_student.class_id.in_(db.session.query(teaching_information.class_id).filter(teaching_information.teacher_id==current_user.id)))))).filter(abnormal_job.job_id==id).all()
+    d_judge=abnormal_job.query.filter(abnormal_job.job_id==id).all()
     data=[[d.reason,d.paper,d.student_id] for d in d_judge]
     total=job_student.query.filter(job_student.job_id==int(id)).filter(job_student.mark!=None).count()
     return(jsonify({"s_num":n,"d_num":len(data),"name":job_.job_name,"total":total,"d_list":data}))
@@ -663,8 +689,11 @@ def cpl_judge():
                 .filter(teaching_information.teacher_id==current_user.teacher.id)\
                 .filter(job_detail.serial_No>select,job_detail.mark==None)\
                 .first()
+        
         if j_detail:
+            print(j_detail.student)
             paper =os.path.join(os.getcwd(),"app","static","job_readed",str(id),j_detail.student+".jpg")
+            
             if os.path.exists(paper):
                 img=judge.open(os.path.join(os.getcwd(),"app","static","paper","excercise",j.paper_url))
                 ep =judge.open2(paper)
@@ -677,10 +706,26 @@ def cpl_judge():
                 stu=student.query.filter(student.number==j_detail.student).first().name
                 response = {'image': img_b64,'No':j_detail.serial_No,'mark':json.loads(j.complete)[j_detail.serial_No-j.select-1],'id':j_detail.id,'name':stu}
                 response['Content-Type'] = 'image/png'
-                return jsonify(response)                
+                return jsonify(response)
+                             
             else:
-                response= make_response("试卷不存在")
-                response.headers['Content-Type'] = 'text/plain'                
+                paper1=os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),j_detail.student+".jpg")
+                if os.path.exists(paper1):
+                    img=judge.open(os.path.join(os.getcwd(),"app","static","paper","excercise",j.paper_url))
+                    ep =judge.open2(paper1)
+                    ep=judge.paper_ajust(img,ep)
+                    #if judge.qr(img)==judge.qr(ep):
+                    split=judge.paper_split(ep,select,json.loads(j.line))
+                    retval, buffer = cv2.imencode('.png', split[-1][j_detail.serial_No-select-1])
+                    # 创建响应对象
+                    img_b64 = base64.b64encode(buffer).decode('utf-8')
+                    stu=student.query.filter(student.number==j_detail.student).first().name
+                    response = {'image': img_b64,'No':j_detail.serial_No,'mark':json.loads(j.complete)[j_detail.serial_No-j.select-1],'id':j_detail.id,'name':stu}
+                    response['Content-Type'] = 'image/png'
+                    return jsonify(response)
+                else:
+                    response= make_response("试卷不存在")
+                    response.headers['Content-Type'] = 'text/plain'                
         else:
             response= make_response("无待阅卷")
             response.headers['Content-Type'] = 'text/plain'
@@ -714,7 +759,14 @@ def set_cpl_mark():
 @login_required
 @permission_required(Permission.job_publish)
 def judge_report(id):
-    return render_template("job/judge_report.html",id=id)
+    d_judge=abnormal_job.query.filter(abnormal_job.job_id==id).all()
+    data=[[d.reason,d.paper,d.student_id] for d in d_judge]
+    job_=job.query.filter(job.id==id).first()
+    #n为提交时间为今天的job_student记录数
+    n=job_student.query.filter(job_student.job_id==int(id)).filter(job_student.submit_time>datetime.date.today()).count()
+    total=job_student.query.filter(job_student.job_id==int(id)).filter(job_student.mark!=None).count()
+    data={"s_num":n,"d_num":len(data),"name":job_.job_name,"total":total,"d_list":data}
+    return render_template("job/judge_report.html",data=data,id=id)
 
 @job_manage.route("/clear_abnormal/<id>",methods=["POST","GET"]) #阅卷报告
 @login_required
@@ -763,10 +815,88 @@ def abnormal(args):
                 retval, buffer = cv2.imencode('.png', j)
                 img_b64 = base64.b64encode(buffer).decode('utf-8')
                 splits.append(img_b64)
-
         # 创建响应对象
-        
     return render_template("job/abnormal.html",splits=splits,job=job_,abnormal=abnormal)
-
     
+@job_manage.route("func1",methods=["POST","GET"])
+def func1():
+    #获取当前用户的行政班任教信息
+    t_info=teaching_information.query.join(class_info).filter(teaching_information.teacher_id==current_user.teacher.id,class_info.attribute=="行政班").all()
+    #获取当前用户所在学科的所有作业
+    jobs=job.query.filter(job.subject==current_user.teacher.subject).all()
+    #将每一个作业布置给每一个班级
+    for j in jobs:
+        for t in t_info:
+            j_s=job_class(job_id=j.id,class_id=t.class_id)
+            db.session.add(j_s)
+            db.session.flush()
+    db.session.commit()
+    return("ok")
+
+@job_manage.route("/job_analyse",methods=["POST","GET"]) #阅卷报告
+@login_required
+@permission_required(Permission.job_publish)
+def job_analyse():
+    return render_template("job/job_analyse.html")
+
+@job_manage.route("/modify_mark/<id>",methods=["POST","GET"]) #修改选择题成绩，当选择题分数设置错误，需要整体修改时运行该函数
+@login_required
+@permission_required(Permission.job_publish)
+def modify_mark(id):
+    job_=job.query.filter(job.id==id).first()
+    mark=job_.s_m
+    jt=job_detail.query.filter(job_detail.job_id==id).filter(job_detail.serial_No<=job_.select).all()
+    answers=job_.select_answer[:-1].split(" ")
+    for j in jt:
+        
+        if j.answer==answers[j.serial_No-1]:
+            j.mark=mark
+    j_s=job_student.query.filter(job_student.job_id==id).filter(job_student.mark!=None).all()
+    for j in j_s:
+        #j.mark的值为所有相关job_detail的mark的和
+        jt=job_detail.query.filter(job_detail.job_id==id).filter(job_detail.serial_No<=job_.select).filter(job_detail.student==j.student).all()
+        j.select_mark=sum([i.mark for i in jt])
+    j_cla=job_class.query.filter(job_class.job_id==int(id)).all()  #阅卷完成后统计作业情况，查询被布置了此作业的所有班级
+    #分别统计每个班的作业情况，包括提交人数，平均分，最高分，最低分，标准差
+    for j in j_cla:
+        #job_student有外键student连接到student表，class_student表有外键class_id连接到class_info表,student_id连接到student表,运用join连接查询，获取每个班级的学生作业情况
+        # 如果值为空，则设置为0     
+        average=db.session.query(func.avg(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #平均分
+        submit_number=job_student.query.filter(job_student.job_id==int(id),job_student.mark!=None).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id).count() #提交人数
+        max=db.session.query(func.max(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #最高分
+        min=db.session.query(func.min(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #最低分
+        std=db.session.query(func.stddev(job_student.mark)).join(student,job_student.student==student.number).join(class_student,student.id==class_student.student_id).filter(class_student.class_id==j.class_id,job_student.job_id==int(id)).scalar() #标准差
+        if average:
+            j.average=average
+        if submit_number:
+            j.submit_number=submit_number
+        if max:
+            j.max=max
+        if min:
+            j.min=min
+        if std:
+            j.std=std
+        db.session.flush()
+    
+    db.session.commit()
+    return ("chenggong")
+
+@job_manage.route("/modify/<id>",methods=["POST","GET"]) #将异常卷的文件名以学号命名
+@login_required
+@permission_required(Permission.job_publish)
+def modify(id):
+    ab=db.session.query(abnormal_job).filter(abnormal_job.job_id==id).all()
+    n=0
+    for a in ab:
+        path=os.path.join(os.getcwd(),"app/static/abnormal_paper",str(id),a.paper)
+        print(path)
+        if os.path.exists(path):
+            
+            if a.student_id:
+                os.rename(path,os.path.join(os.getcwd(),"app/static/abnormal_paper",str(id),a.student_id+".jpg"))
+                a.paper=a.student_id+".jpg"
+                db.session.flush()
+                n+=1
+    db.session.commit()
+    return(str(n))
         

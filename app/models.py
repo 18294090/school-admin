@@ -1,11 +1,13 @@
 """数据库模型文件，在这里定义数据库模型，一个模型对应一张数据表"""
 from sqlalchemy.orm import backref
 from app import db
-from sqlalchemy import ForeignKey,func,CheckConstraint,case
+from sqlalchemy import ForeignKey,func,CheckConstraint,case,event
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin,AnonymousUserMixin
 from sqlalchemy.ext.hybrid import hybrid_property
 from . import login_manager
+from datetime import datetime
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -187,6 +189,9 @@ class job_class(db.Model):
     max=db.Column(db.Float(precision=2),default=0)
     min=db.Column(db.Float(precision=2),default=0)
     submit_number=db.Column(db.Integer,default=0)
+    std=db.Column(db.Float(precision=2),default=0)
+    date=db.Column(db.DateTime,default=datetime.now)
+
 
 class job_detail(db.Model):
     __table_args__ = {'extend_existing': True}
@@ -233,7 +238,8 @@ class job_student(db.Model):
             ],
             else_=cls.select_mark + cls.complete_mark
         )
-    
+
+
 class difficult(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     difficult =  db.Column(db.String(32))

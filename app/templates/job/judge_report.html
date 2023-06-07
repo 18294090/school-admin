@@ -4,20 +4,7 @@
 {%endblock%}
 {% block main%}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-4"></div>
-        <div class="col-4"> 
-            <div class="d-flex align-items-center d-none" id="spinners" >
-                <strong>正在阅卷，请稍后...</strong>
-                <div class="spinner-grow spinner-grow-sm ms-auto  text-secondary" role="status" aria-hidden="true"></div>
-                <div class="spinner-grow spinner-grow-sm ms-auto  text-primary" role="status" aria-hidden="true"></div>
-                <div class="spinner-grow spinner-grow-sm ms-auto  text-success" role="status" aria-hidden="true"></div>
-                <div class="spinner-grow spinner-grow-sm ms-auto  text-info" role="status" aria-hidden="true"></div>
-                <div class="spinner-grow spinner-grow-sm ms-auto  text-light" role="status" aria-hidden="true"></div>
-            </div>
-        </div>
-        <div class="col-4"></div>
-    </div>
+    
     <!--以下为阅卷报告，在card上显示-->
     <div class="row">
         <div class="col-12">
@@ -63,11 +50,18 @@
     </div>
 </div>
 <script  src="/static/build/js/jquery.min.js"></script>
-<script>   
-   //页面载入时，调用阅卷函数，显示spinners，阅卷完成后，隐藏spinners
+<script> 
+//页面载入时运行
     $(document).ready(function(){
-        judge({{id}});
-    });
+                var id={{id}};
+                //将后台传来的jsonify化的字典数据转化为js字典
+                var data=JSON.parse('{{data|tojson|safe}}');
+                console.log(data);
+                refresh_table(data,id);
+            }
+        );
+    
+    
     function refresh_table(data,id){
         var s_num=document.getElementById("s_num");
         var d_num=document.getElementById("d_num");
@@ -111,33 +105,6 @@
             tbody.append(tr);
         }
     }
-    function judge(id){
-        var data={"judge":id};
-        var csrf_token="{{csrf_token()}}";
-        showSpinners();  // 显示 Spinners
-        $.ajax({
-                url: "/job/judge/"+String(id),    // 提交到controller的url路径 
-                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
-                type: "POST",    // 提交方式
-                contentType: 'application/json; charset=UTF-8', //提交数据类型
-                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
-                dataType: "json",    // 服务器端返回的数据类型
-                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
-                    hideSpinners();  // 隐藏 Spinners                                          
-                    refresh_table(data,id);
-                },
-                error:function (error) {
-                        hideSpinners();
-                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
-            });
-    };
-    function showSpinners() {
-    $("#spinners").removeClass('d-none');
-    }
-
-    // 隐藏 Spinners
-    function hideSpinners() {
-    $("#spinners").addClass('d-none');
-    } 
+   
 </script>
 {%endblock%}         
