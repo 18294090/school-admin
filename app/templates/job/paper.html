@@ -1,44 +1,815 @@
 {% extends "base.html" %}
-{% from 'bootstrap/form.html' import render_field %}
-{%block title%}
-<TITLE>作业</TITLE>
-<style>
-    .card {
-      width: 210mm; /* A4纸的尺寸 */
-      height: 297mm;
-      margin: 0 auto;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-    }
-  
-    .black-square {
-      width: 5.12mm;
-      height: 5.12mm;
-      background-color: #000;
-      margin: 5.12mm;
-    }
-   
-  </style>
-{%endblock%}
-{% block main%}
+
+{% block main %}
 <link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
-<!DOCTYPE html>
 
-<body>
-<div class='container'>
-  <div class='row'>
-    <div class="card d-flex flex-column col-8">
-    <!--以下为bootstrap自适应图片-->
-     <img class=
-
-
-    </div>    
-    <div class="form-container col">
-    <!-- 右边的表单内容 -->
-
+<div class="container">
+    <!--以下为modal-->
+    <div class="modal fade" id="title_input" tabindex="-1" data-bs-backdrop="static" aria-labelledby="exampleModalLabel2" aria-hidden="true" data-bs-keyboard ="false">
+        <div class="modal-dialog modal-lg" >
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel2">请输入作业标题</h1>                    
+                </div>
+                <div class="modal-body" >
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="title" placeholder="作业标题" aria-label="Recipient's username" id="title" aria-describedby="button-addon2">
+                        
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"  id="submit_title" >提交</button>
+                </div>
+                
+                
+            </div>
+            
+        </div>
+    </div>
+    <!-- Modal for setting select question quantity and score -->
+<div class="modal fade" id="setselect" tabindex="-1" data-bs-backdrop="static" aria-labelledby="setselectLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="setselectLabel">设置选择题</h5>（
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="checkMultiple">
+            <label class="form-check-label" for="flexCheckDefault">
+              多选
+            </label>
+          </div>）
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="mb-3">
+              <label for="select-quantity" class="col-form-label">题目数量:</label>
+              <input type="number" class="form-control" id="select-quantity">
+              <label for ="set-answer"><i class="bi bi-pencil-square"></i>
+                设置选择题答案</label>
+              <div  id="set-answer"></div>
+            </div>
+            <div class="mb-3">
+              <label for="select-score" class="col-form-label">每题分值:</label>
+              <input type="number" class="form-control" id="select-score" value="2">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          
+          <button type="button" class="btn btn-primary" id="saveSelect" data-bs-dismiss="modal" onclick="check()">保存</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>  
-</body>
+  
+  <!--以下modal用于设置填空题-->
+  <div class="modal fade" id="setComplete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="staticBackdropLabel">填空题详情</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-4" id="c">
+            <label for="complete" class="form-label" >填空题大题数量</label>
+            <input type="text" class="form-control" id="complete" >
+          </div>
+           <div class="row" for="sub_c">
+           <div class="col-2"></div>
+              <div class="col-4">
+                <label for="structure" style="text-align:center">设置题目结构</label>
+              </div>
+              <div class="col-3">
+                <label for="score">设置分值</label>
+              </div>
+              <div class="col-3">
+                <label for="difficulty">选择难度</label>
+              </div>
+          </div>
+          <div class="mb-4 " id="sub_c"  data-bs-toggle="tooltip" data-bs-placement="top" title="请设置每道填空题的结构和分值，设置填空题结构方法如下：用数字表示每道小题有几个空，小题和小题间用空格隔开。如：2 3 2表示有三个小题，第一题两空，第二题3空，第三题2空。选择题分值为一个数字表示大题的总分"> 
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button  type="button" class="btn btn-secondary" onclick="saveComplete()" id="saveComplete">保存</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+<!--以下modal用于设置简答题-->
+<div class="modal fade" id="setShortAnswer" tabindex="-1" data-bs-backdrop="static"   data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">简答题详情</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4" id="line">
+          <label for="setShortAnswerNumber" class="form-label" >简答题大题数量</label>
+          <input type="text" class="form-control" id="setShortAnswerNumber" >
+        </div>
+         <div class="row" for="sub_shortAnswer">
+            <div class="col-2"></div>
+            <div class="col-4">
+              <label for="structure" style="text-align:center">设置题目行数</label>
+            </div>
+            <div class="col-3">
+              <label for="ShortAnswerScore">分数</label>
+            </div>
+            <div class="col-3">
+              <label for="difficulty">选择难度</label>
+            </div>
+        </div> 
+        <div class="mb-4 " id="sub_shortAnswer"  data-bs-toggle="tooltip" data-bs-placement="top" title="请设置每道题的行数和分值"> 
+        </div>       
+      </div>
+      <div class="modal-footer">
+        <button  type="button" class="btn btn-secondary" onclick="saveShortAnswer()" id="saveComplete">保存</button>  
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <!-- bootstrap的img组件，用于显示后台传来的base64图片 -->
+                    <!--startprint-->
+                    <img class="card-img-top" src="" alt="Card image cap">
+                    <!--endprint-->   
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+            <div class="card-header">
+                作业设置
+            </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!--点击按钮，显示modal，用于输入作业标题-->
+                         <div class="btn-group ">
+                        <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#title_input" type="button">
+                        <i class="bi bi-card-heading"></i>
+                        更改标题
+                        </button>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="btn-group">
+                            <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#setselect" type="button">
+                                <i class="bi  bi-pencil-fill"></i>
+                                添加选择题       
+                            </button>
+                            <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#setComplete" type="button">
+                                <i class="bi  bi-text-left"></i>
+                                添加填空题       
+                            </button>
+                            <button class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#setShortAnswer" type="button">
+                                <i class="bi  bi-square"></i>
+                                添加简答题       
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="btn-group ">
+                            <button class="btn btn-primary " type="button">
+                                <i class="bi  bi-card-text"></i>
+                                添加作文（英语）       
+                        
+                            <button class="btn btn-primary " type="button">
+                                <i class="bi  bi-table"></i>
+                                添加作文（语文）
+                            </button>
+                        </div> 
+                    </div>
+                    <div class="row">
+                     <div class="btn-group ">
+                        <button class="btn btn-primary " type="button">
+                            <i class="bi  bi-x-square"></i>
+                            添加非作答区域
+                        </button>
+                    </div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-4">
+                            <label for="formFile" class="form-label">上传试题卷</label>
+                            <input class="form-control" type="file" id="formFile" accept=".txt,.pdf,.doc,.docx">
+                          </div >
+                        <div class="mb-4">
+                        <label class="form-label" for="check_class">选择班级</label>
+                        <div class="card">
+                          <div class="card-body">
+                            {%if current_user.role.has_permission(Permission.job_publish)%}
+                                {%for i in class_%}
+                                <div class="form-check form-check-inline" name="check_class">
+                                    <input class="form-check-input" type="checkbox" name="cla" value="{{i.id}}" id="checkbox-{{i.id}}" checked>
+                                    <label class="form-check-label" for="checkbox-{{i.id}}">
+                                        {{i.class_name}}
+                                    </label>
+                                  </div> 
+                                {%endfor%}
+                                <hr class="my-4">
+                                <div>
+                                <button id="checkAllBtn" type="button" class="btn btn-secondary btn-sm" >全选</button>
+                                <button id="uncheckAllBtn" type="button" class="btn btn-secondary btn-sm">清空</button>
+                                </div>
+                            {%elif current_user.role.role=="representative"%}
+                                    <div class="form-check form-check-inline" name="check_class">
+                                    <input class="form-check-input" type="checkbox" name="cla" value="{{current_user.student.class_info.id}}" id="checkbox" checked>
+                                    <label class="form-check-label" for="checkbox">
+                                        {{current_user.student.class_info.class_name}}
+                                    </label>
 
+                                    </div>
+                                    
+                            {%endif%}        
+                          </div>
+                        </div>
+                      </div>
+                      
+                        {%if current_user.role.has_permission(Permission.job_grade)%}
+                      <div class="mb-4">                      
+                          <label class="form-label" for="check_class">选择年级</label>
+                          <div class="card">
+                            <div class="card-body">
+                              {%for i in g%}
+                                <div class="form-check form-check-inline" name="check_class">
+                                    <input class="form-check-input" type="checkbox" name="grade" value="{{i.id}}" id="grade-{{i.id}}">
+                                    <label class="form-check-label" for="grade-{{i.id}}">
+                                        {{i.grade_name}}
+                                    </label>
+                                </div> 
+                                {%endfor%}
+                            </div>
+                          </div>
+                      </div>  
+                        {%endif%}
+                </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" onclick="javascript:location.reload();" type="button">
+                        <i class="bi  bi-trash"></i>
+                        取消       
+                    </button>
+                    
+                    <button class="btn btn-primary " onclick ="doPrint" id="s1" type="button">
+                        <i class="bi  bi-cloud-arrow-up"></i>
+                        提交       
+                    </button>
+                    <button class="btn btn-primary visually-hidden " onclick ="doPrint" id="print" type="button">
+                      <i class="bi  bi-printer"></i>
+                      打印答题卡       
+                  </button>
+                </div>    
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script>
+    $(document).ready(function () {  
+        //弹出一个modal，用于输入作业标题
+        $("#title_input").modal("show");
+
+    });
+    let number1=1
+    let number2=1  //number1为大题题号，number2为小题题号
+    let structrued={};  //用于存储试卷的结构化信息，包括大题题号，题目类型，小题结构，分值，在试卷上的定位等
+    let position=38
+    var complete = document.getElementById("complete")
+    var s1 = document.getElementById("s1")
+    var answers={};
+    var tags = [];
+    //点击card时，显示structured和position
+    $(".card").click(function () { 
+        console.log(structrued);
+        console.log(answers);
+
+    });
+    //submit_title提交按钮的点击事件
+    $("#submit_title").click(function () {
+        var title= document.getElementById("title");
+        if(title.value.length<4){
+        title.value="",
+        title.placeholder=("标题长度不小于四个字符");
+        title.style.borderColor="red";
+    }
+    else{title.style.removeProperty("border-color");
+        //关闭modal
+        $("#title_input").modal("hide");
+        // 使用ajax技术，将标题传给后台，接收后台传来封装好的response，封装 了base64格式图片，将图片显示在在img标签中
+        $.ajax({
+            url: "/job/paper/",
+            type: "post",
+            data: { "title": title.value,
+                    csrf_token : '{{csrf_token()}}' 
+                    },
+            dataType: "text",
+            success: function (response) {                              
+                //response的头为"image/png",内容为base64格式图片，将图片显示在img中
+                $(".card-img-top").attr("src", "data:image/png;base64," + response);},
+            error: function (xhr, status, error) {
+                console.log(xhr);
+                console.log(status);
+                console.log(error);
+            }    
+        });} 
+    });
+    var selectQuantity=document.getElementById("select-quantity")
+    //selectQuantity.onchange时调用buidOptions函数，生成选项列表
+    selectQuantity.onchange=function(){
+      if(!/[0-9]$/.test(selectQuantity.value) ||Number(selectQuantity.value)>80){
+    selectQuantity.value=""
+    selectQuantity.placeholder=("只能填不大于80的数字");
+    selectQuantity.style.borderColor="red";
+    }
+  else{selectQuantity.style.removeProperty("border-color");
+      
+        buidOptions()}
+    }
+    //select-score数据发生变化时，检验输入是否为为<=10的正整数
+    document.getElementById("select-score").onchange=function(){
+        var score=document.getElementById("select-score")
+        if(!/[0-9]$/.test(score.value) || Number(score.value)>10){
+          score.value=""
+          score.placeholder="只能填不大于10的数字";
+          score.style.borderColor="red";
+          //禁用保存按钮
+          document.getElementById("saveSelect").disabled=true;
+        }
+        else{
+          score.style.removeProperty("border-color");
+          //启用保存按钮
+          document.getElementById("saveSelect").disabled=false;
+        }
+    }
+    document.getElementById("checkMultiple").onchange=function(){
+      selectQuantity.value=""
+      document.getElementById("set-answer").innerHTML=""
+    }
+    function buidOptions(){
+    const set_select=document.getElementById("set-answer")
+    //获取单选题和多选题状态
+    const checkMultiple=document.getElementById("checkMultiple")
+    if(checkMultiple.checked){
+        var type="checkbox"}
+    else{
+        var type="radio"}   
+    set_select.innerHTML=""
+    var s_n=Number(selectQuantity.value)
+    var questions=[]
+    for(var i=1;i<=s_n;i++){
+        questions.push({
+        options: ['A', 'B', 'C', 'D'],
+        },)
+    }
+    questions.forEach((question, index) => {
+    // 生成选项列表的HTML代码
+    const optionsHtml = question.options.map((option) => {
+    return `
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type=${type} name="question${index}" id="radio${index}-${option}" value="${option}"">
+        <label class="form-check-label" for="radio${index}-${option}">${option}</label>
+    </div>`;
+    }).join('');
+
+    // 生成题目的HTML代码
+    const questionHtml = `
+    <div class="mb-4">
+        
+        <ul>${index + 1}:${optionsHtml}</ul>
+        <div>
+        <select class="form-select" name="tag" aria-label="选择难度">
+        {%for i in difficult%}
+        <option value={{i.id}}  >{{i.difficult}}</option>
+        {%endfor%}
+        </select>
+        </div>
+    </div>
+    
+    `;
+
+    // 添加题目的HTML代码到页面中
+    set_select.insertAdjacentHTML('beforeend', questionHtml);
+    });
+    }
+$(function() {
+  // 全选按钮
+  $('#checkAllBtn').click(function() {
+    $('input[name="cla"]').prop('checked', true);
+  });
+  
+  // 清空按钮
+  $('#uncheckAllBtn').click(function() {
+    $('input[name="cla"]').prop('checked', false);
+  });
+});
+function doPrint() {   
+    bdhtml=window.document.body.innerHTML;   
+    sprnstr='<!--startprint-->';   
+    eprnstr='<!--endprint-->';   
+    prnhtml=bdhtml.substr(bdhtml.indexOf(sprnstr) + 17);   
+    prnhtml=prnhtml.substring(0, prnhtml.indexOf(eprnstr));   
+    window.document.body.innerHTML=prnhtml;  
+    window.print();}//打印答题卡
+function check(){   
+     
+    var selects = $("select[name='tag']");
+    // 遍历每个select元素，并将它们的值添加到数组中
+    selects.each(function() {
+      tags.push($(this).val());
+    });
+    
+    var answer=[];
+    var checkMultiple=document.getElementById("checkMultiple");
+    if(checkMultiple.checked){        
+        for (var i = 0; i < selectQuantity.value; i++) {
+          var checks=document.getElementsByName("question"+String(i))
+          var t=""
+          for (var j=0;j<4;j++){
+            if (checks[j].checked) {
+              var value = checks[j].value;
+              t+=value;
+            }}
+          answer.push(t)
+        }
+      
+
+    }
+    else{
+      var radios = document.querySelectorAll('input[type="radio"]');     
+      for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) {
+          var value = radios[i].value;          
+          answer.push(value);
+        }
+      }
+    }
+      if (selectQuantity.value!=answer.length){
+      alert("请完成答案设置")
+      }
+      else{saveSelect()
+      }
+    answers[number1]=answer
+}
+function saveSelect()//将选择题数据提交给后台，获取后台画好的答题卡，显示在card中
+      {
+        //显示设置选择题答案的按钮        
+        var checkMultiple= document.getElementById("checkMultiple")
+        var score=Number(document.getElementById("select-score").value)
+        var quantity=Number(selectQuantity.value)
+        //使用ajax技术，向后台发送选择题的大题号，题目数量，接收后台传来封装好的response，封装 了base64格式图片，将图片显示在在img标签中
+        $.ajax({
+            url:"/job/paper/select",
+            type:"post",
+            data:{"number1":number1,
+                  "quantity":quantity,
+                  "number2":number2,
+                  "score":score,
+                  "position":position,
+                  "checkMultiple":checkMultiple.checked,
+                  csrf_token:'{{csrf_token()}}'},
+            dataType:"text",
+            success:function(response){
+                number1+=1;                
+                //response包含两个字段，"img"键为base64格式图片，将图片显示在img中，"pos"键为选择题的定位
+                response=JSON.parse(response)
+                $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
+                number2+=quantity;
+                position=response['pos']['end']+2
+                if (checkMultiple.checked==true){
+                    type="多选题";//多选题结构
+                }
+                else{
+                  type="单选题"
+                }
+                structrued[number1-1]={"类型":type,"小题数":quantity,"分值":Number(score),"位置":response['pos']};//选择题结构
+                selectQuantity.value=""                
+                //清空set_select中的内容               
+                document.getElementById("set-answer").innerHTML=""
+            },
+            error:function(xhr,status,error){
+                console.log(xhr);
+                console.log(status);
+                console.log(error);
+            }
+        })  
+
+    }
+complete.onchange=function(){ 
+  var c = document.getElementById("sub_c")
+c.innerHTML=""
+if(Number(complete.value)>6||!/[0-9]$/.test(complete.value)){
+  complete.value=""
+  complete.placeholder="只能够输入6以下的数字"
+  complete.style.borderColor="red"
+}
+else{
+  complete.style.removeProperty("border-color")
+  
+    for (var i=0;i<Number(complete.value);i++){ 
+        var number=number2+i
+        var row = $("<div class='row'></div>");
+        var lable=$('<label class="col-1">'+number+':</label>')
+        var input1 = $("<input type='text' class='col-5' name='subtopic'  className='form-control form-control-sm' />");
+        var input2 = $("<input type='text' class='col-3' name='c_mark' />");
+        var tag = $("<select class='col-3' name='c-diff' > {%for i in difficult%}<option value={{i.id}}  >{{i.difficult}}</option>{%endfor%}</select>");
+        row.append(lable)
+        row.append(input1);
+        row.append(input2);
+        row.append(tag);
+        $("#sub_c").append(row);
+        
+    }
+    const subtopicInputs = document.querySelectorAll("input[name='subtopic']");
+// 为每个输入字段添加 change 事件监听器
+        subtopicInputs.forEach(input => {
+          input.addEventListener("change", () => {
+            const value = input.value.trim();     
+            // 输入的数据为若干个数字，数字范围为1-6,每个数字用空格隔开
+            if (!/^[1-6](\s[1-6])*$/.test(value)) {
+              input.value = "";
+              input.placeholder="只能输入1-6的数字，数字之间用空格隔开"
+              input.style.borderColor="red"
+            }
+            else{
+              input.style.removeProperty("border-color")
+            }
+            
+            
+            });
+          });
+  const c_markInputs = document.querySelectorAll("input[name='c_mark']");
+  c_markInputs.forEach(input => {
+    input.addEventListener("change", () => {
+      const value = input.value.trim();     
+      //判断是否为数字      
+      if (/^[0-9]+$/.test(value)){       
+        input.style.removeProperty("border-color")
+      }
+      else{
+        input.value = "";
+        input.placeholder="只能输入数字"
+        input.style.borderColor="red"
+      }
+    });
+  });
+}                    
+}
+//当name为subtopic的input值发生改变时，检查是否符合要求
+function saveComplete(){
+  //如果name为c_mark和subtopic的input值都不为空，则将数据提交给后台，获取后台画好的答题卡，显示在card中
+  var subtopic = document.getElementsByName("subtopic")
+  var c_mark=document.getElementsByName("c_mark")
+  var difficulty=document.getElementsByName("c-diff")
+  //检测subtopic和c_mark的值是否符合要求 
+  var f1=true
+  var f2=true
+  for (var i=0;i<subtopic.length;i++){
+    if(subtopic[i].value==""||subtopic[i].value==null){
+      subtopic[i].value=""
+      subtopic[i].placeholder="不能为空"
+      subtopic[i].style.borderColor="red"
+      f1=false
+    }
+    else{
+      subtopic[i].style.removeProperty("border-color")
+    }
+    if(c_mark[i].value==""||c_mark[i].value==null){
+      c_mark[i].value=""
+      c_mark[i].placeholder="不能为空"
+      c_mark[i].style.borderColor="red"
+      f2=false
+    }
+    else{
+      c_mark[i].style.removeProperty("border-color")
+      
+    }
+  }
+  if(f1==true&&f2==true){
+    var sub=new Array();
+    var c_marks=new Array()
+    var diff=new Array()
+    for (var i=0;i<subtopic.length;i++){
+      sub.push(subtopic[i].value)
+      c_marks.push(Number(c_mark[i].value))
+      tags.push(difficulty[i].value)
+    }
+    $.ajax({
+      url:"paper/complete/",
+      type:"POST",
+      data:{"subtopic":JSON.stringify(sub),
+            "c_mark":JSON.stringify(c_marks),
+            'number1':number1,
+            'number2':number2,
+            'position':position,
+            csrf_token:'{{csrf_token()}}',
+          },
+      dataType:"text",
+      success:function(response){
+        //隐藏modal
+        $("#setComplete").modal("hide");
+          number1+=1;
+          //response包含两个字段，"img"键为base64格式图片，将图片显示在img中，"pos"键为选择题的定位
+          response=JSON.parse(response)
+          $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
+          number2+=c_marks.length;
+          var keys=Object.keys(response['pos']);
+          var lastKey = keys[keys.length - 1];          
+          position=response['pos'][lastKey]["end"]+2;          
+          structrued[number1-1]={"类型":"填空题","小题数":subtopic.length,"分值":c_marks,"位置":response['pos']};//选择题结构               
+          //清空complete中的内容               
+          document.getElementById("complete").value=""
+          $("#sub_c").empty();
+      },
+      error:function(xhr,status,error){
+          console.log(xhr);
+          console.log(status);
+          console.log(error);
+      }
+  })  
+  }
+}
+//当setShortAnswerNumber的值发生改变时，检查是否符合要求，根据值的大小动态生成输入框，类似填空题生成界面
+const shortAnswer = document.getElementById("setShortAnswerNumber");
+  shortAnswer.addEventListener("change", () => {
+    const value = shortAnswer.value.trim();     
+    // 输入的数据为小于5的数字
+    if(!/^[1-4]$/.test(value)){      
+      shortAnswer.value = "";
+      shortAnswer.placeholder="只能小于5的数字"
+      shortAnswer.style.borderColor="red"
+    }
+    else{
+      shortAnswer.style.removeProperty("border-color")
+      var num=Number(value)
+      //根据num数量，动态num行，每行两个输入框，一个select框，输入框一个为行数，一个为分值，每行的开头为number2+i小题号
+      $("#sub_shortAnswer").empty();
+      for(var i=0;i<num;i++){
+        number=number2+i
+        var row = $("<div class='row'></div>");
+        var lable=$('<label class="col-1">'+number+':</label>')
+        var input1 = $("<input type='text' class='col-5' name='shortAnswerLine'  className='form-control form-control-sm' />");
+        var input2 = $("<input type='text' class='col-3' name='s_mark' />");
+        var tag = $("<select class='col-3' name='s-diff' > {%for i in difficult%}<option value={{i.id}}  >{{i.difficult}}</option>{%endfor%}</select>");
+        row.append(lable)
+        row.append(input1);
+        row.append(input2);
+        row.append(tag);
+        $("#sub_shortAnswer").append(row);
+      }
+       // 获取输入框元素
+    var inputs = document.querySelectorAll("input[name='shortAnswerLine'], input[name='s_mark']");
+    // 监听输入框的 input 事件
+    inputs.forEach(function(input) {
+    input.addEventListener("input", function() {
+    // 检查输入框的值是否为数字
+    if (isNaN(input.value)) {
+      // 输入框的值不是数字，将其边框设置为红色，并清空其值
+      input.style.borderColor = "red";
+      input.placeholder="只能为数字"
+      input.value = "";
+    } else {
+      // 输入框的值是数字，将其边框恢复为默认值
+      input.style.removeProperty("border-color");
+    }
+    });
+    });      
+    }
+  });
+
+function saveShortAnswer(){
+  var inputs = document.querySelectorAll("input[name='shortAnswerLine'], input[name='s_mark']");
+
+  var f1=true
+  var line=new Array()
+  var score=new Array()
+  //当inputs都不为空时，将其值存入line和score中  
+  for(var i=0;i<inputs.length;i++){
+     
+    if(inputs[i].value==""){
+      inputs[i].style.borderColor="red"
+      f1=false
+    }
+    else{
+      inputs[i].style.removeProperty("border-color")
+      if(i%2==0){
+        line.push(Number(inputs[i].value))
+        var sum = line.reduce(function(acc, val) {
+          return acc + val;
+        }, 0);
+        if (position+sum>100){
+          alert("位置超过100")
+          f1=false
+          break
+        }
+      }
+      else{
+        score.push(Number(inputs[i].value))
+      }
+    }
+    }
+
+  if (f1==true){ 
+      //使用ajax将数据传给后端
+      $.ajax({
+        url:"paper/shortAnswer/",
+        type:"POST",
+        data:{"line":JSON.stringify(line),
+              "score":JSON.stringify(score),
+              'number1':number1,
+              'number2':number2,
+              'position':position,
+              csrf_token:'{{csrf_token()}}',
+            },
+        dataType:"text",
+        success:function(response){
+          //隐藏modal
+          $("#setShortAnswer").modal("hide");
+            number1+=1;
+            //response包含两个字段，"img"键为base64格式图片，将图片显示在img中，"pos"键为选择题的定位
+            response=JSON.parse(response)
+            $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
+            number2+=score.length;
+            var keys=Object.keys(response['pos']);
+            var lastKey = keys[keys.length - 1];          
+            position=response['pos'][lastKey]["end"]+2;          
+            structrued[number1-1]={"类型":"简答题","小题数":score.length,"分值":score,"位置":response['pos']};//选择题结构               
+            //清空complete中的内容               
+            shortAnswer.value=""
+            $("#sub_shortAnswer").empty();
+        },
+        error:function(xhr,status,error){
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+        }}) 
+    }
+  }
+//保存提交按钮，提交成功后显示打印按钮
+s1.onclick=function(){
+  var f0=false
+  var title=document.getElementById("title")
+  var classlist =document.getElementsByName("cla")
+  var tp=document.getElementById("formFile")
+  var grade = document.getElementsByName("grade")
+  if(tp.value==""||tp.value==null){
+    tp.value="",    
+    tp.style.borderColor="red",
+    f0=false
+  }
+  else{tp.style.removeProperty("border-color");f0=true}
+  for (var i=0;i<classlist.length;i++){
+    if (classlist[i].checked ){
+    cla.push((classlist[i].value))        
+    }
+  }
+  for(var i=0;i<grade.length;i++){
+    if (grade[i].checked ){
+    g.push(grade[i].value)        
+    }
+  }
+  if(f0){
+    $(function () {
+          var url ="/job/publish_work/";           
+          var formData =new FormData();
+          formData.append("file",tp.files[0])
+          formData.append('title',title.value)
+          formData.append('structred',JSON.stringify(structrued))
+          formData.append('answers',answers)
+          formData.append("classlist",JSON.stringify(cla))
+          formData.append('grade',JSON.stringify(g))
+          formData.append('tags',JSON.stringify(tags))
+          var csrf_token="{{csrf_token()}}";
+          $.ajax({
+              url:url,
+              type:'post',
+                 // 服务器端返回的数据类型
+              headers:{"X-CSRFToken":csrf_token},
+              cache: false,//上传文件无需缓存
+              data: formData,
+              contentType: false,
+              processData: false,
+              success:function (data) {
+                //显示隐藏的按钮                
+                document.getElementById("print").removeClass("visibility-hidden")
+               } , 
+              error:function (error) {
+                  alert(error);
+              } 
+          })
+    })
+}
+  else{
+    window.alert("数据输入错误，请检查")
+  }                        
+};
+</script>
 {%endblock%}

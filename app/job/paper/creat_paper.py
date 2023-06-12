@@ -26,20 +26,25 @@ def genarate_papaer(width):  #生成试卷，width为宽度，高度为宽度的
     draw.rectangle([n*2,height-n*4,n*4,height-n*2],fill=0)
     draw.rectangle([width-n*4,height-n*4,width-n*2,height-n*2],fill=0)    
     return paper
+bigQuestionNumber=["一","二","三","四","五","六","七","八","九","十","十一","十二"]
 
-
-def genarate_select(n,n1,pic,x,y): #生成选择题，n1为题目数量，pic为试卷模板，pos为第一题位置
+def genarate_select(n:int,number1:int,number2:int,n1:int,score:int,pic,x:int,y:int,checkMultiple): #生成选择题，n1为题目数量，pic为试卷模板，pos为第一题位置
     font=ImageFont.truetype(f_url, int(n*1.5))   
     char=["[ A ]","[ B ]","[ C ]","[ D ]"]
-    draw=ImageDraw.Draw(pic)    
-    draw.text((x,y),"一、选择题",fill="#000000",font=font)
+    draw=ImageDraw.Draw(pic) 
+    if checkMultiple=='true':
+        title=bigQuestionNumber[int(number1)-1]+"、多项选择题，多选，少选均不给分（每题"+str(score)+"分）" 
+    else:
+        title=bigQuestionNumber[int(number1)-1]+"、单项选择题（每题"+str(score)+"分）" 
+    draw.text((x,y),title,fill="#000000",font=font)
     y+=3*n
     font=ImageFont.truetype(f_url, n)
-    end=y+(n1//4+1)*(n*2) 
+    end=y+(n1//4+int(bool(n1%4)))*(n*2) 
     draw.rectangle([x-n,y-n,pic.width-n*5,end],width=2,outline="#000000")
-    pos=[]
+    pos={}
+    pos["start"]=y//n
     for i in range(n1):
-        draw.text((x,y),str(i+1)+".",fill="#000000",font=font)
+        draw.text((x,y),str(i+number2)+".",fill="#000000",font=font)
         x+=2*n
         for j in range(4):
             draw.text((x,y),char[j],fill="#000000",font=font)
@@ -48,27 +53,33 @@ def genarate_select(n,n1,pic,x,y): #生成选择题，n1为题目数量，pic为
         if (i+1)%4==0:
             y+=2*n
             x=n*7
-    return([end,n1]) 
+    pos["end"]=end//n
+    return(pos) 
 
-def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列表，存储每个小题几个空[[1,2],[1,1,1]],x,y 为位置，n1为题号
-    line=[]
+def generate_completion(n,pic,list,c_mark,x,y,number1,n1): #生成填空题，list为二维列表，存储每个小题几个空[[1,2],[1,1,1]],x,y 为位置，n1为题号
+    line={}
     flag=True
     draw=ImageDraw.Draw(pic)
     font=ImageFont.truetype(f_url, int(n*1.5))
-    draw.text((x,y),"二、填空题",fill="#000000",font=font)
-    y+=3*n
-    draw.rectangle([x,y,pic.width-n*5,pic.height-n*5],width=2,outline="#000000")
-    line.append(y//n)
-    y+=3*n
-    font=ImageFont.truetype(f_url, int(n*1.3))
-    x+=n
+    title=""
+       
+    for i in range(len(c_mark)):
+        title+="第"+str(n1+i)+"题"+str(c_mark[i])+"分，"
+    title= bigQuestionNumber[int(number1)-1]+"、填空题（"+title[:-1]+"。）"
+    draw.text((x,y),title,fill="#000000",font=font)
+    y+=3*n  
+    start=y
+    y+=n    
+    font=ImageFont.truetype(f_url, int(n*1.3))    
     for i in range(len(list)):
+        pos={} 
+        pos["start"]=y//n
         if (pic.height-y)<(len(list[i])+1)*3*n :
             break
+        y+=n
         draw.text((x,y),str(n1)+".",fill=0,font=font)        
         x+=2*n
         y+=2*n
-        pos=[]
         for j in range(len(list[i].split())):
             draw.text((x,y),"("+str(j+1)+")",fill=0,font=font)            
             x+=2*n
@@ -76,7 +87,7 @@ def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列�
                 if x>pic.width-n*20:
                     x=n*11
                     y+=3*n
-                draw.text((x,y),"____________________",fill=0,font=font)                
+                draw.text((x,y),"________________",fill=0,font=font)                
                 x+=16*n
             y+=3*n
             x=9*n
@@ -85,10 +96,47 @@ def generate_completion(n,pic,list,x,y,n1): #生成填空题，list为二维列�
         if y//n>114:
             flag=False
         else:
-            line.append(y//n)
-            y+=2*n
+            pos["end"]=y//n
+            line[n1]=pos            
             n1+=1
+    end=y
+    draw.rectangle([n*6,start,pic.width-n*5,end],width=2,outline="#000000")
     return(line,flag)
+
+def drawShortAnswer(n,img,y,structure,score,number1,number2):
+    draw=ImageDraw.Draw(img)
+    font=ImageFont.truetype(f_url, int(n*1.5))
+    title=""
+    line={}
+    x=n*7
+    for i in range(len(score)):
+        title+="第"+str(number2+i)+"题"+str(score[i])+"分，"
+    title= bigQuestionNumber[int(number1)-1]+"、简答题（"+title[:-1]+"。）"
+    draw.text((x,y),title,fill="#000000",font=font)
+    y+=3*n
+    start=y
+    y+=n    
+    font=ImageFont.truetype(f_url, int(n*1.3))
+    n1=number2
+    for i in range(len(structure)):
+        pos={}
+        y+=n
+        pos["start"]=y//n
+        draw.text((x,y),str(number2+i)+".",fill="#000000",font=font)
+        y+=structure[i]*n
+        draw.line((n*6,y,img.width-n*5,y),fill="#000000",width=2)
+        if y//n>114:
+            break
+        else:
+            pos["end"]=y//n
+            line[n1]=pos
+        n1+=1        
+    end=y
+    draw.rectangle([n*6,start,img.width-n*5,end],width=2,outline="#000000")
+    return(line)
+
+    
+        
 
 def number_area(n,pic,x,y,n1): #产生学号填涂区，pic为image对象，x,y 为填涂区左上角顶点坐标，n1为号码个数
     draw=ImageDraw.Draw(pic)    
@@ -130,3 +178,19 @@ def paper(subject,teacher,width,title,s_n,complete):
     qr_paste(subject+"-"+title+"-"+teacher,paper,(paper.width-n*16,n*15),n*12)
     p_name=os.getcwd()+"/app/static/paper/excercise/"+teacher+"-"+str(time.time())+".png"
     return((line,paper,flag))
+
+def paste_image(paper):
+    img=Image.open(os.getcwd()+"/app/job/paper/pic/"+"name.png")
+    n=paper.width//82
+    img=img.convert('L')
+    name_width=n*20
+    img=img.resize((name_width,27*n))
+    paper.paste(img,(n*6,n*9))
+    return  paper
+
+def add_title(paper,title):
+    n=paper.width//82
+    d=ImageDraw.Draw(paper)    
+    font=ImageFont.truetype(f_url, n*3)
+    d.text(((paper.width-n*3*len(title))//2,n*5),title,fill=0,font=font)
+    return paper

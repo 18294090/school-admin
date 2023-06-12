@@ -161,6 +161,7 @@ class job(db.Model):  # 作业
     select_answer=db.Column(db.Text)
     complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
     paper_url = db.Column(db.String(64))
+    answerCardStructure=db.Column(db.String(128))
     line = db.Column(db.String(64))    
     #total字段为作业总分，值为select字段乘以s_m字段的和加上complete字段的和，total字段的值在作业发布时自动计算，不需要手动输入
 

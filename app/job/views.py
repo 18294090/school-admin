@@ -26,6 +26,8 @@ import mammoth
 import itertools
 import random
 import numpy as np
+from PIL import Image
+
 @job_manage.route("/",methods=["POST","GET"]) # 作业管理主页教师页面为作业情况，学生页面为学生个人信息
 @login_required 
 def job_mg():
@@ -1063,4 +1065,109 @@ def student_charts(number):
 @login_required
 @permission_required(Permission.job_publish)
 def test():
-    return(render_template("/job/paper.html"))
+    return(render_template("/job/paper.html",Permission=Permission))
+
+@job_manage.route("/paper/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def initial_paper():
+    if request.method=="POST":
+        title=request.form.get("title")            
+    paper=creat_paper.genarate_papaer(2000)#paper为pil格式图片
+    n=paper.width//82
+    paper=creat_paper.add_title(paper,title)    
+    creat_paper.number_area(n,paper,n*27,n*9,10)
+    paper=creat_paper.paste_image(paper)
+    #将paper保存在static文件夹下的temp文件夹中，文件名为currentuser的id，格式为png
+    paper.save(os.path.join(os.getcwd(),"app","static","temp",str(current_user.id)+".png"))
+    #将pil格式图片转换为opencv格式图片
+    paper_cv=np.array(paper)
+    paper_cv=cv2.cvtColor(paper_cv,cv2.COLOR_RGB2BGR)
+    retval, buffer = cv2.imencode('.png', paper_cv)
+    img_b64 = base64.b64encode(buffer).decode('utf-8')
+    # 创建响应对象
+    response = make_response(img_b64)
+    # 设置响应头
+    response.headers['Content-Type'] = 'text/plain'
+    return(response)
+
+@job_manage.route("/paper/select",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def drawSelect():
+    if request.method=="POST":
+        quantity=int(request.form.get("quantity"))
+        number1=int(request.form.get("number1"))
+        number2=int(request.form.get("number2"))
+        score=int(request.form.get("score"))
+        position=int(request.form.get("position"))
+        checkMultiple=request.form.get('checkMultiple')
+        #打开pil图像,图像位置在static文件夹下的temp目录中
+        img=Image.open(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        n=img.width//82
+        print(checkMultiple)
+        pos=creat_paper.genarate_select(n,number1,number2,quantity,score,img,n*7,n*position,checkMultiple)
+        img.save(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        #将pil格式图片转换为opencv格式图片
+        img_cv=np.array(img)
+        img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
+        retval, buffer = cv2.imencode('.png', img_cv)
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+        # 创建响应对象，将pos和img_b64传输给前端
+        response = make_response(json.dumps({"pos":pos,"img":img_b64}))
+        # 设置响应头
+        response.headers['Content-Type'] = 'text/plain'
+        return(response)
+@job_manage.route("/paper/complete/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def drawComplete():
+    if request.method=="POST":
+        subtopic=request.form.get("subtopic")
+        subtopic=json.loads(subtopic)
+        number1=int(request.form.get("number1"))
+        number2=int(request.form.get("number2"))
+        c_marks=request.form.get("c_mark") 
+        c_marks=json.loads(c_marks)       
+        position=int(request.form.get("position"))
+        #打开pil图像,图像位置在static文件夹下的temp目录中
+        img=Image.open(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        n=img.width//82
+        pos=creat_paper.generate_completion(n,img,subtopic,c_marks,n*7,n*position,number1,number2)
+        img.save(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        #将pil格式图片转换为opencv格式图片
+        img_cv=np.array(img)
+        img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
+        retval, buffer = cv2.imencode('.png', img_cv)
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+        # 创建响应对象，将pos和img_b64传输给前端,pos是一个列表，每个元素是一个字典，包含了每题的开始位置和结束位置
+        response = make_response(json.dumps({"pos":pos[0],"img":img_b64}, default=str))
+        response.headers['Content-Type'] = 'text/plain'
+        return(response)
+
+@job_manage.route("/paper/shortAnswer/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def drawShortAnswer():
+    if request.method=="POST":
+        line=request.form.get("line")
+        line=json.loads(line)
+        score=request.form.get("score")
+        score=json.loads(score)
+        number1=int(request.form.get("number1"))
+        number2=int(request.form.get("number2"))
+        position=int(request.form.get("position"))
+        #打开pil图像,图像位置在static文件夹下的temp目录中
+        img=Image.open(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        n=img.width//82
+        pos=creat_paper.drawShortAnswer(n,img,n*position,line,score,number1,number2)
+        img.save(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        #将pil格式图片转换为opencv格式图片
+        img_cv=np.array(img)
+        img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
+        retval, buffer = cv2.imencode('.png', img_cv)
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+        # 创建响应对象，将pos和img_b64传输给前端,pos是一个列表，每个元素是一个字典，包含了每题的开始位置和结束位置
+        response = make_response(json.dumps({"pos":pos,"img":img_b64}, default=str))
+        response.headers['Content-Type'] = 'text/plain'
+        return(response)
