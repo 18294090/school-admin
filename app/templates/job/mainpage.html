@@ -11,13 +11,12 @@
 			<div class="card shadow " style="height: 180px">
                 <div class="card-block">
 					<h5 class="card-title">
-						发布作业
-                       
+						发布作业                       
                     </h5>
                     <div class="row">
                         <!--一张图片，来自于static文件夹下的OIG.jpeg,图片大小为自适应-->
                         <div class="col-3">
-                            <img src="{{url_for('static',filename='OIG.jpeg')}}" class="img-fluid  " alt="Responsive image" style="height: 90px;">
+                            <img src="{{url_for('static',filename='/picture/OIG.jpeg')}}" class="img-fluid  " alt="Responsive image" style="height: 90px;">
                         </div>    
                         <p class="card-text col-9">
                             1、发布作业，填写作业标题，截至时间等作业信息<br>
@@ -69,17 +68,15 @@
                             上传答卷，不需要区分作业
                             </p>
                             <div class=" d-flex input-group">
-                                <input type="file" class="form-control" id="inputGroupFile1" aria-describedby="inputGroupFileAddon" aria-label="Upload" multiple accept=".png,.jpg,.bmp">
-                                <button class="btn btn-outline-primary" type="button" id="inputGroupFileAddon" onclick="upload_paper1()">上传</button>
+                                <input type="file" class="form-control" id="GroupFile" aria-describedby="GroupFileAddon" aria-label="Upload" multiple accept=".png,.jpg,.bmp">
+                                <button class="btn btn-outline-primary" type="button" id="GroupFileAddon" onclick="upload_paper1()">上传</button>
                             </div>  
                         </div>
                     </div>
-                </div>
-                
+                </div>                
                 <div class="card-block">
                     <a class="btn btn-primary"onclick="judge1()"><i class="fa fa-bicycle"></i>阅卷</a>
-                </div>
-                    
+                </div>                    
                 <br>
             </div>
         </div>
@@ -140,8 +137,6 @@
                     <th>
                         发布时间
                     </th>
-                    
-                    
                     <th>
                         发布者
                     </th>
@@ -185,10 +180,10 @@
                             <ul class="dropdown-menu">
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button>
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button> 
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='paper/excercise/'+i.paper_url) }}'">查看答题卡</button>
+                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='job/answerCard/'+i.subject+"/"+i.paper_url) }}'">查看答题卡</button>
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button>
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick=judge({{i.id}}) >选择题阅卷</button>
-                                {%if i.complete|from_json|length>0%}
+                                {%if i.complete%}
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="c_judge({{i.id}})">填空题阅卷</button>
                                 {%endif%}
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">查看阅卷报告</button>
@@ -214,11 +209,9 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="job_class">
-        
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick=assign_job()>确定</button>
-        
       </div>
     </div>
   </div>
@@ -257,8 +250,7 @@
       <div class="modal-footer">
       <label>评分</label>
       <div class="btn-group btn-group" role="group" id='btn-group'>
-      </div>
-        
+      </div>        
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >关闭</button>
       </div>
     </div>
@@ -358,7 +350,6 @@
                 div.append(check);
                 div.append(label);
                 // 将div添加到网页的某个容器中，比如id为container的div
-                
                 $("#job_class").append(div);
                 });
                 }
@@ -403,6 +394,39 @@
                        var counttag=document.getElementById("c-"+String(id))
                        counttag.innerHTML=""
                        counttag.innerHTML="<a href="+{{'/answer/url'|replace('url',id)}}+">"+data[1]+"</a>"
+                        judge(id)
+                    } else {
+                        console.log(data)
+                        alert("上传失败")
+                    }
+                },
+            });
+    };
+    function upload_paper1(){
+        var file=document.getElementById("GroupFile");
+        var formData =new FormData();
+        var files = file.files;
+        for(var i=0; i<files.length; i++){
+            formData.append('files',files[i]);
+        }
+        var csrf_token="{{csrf_token()}}";
+        $.ajax({
+                url: "/job/upload/all",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式               
+                data: formData,  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                cache: false,//上传文件无需缓存
+                processData: false,//用于对data参数进行序列化处理 这里必须false
+                contentType: false, //必须
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
+                    if (data) {
+                       alert(data[0]+"个文件上传成功")
+                       file.value=""
+                       var counttag=document.getElementById("c-"+String(id))
+                       counttag.innerHTML=""
+                       counttag.innerHTML="<a href="+{{'/answer/url'|replace('url',id)}}+">"+data[1]+"</a>"
+                        judge(id)
                     } else {
                         console.log(data)
                         alert("上传失败")
@@ -517,9 +541,8 @@
     };
     function judge1(){       
         var csrf_token="{{csrf_token()}}";
-        showSpinners();  // 显示 Spinners
-       
-        
+         // 显示 Spinners
+         showSpinners(); 
         $.ajax({
                 url: "/job/judge1/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},//提交给flask后台必须有csrf认证
@@ -538,6 +561,13 @@
     };
     function showSpinners() {
     $("#spinners").removeClass('d-none');
+    //使spinners全屏局中
+    $("#spinners").css("position", "fixed");
+    $("#spinners").css("top", "50%");
+    $("#spinners").css("left", "50%");
+    $("#spinners").css("transform", "translate(-50%, -50%)");
+    //将spinners置于最上层
+    $("#spinners").css("z-index", "9999");
     //使网页变为灰色，不可点击，不可滚动
     $("body").css("pointer-events", "none");
     }

@@ -4,27 +4,42 @@ import cv2
 from pyzbar import pyzbar
 line=[]
 n=0
-def open(url1):
+def open_answer_card(url1):
     global n
     img=cv2.imread(url1)
     n=img.shape[1]//82   
     return(img)
 
-def open2(url):
+def open_student_card(url):
     global n
     img=cv2.imread(url)
     img=img[n*2:-n*2,n*2:-n*2]
     return(img)
 
-def qr(img):#读取识别二维码
+#读取识别二维码
+def qr_recognize(pic,pos):
     global n
-    if len(img.shape)!=2:
-        pic = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)    
-    pic=pic[n*15:n*27,n*68:n*79]
-    qr_code_blur = cv2.GaussianBlur(pic, (5, 5), 0)
-    # 填充空洞
-    qr_code_dilate = cv2.dilate(qr_code_blur, None, iterations=1)
-    pic = cv2.erode(qr_code_dilate, None, iterations=1)
+    if len(pic.shape)!=2:
+        pic = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)    
+    pic=pic[pos[0]:pos[1],pos[2]:pos[3]]
+    
+    if pic.dtype != np.uint8:
+        pic = pic.astype(np.uint8)
+    # 去除噪点
+    pic = cv2.medianBlur(pic, 3)
+    # 二值化处理
+    _, thresh = cv2.threshold(pic, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    #膨胀
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    pic = cv2.dilate(thresh, kernel, iterations=1)
+    #腐蚀
+    pic = cv2.erode(pic, kernel, iterations=1)
+    #反色
+    pic= cv2.bitwise_not(pic)
+    #显示pic
+    """cv2.imshow('pic',pic)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""
     barcodes =""
     barcodes = pyzbar.decode(pic)    
     barcodeData=[]
@@ -55,7 +70,6 @@ def paper_ajust(original_image, target_image):
     M = cv2.getPerspectiveTransform(target_corners, original_corners)
     # 应用仿射变换矩阵对目标图像进行变换，实现矫正
     adjusted_image = cv2.warpPerspective(target_image, M, (original_image.shape[1], original_image.shape[0]))
-    
     return adjusted_image
 
 def find_corners(img):

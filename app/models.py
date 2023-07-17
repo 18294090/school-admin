@@ -161,17 +161,15 @@ class job(db.Model):  # 作业
     select_answer=db.Column(db.Text)
     complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
     paper_url = db.Column(db.String(64))
-    answerCardStructure=db.Column(db.String(128))
-    line = db.Column(db.String(64))    
+    answerCardStructure=db.Column(db.Text)
+    line = db.Column(db.String(64))
+    multiple_choice_infor=db.Column(db.Text)
+    no_multiple_choice_infor=db.Column(db.Text)
+    total1=db.Column(db.Integer)    
     #total字段为作业总分，值为select字段乘以s_m字段的和加上complete字段的和，total字段的值在作业发布时自动计算，不需要手动输入
-
-        
     @property
     def total(self):
-        # Calculate the total score based on select, s_m, and complete fields
-        select_score = self.select * self.s_m
-        complete_score = sum(json.loads(self.complete))
-        return select_score + complete_score
+        return self.select*self.s_m+sum(json.loads(self.complete))
     #作业和班级的关系，一个作业可以有多个班级，一个班级可以有多个作业，删除作业时，job_class表中的数据也会被删除，而删除job_class表中的数据时，不会影响作业表
     job_class = db.relationship("job_class",  back_populates="job",cascade="all, delete")
     job_detail = db.relationship("job_detail",  back_populates="job",cascade="all, delete")

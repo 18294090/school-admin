@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <meta name="viewport" content="{{ viewport }}" />
+    <script src="{{ prefix | safe }}/_nicegui/{{version}}/static/socket.io.min.js"></script>
+    <link href="{{ favicon_url }}" rel="shortcut icon" />
+    <link href="{{ prefix | safe }}/_nicegui/{{version}}/static/nicegui.css" rel="stylesheet" type="text/css" />
+    <link href="{{ prefix | safe }}/_nicegui/{{version}}/static/fonts.css" rel="stylesheet" type="text/css" />
+    <link href="{{ prefix | safe }}/_nicegui/{{version}}/static/quasar.prod.css" rel="stylesheet" type="text/css" />
+    {% if tailwind %}
+    <script src="{{ prefix | safe }}/_nicegui/{{version}}/static/tailwindcss.min.js"></script>
+    {% endif %} {{ head_html | safe }}
+  </head>
+  <body>
+    <script src="{{ prefix | safe }}/_nicegui/{{version}}/static/vue.global.prod.js"></script>
+    <script src="{{ prefix | safe }}/_nicegui/{{version}}/static/quasar.umd.prod.js"></script>
+    <script src="{{ prefix | safe }}/_nicegui/{{version}}/static/quasar.{{ language }}.umd.prod.js"></script>
+
+    {{ body_html | safe }}
+
+    <div id="app"></div>
+    <div id="popup">
+      <span>Connection lost.</span>
+      <span>Trying to reconnect...</span>
+    </div>
+    <script>
+      function getElement(id) {
+        return window.app.$refs["r" + id];
+      }
+    </script>
+    <script type="module">
+      const True = true;
+      const False = false;
+      const None = undefined;
+
+      const elements = {{ elements | safe }};
+
+      const waitingCallbacks = new Map();
+      function throttle(callback, time, leading, trailing, id) {
+        if (time <= 0) {
+          // execute callback immediately and return
+          callback();
+          return;
+        }
+        if (waitingCallbacks.has(id)) {
+          if (trailing) {
+            // update trailing callback
+            waitingCallbacks.set(id, callback);
+          }
+        } else {
+          if (leading) {
+            // execute leading callback and set timeout to block more leading callbacks
+            callback();
+            waitingCallbacks.set(id, null);
+          }
+          else if (trailing) {
+            // set trailing callback and set timeout to execute it
+            waitingCallbacks.set(id, callback);
+          }
+          if (leading || trailing) {
+            // set timeout to remove block and to execute trailing callback
+            setTimeout(() => {
+              const trailingCallback = waitingCallbacks.get(id);
+              if (trailingCallback) trailingCallback();
+              waitingCallbacks.delete(id)
+            }, 1000 * time);
+          }
+        }
+      }
+      function renderRecursively(elements, id) {
+        const element = elements[id];
+        const props = {
+          id: element.id,
+          ref: 'r' + element.id,
+          class: element.class.join(' ') || undefined,
+          style: Object.entries(element.style).reduce((str, [p, val]) => `${str}${p}:${val};`, '') || undefined,
+          ...element.props,
+        };
+        Object.entries(props).forEach(([key, value]) => {
+          if (key.startsWith(':')) {
+            props[key.substring(1)] = eval(value);
+            delete props[key];
+          }
+        });
+        element.events.forEach((event) => {
+          let event_name = 'on' + event.type[0].toLocaleUpperCase() + event.type.substring(1);
+          event.specials.forEach(s => event_name += s[0].toLocaleUpperCase() + s.substring(1));
+          let handler = (e) => {
+            const all = (typeof e !== 'object' || e === null) || !event.args;
+            const args = all ? e : Object.fromEntries(event.args.map(a => [a, e[a]]));
+            const emitter = () => window.socket.emit("event", {id: element.id, listener_id: event.listener_id, args});
+            throttle(emitter, event.throttle, event.leading_events, event.trailing_events, event.listener_id);
+            if (element.props["loopback"] === False && event.type == "update:model-value") {
+              element.props["model-value"] = args;
+            }
+          };
+          handler = Vue.withModifiers(handler, event.modifiers);
+          handler = event.keys.length ? Vue.withKeys(handler, event.keys) : handler;
+          if (props[event_name]) {
+            props[event_name].push(handler)
+          } else {
+            props[event_name] = [handler];
+          }
+        });
+        const slots = {};
+        Object.entries(element.slots).forEach(([name, data]) => {
+          slots[name] = (props) => {
+            const rendered = [];
+            if (data.template) {
+              rendered.push(Vue.h({
+                props: { props: { type: Object, default: {} } },
+                template: data.template,
+              }, {
+                props: props
+              }));
+            }
+            const children = data.ids.map(id => renderRecursively(elements, id));
+            if (name === 'default' && element.text !== null) {
+              children.unshift(element.text);
+            }
+            return [ ...rendered, ...children]
+          }
+        });
+        return Vue.h(Vue.resolveComponent(element.tag), props, slots);
+      }
+
+      function runJavascript(code, request_id) {
+        (new Promise((resolve) =>resolve(eval(code)))).catch((reason) => {
+          if(reason instanceof SyntaxError)
+            return eval(`(async() => {${code}})()`);
+          else
+            throw reason;
+        }).then((result) => {
+          if (request_id) {
+            window.socket.emit("javascript_response", {request_id, result});
+          }
+        });
+      }
+
+      function download(url, filename) {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.target = "_blank";
+        anchor.download = filename || "";
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+      }
+
+      const app = Vue.createApp({
+        data() {
+          return {
+            elements,
+          };
+        },
+        render() {
+          return renderRecursively(this.elements, 0);
+        },
+        mounted() {
+          window.app = this;
+          const query = { client_id: "{{ client_id }}" };
+          const url = window.location.protocol === 'https:' ? 'wss://' : 'ws://' + window.location.host;
+          const extraHeaders = {{ socket_io_js_extra_headers | safe }};
+          const transports = ['websocket', 'polling'];
+          window.path_prefix = "{{ prefix | safe }}";
+          window.socket = io(url, { path: "{{ prefix | safe }}/_nicegui_ws/socket.io", query, extraHeaders, transports });
+          window.socket.on("connect", () => {
+            window.socket.emit("handshake", (ok) => {
+              if (!ok) window.location.reload();
+              document.getElementById('popup').style.opacity = 0;
+            });
+          });
+          window.socket.on("connect_error", (err) => {
+            if (err.message == 'timeout') window.location.reload(); // see https://github.com/zauberzeug/nicegui/issues/198
+          });
+          window.socket.on("disconnect", () => {
+            document.getElementById('popup').style.opacity = 1;
+          });
+          window.socket.on("update", (msg) => Object.entries(msg).forEach(([id, el]) => this.elements[el.id] = el));
+          window.socket.on("run_method", (msg) => getElement(msg.id)?.[msg.name](...msg.args));
+          window.socket.on("run_javascript", (msg) => runJavascript(msg['code'], msg['request_id']));
+          window.socket.on("open", (msg) => (location.href = msg.startsWith('/') ? "{{ prefix | safe }}" + msg : msg));
+          window.socket.on("download", (msg) => download(msg.url, msg.filename));
+          window.socket.on("notify", (msg) => Quasar.Notify.create(msg));
+        },
+      }).use(Quasar, {
+        config: {
+          brand: {
+            primary: '#5898d4',
+          },
+          loadingBar: {
+            color: 'primary'
+          },
+        }
+      });
+
+      Quasar.lang.set(Quasar.lang["{{ language }}"]);
+
+      {{ vue_scripts | safe }}
+      {{ js_imports | safe }}
+
+      const dark = {{ dark }};
+      Quasar.Dark.set(dark === None ? "auto" : dark);
+      {% if tailwind %}
+      if (dark !== None) tailwind.config.darkMode = "class";
+      if (dark === True) document.body.classList.add("dark");
+      {% endif %}
+
+      app.mount("#app");
+    </script>
+  </body>
+</html>

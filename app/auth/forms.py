@@ -4,7 +4,7 @@ from wtforms import PasswordField, SubmitField, SelectField, StringField, Intege
 from flask_wtf import FlaskForm
 from flask_wtf.file import DataRequired
 from flask_ckeditor import CKEditorField
-from flask_codemirror.fields import CodeMirrorField
+
 from wtforms.validators import InputRequired, EqualTo
 
 

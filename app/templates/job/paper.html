@@ -14,16 +14,12 @@
                 <div class="modal-body" >
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="title" placeholder="作业标题" aria-label="Recipient's username" id="title" aria-describedby="button-addon2">
-                        
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"  id="submit_title" >提交</button>
                 </div>
-                
-                
-            </div>
-            
+            </div>            
         </div>
     </div>
     <!-- Modal for setting select question quantity and score -->
@@ -62,8 +58,7 @@
         </div>
       </div>
     </div>
-  </div>
-  
+  </div>  
   <!--以下modal用于设置填空题-->
   <div class="modal fade" id="setComplete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -89,7 +84,7 @@
                 <label for="difficulty">选择难度</label>
               </div>
           </div>
-          <div class="mb-4 " id="sub_c"  data-bs-toggle="tooltip" data-bs-placement="top" title="请设置每道填空题的结构和分值，设置填空题结构方法如下：用数字表示每道小题有几个空，小题和小题间用空格隔开。如：2 3 2表示有三个小题，第一题两空，第二题3空，第三题2空。选择题分值为一个数字表示大题的总分"> 
+          <div class="mb-4" id="sub_c"  data-bs-toggle="tooltip" data-bs-placement="top" title="请设置每道填空题的结构和分值，设置填空题结构方法如下：用数字表示每道小题有几个空，小题和小题间用空格隔开。如：2 3 2表示有三个小题，第一题两空，第二题3空，第三题2空。选择题分值为一个数字表示大题的总分"> 
           </div>
         </div>
         <div class="modal-footer">
@@ -137,7 +132,7 @@
         <div class="col-md-8">
             <div class="card shadow">
                 <div class="card-body">
-                    <!-- bootstrap的img组件，用于显示后台传来的base64图片 -->
+                    <!-- bootstrap的img组件，用于显示图片 -->
                     <!--startprint-->
                     <img class="card-img-top" src="" alt="Card image cap">
                     <!--endprint-->   
@@ -145,11 +140,11 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
+            <div class="card" >
             <div class="card-header">
                 作业设置
             </div>
-                <div class="card-body">
+                <div class="card-body" id="set_card">
                     <div class="row">
                         <!--点击按钮，显示modal，用于输入作业标题-->
                          <div class="btn-group ">
@@ -197,7 +192,7 @@
                     </div>
                     </div>
                     <div class="row">
-                        <div class="mb-4">
+                        <div class="mb-4">                          
                             <label for="formFile" class="form-label">上传试题卷</label>
                             <input class="form-control" type="file" id="formFile" accept=".txt,.pdf,.doc,.docx">
                           </div >
@@ -253,19 +248,25 @@
                 </div>
                 </div>
                 <div class="card-footer">
-                    <button class="btn btn-primary" onclick="javascript:location.reload();" type="button">
+                  <div class="btn-group">
+                    <button class="btn btn-primary" id="cancel",onclick="javascript:location.reload();" type="button">
                         <i class="bi  bi-trash"></i>
                         取消       
-                    </button>
-                    
-                    <button class="btn btn-primary " onclick ="doPrint" id="s1" type="button">
+                    </button> 
+                    <button class="btn btn-primary " id="rollBack" onclick ="rollBack()"  type="button">
+                      <i class="bi  bi-back"></i>
+                     回滚       
+                  </button> 
+                   <button class="btn btn-primary visually-hidden " onclick ="doPrint()" id="print" type="button">
+                      <i class="bi  bi-printer"></i>
+                      打印     
+                  </button>                  
+                    <button class="btn btn-primary " onclick ="submit()" id="s1" type="button">
                         <i class="bi  bi-cloud-arrow-up"></i>
                         提交       
                     </button>
-                    <button class="btn btn-primary visually-hidden " onclick ="doPrint" id="print" type="button">
-                      <i class="bi  bi-printer"></i>
-                      打印答题卡       
-                  </button>
+                   
+                </div>
                 </div>    
             </div>
         </div>
@@ -274,10 +275,17 @@
 <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
 
 <script>
-    $(document).ready(function () {  
-        //弹出一个modal，用于输入作业标题
-        $("#title_input").modal("show");
-
+    $(document).ready(function () {
+        $.ajax({
+            url:"/job/paper",
+            type:"GET",
+            success:function(response){
+              //弹出一个modal，用于输入作业标题
+              $("#title_input").modal("show");
+              //在card上显示图片
+              $(".card-img-top").attr("src", "data:image/png;base64," + response);
+            }
+        });
     });
     let number1=1
     let number2=1  //number1为大题题号，number2为小题题号
@@ -291,7 +299,9 @@
     $(".card").click(function () { 
         console.log(structrued);
         console.log(answers);
-
+        console.log(tags); 
+        console.log(number1);
+        console.log(number2);
     });
     //submit_title提交按钮的点击事件
     $("#submit_title").click(function () {
@@ -306,13 +316,13 @@
         $("#title_input").modal("hide");
         // 使用ajax技术，将标题传给后台，接收后台传来封装好的response，封装 了base64格式图片，将图片显示在在img标签中
         $.ajax({
-            url: "/job/paper/",
+            url: "/job/modifyTitle/",
             type: "post",
             data: { "title": title.value,
                     csrf_token : '{{csrf_token()}}' 
                     },
             dataType: "text",
-            success: function (response) {                              
+            success: function (response) {                                
                 //response的头为"image/png",内容为base64格式图片，将图片显示在img中
                 $(".card-img-top").attr("src", "data:image/png;base64," + response);},
             error: function (xhr, status, error) {
@@ -330,8 +340,7 @@
     selectQuantity.placeholder=("只能填不大于80的数字");
     selectQuantity.style.borderColor="red";
     }
-  else{selectQuantity.style.removeProperty("border-color");
-      
+  else{selectQuantity.style.removeProperty("border-color");      
         buidOptions()}
     }
     //select-score数据发生变化时，检验输入是否为为<=10的正整数
@@ -393,9 +402,7 @@
         </select>
         </div>
     </div>
-    
     `;
-
     // 添加题目的HTML代码到页面中
     set_select.insertAdjacentHTML('beforeend', questionHtml);
     });
@@ -418,15 +425,16 @@ function doPrint() {
     prnhtml=bdhtml.substr(bdhtml.indexOf(sprnstr) + 17);   
     prnhtml=prnhtml.substring(0, prnhtml.indexOf(eprnstr));   
     window.document.body.innerHTML=prnhtml;  
-    window.print();}//打印答题卡
-function check(){   
-     
+    window.print();
+    //页面跳转
+    window.location.href="/job/";
+    }//打印答题卡
+function check(){
     var selects = $("select[name='tag']");
     // 遍历每个select元素，并将它们的值添加到数组中
     selects.each(function() {
       tags.push($(this).val());
     });
-    
     var answer=[];
     var checkMultiple=document.getElementById("checkMultiple");
     if(checkMultiple.checked){        
@@ -439,9 +447,7 @@ function check(){
               t+=value;
             }}
           answer.push(t)
-        }
-      
-
+        } 
     }
     else{
       var radios = document.querySelectorAll('input[type="radio"]');     
@@ -459,6 +465,7 @@ function check(){
       }
     answers[number1]=answer
 }
+
 function saveSelect()//将选择题数据提交给后台，获取后台画好的答题卡，显示在card中
       {
         //显示设置选择题答案的按钮        
@@ -482,7 +489,7 @@ function saveSelect()//将选择题数据提交给后台，获取后台画好的
                 //response包含两个字段，"img"键为base64格式图片，将图片显示在img中，"pos"键为选择题的定位
                 response=JSON.parse(response)
                 $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
-                number2+=quantity;
+                
                 position=response['pos']['end']+2
                 if (checkMultiple.checked==true){
                     type="多选题";//多选题结构
@@ -490,7 +497,8 @@ function saveSelect()//将选择题数据提交给后台，获取后台画好的
                 else{
                   type="单选题"
                 }
-                structrued[number1-1]={"类型":type,"小题数":quantity,"分值":Number(score),"位置":response['pos']};//选择题结构
+                structrued[number1-1]={"类型":type,"小题数":quantity,'初始题号':number2,"分值":Number(score),"位置":response['pos']};//选择题结构
+                number2+=quantity;
                 selectQuantity.value=""                
                 //清空set_select中的内容               
                 document.getElementById("set-answer").innerHTML=""
@@ -513,20 +521,18 @@ if(Number(complete.value)>6||!/[0-9]$/.test(complete.value)){
 }
 else{
   complete.style.removeProperty("border-color")
-  
     for (var i=0;i<Number(complete.value);i++){ 
         var number=number2+i
         var row = $("<div class='row'></div>");
         var lable=$('<label class="col-1">'+number+':</label>')
         var input1 = $("<input type='text' class='col-5' name='subtopic'  className='form-control form-control-sm' />");
-        var input2 = $("<input type='text' class='col-3' name='c_mark' />");
+        var input2 = $("<input type='text' class='col-3' id='"+String(number)+"' name='c_mark'  />");
         var tag = $("<select class='col-3' name='c-diff' > {%for i in difficult%}<option value={{i.id}}  >{{i.difficult}}</option>{%endfor%}</select>");
         row.append(lable)
         row.append(input1);
         row.append(input2);
         row.append(tag);
         $("#sub_c").append(row);
-        
     }
     const subtopicInputs = document.querySelectorAll("input[name='subtopic']");
 // 为每个输入字段添加 change 事件监听器
@@ -542,8 +548,6 @@ else{
             else{
               input.style.removeProperty("border-color")
             }
-            
-            
             });
           });
   const c_markInputs = document.querySelectorAll("input[name='c_mark']");
@@ -590,16 +594,14 @@ function saveComplete(){
     }
     else{
       c_mark[i].style.removeProperty("border-color")
-      
     }
   }
   if(f1==true&&f2==true){
     var sub=new Array();
-    var c_marks=new Array()
-    var diff=new Array()
+    var c_marks={}
     for (var i=0;i<subtopic.length;i++){
       sub.push(subtopic[i].value)
-      c_marks.push(Number(c_mark[i].value))
+      c_marks[c_mark[i].id]=Number(c_mark[i].value)
       tags.push(difficulty[i].value)
     }
     $.ajax({
@@ -620,11 +622,12 @@ function saveComplete(){
           //response包含两个字段，"img"键为base64格式图片，将图片显示在img中，"pos"键为选择题的定位
           response=JSON.parse(response)
           $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
-          number2+=c_marks.length;
+          
           var keys=Object.keys(response['pos']);
           var lastKey = keys[keys.length - 1];          
           position=response['pos'][lastKey]["end"]+2;          
-          structrued[number1-1]={"类型":"填空题","小题数":subtopic.length,"分值":c_marks,"位置":response['pos']};//选择题结构               
+          structrued[number1-1]={"类型":"填空题","小题数":subtopic.length,'初始题号':number2,"分值":c_marks,"位置":response['pos']};//选择题结构               
+          number2+=Object.keys(c_marks).length;
           //清空complete中的内容               
           document.getElementById("complete").value=""
           $("#sub_c").empty();
@@ -657,8 +660,8 @@ const shortAnswer = document.getElementById("setShortAnswerNumber");
         var row = $("<div class='row'></div>");
         var lable=$('<label class="col-1">'+number+':</label>')
         var input1 = $("<input type='text' class='col-5' name='shortAnswerLine'  className='form-control form-control-sm' />");
-        var input2 = $("<input type='text' class='col-3' name='s_mark' />");
-        var tag = $("<select class='col-3' name='s-diff' > {%for i in difficult%}<option value={{i.id}}  >{{i.difficult}}</option>{%endfor%}</select>");
+        var input2 = $("<input type='text' class='col-3' name='s_mark' id='"+String(number)+"'/>");
+        var tag = $("<select class='col-3' name='s-diff' > {%for i in difficult%}<option value={{i.id}}>{{i.difficult}}</option>{%endfor%}</select>");
         row.append(lable)
         row.append(input1);
         row.append(input2);
@@ -687,19 +690,19 @@ const shortAnswer = document.getElementById("setShortAnswerNumber");
 
 function saveShortAnswer(){
   var inputs = document.querySelectorAll("input[name='shortAnswerLine'], input[name='s_mark']");
-
   var f1=true
   var line=new Array()
-  var score=new Array()
+  var score={}
+  var difficulty=document.getElementsByName("s-diff")  
   //当inputs都不为空时，将其值存入line和score中  
-  for(var i=0;i<inputs.length;i++){
-     
+  for(var i=0;i<inputs.length;i++){ 
+       
     if(inputs[i].value==""){
       inputs[i].style.borderColor="red"
       f1=false
     }
     else{
-      inputs[i].style.removeProperty("border-color")
+      inputs[i].style.removeProperty("border-color")     
       if(i%2==0){
         line.push(Number(inputs[i].value))
         var sum = line.reduce(function(acc, val) {
@@ -712,12 +715,14 @@ function saveShortAnswer(){
         }
       }
       else{
-        score.push(Number(inputs[i].value))
+        score[inputs[i].id]=(Number(inputs[i].value))
       }
-    }
-    }
+    }}
 
-  if (f1==true){ 
+  if (f1==true){
+      for(var i=0;i<difficulty.length;i++){
+        tags.push(difficulty[i].value)
+      }
       //使用ajax将数据传给后端
       $.ajax({
         url:"paper/shortAnswer/",
@@ -737,13 +742,13 @@ function saveShortAnswer(){
             //response包含两个字段，"img"键为base64格式图片，将图片显示在img中，"pos"键为选择题的定位
             response=JSON.parse(response)
             $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
-            number2+=score.length;
             var keys=Object.keys(response['pos']);
             var lastKey = keys[keys.length - 1];          
             position=response['pos'][lastKey]["end"]+2;          
-            structrued[number1-1]={"类型":"简答题","小题数":score.length,"分值":score,"位置":response['pos']};//选择题结构               
+            structrued[number1-1]={"类型":"简答题","小题数":Object.keys(score).length,"初始题号":number2,"分值":score,"位置":response['pos']};//选择题结构               
             //清空complete中的内容               
             shortAnswer.value=""
+            number2+=Object.keys(score).length;
             $("#sub_shortAnswer").empty();
         },
         error:function(xhr,status,error){
@@ -753,6 +758,46 @@ function saveShortAnswer(){
         }}) 
     }
   }
+function rollBack(){
+  if (number1==1){
+    alert("试卷已清空")
+    return
+  }
+  //利用ajax将structrued中的数据传给后端
+  $.ajax({
+    url:"paper/rollBack/",
+    type:"POST",
+    data:{"structrued":JSON.stringify(structrued),
+          csrf_token:'{{csrf_token()}}',
+        },
+    dataType:"text",
+    success:function(response){
+      //将后台传来的图片显示在img中
+      response=JSON.parse(response)
+      $(".card-img-top").attr("src","data:image/png;base64,"+response["img"]);
+      number1-=1;
+      number2-=structrued[number1]["小题数"];
+      position=response['pos']      
+      //tags列表存储了每道题目的标签，删除列表tags中相关题目元素
+      for(var i=0;i<structrued[number1]["小题数"];i++){
+        tags.pop()
+      }
+      console.log(number1)
+      //如果当前题型为选择题，则删除answers中的相关元素
+      console.log(structrued[number1]["类型"])
+      if(String(structrued[number1]["类型"]).includes("选")){
+        //删除answers中的相关元素
+        delete answers[number1]
+      }
+      //删除structrued中的最后一个元素
+      delete structrued[number1]
+    },
+    error:function(xhr,status,error){
+        console.log(xhr);
+        console.log(status);
+        console.log(error);
+    }}) 
+}
 //保存提交按钮，提交成功后显示打印按钮
 s1.onclick=function(){
   var f0=false
@@ -760,6 +805,8 @@ s1.onclick=function(){
   var classlist =document.getElementsByName("cla")
   var tp=document.getElementById("formFile")
   var grade = document.getElementsByName("grade")
+  var cla=new Array()
+  var g=new Array()
   if(tp.value==""||tp.value==null){
     tp.value="",    
     tp.style.borderColor="red",
@@ -782,8 +829,8 @@ s1.onclick=function(){
           var formData =new FormData();
           formData.append("file",tp.files[0])
           formData.append('title',title.value)
-          formData.append('structred',JSON.stringify(structrued))
-          formData.append('answers',answers)
+          formData.append('structrued',JSON.stringify(structrued))
+          formData.append('answers',JSON.stringify(answers))
           formData.append("classlist",JSON.stringify(cla))
           formData.append('grade',JSON.stringify(g))
           formData.append('tags',JSON.stringify(tags))
@@ -798,11 +845,28 @@ s1.onclick=function(){
               contentType: false,
               processData: false,
               success:function (data) {
-                //显示隐藏的按钮                
-                document.getElementById("print").removeClass("visibility-hidden")
+                if (data=="success"){
+                  //card显示图片,图片位于static文件夹下
+                  $(".card-img-top").attr("src","/static/job/temp/{{current_user.id}}.png");
+
+                  alert("提交成功,请打印答题卡")
+                  //set_card区域所有按钮不可用
+                  $("#set_card").find("button").attr("disabled",true)
+                  $("#cancel").addClass("visually-hidden")
+                  $("#rollBack").addClass("visually-hidden")
+                 
+                  $("#print").removeClass("visually-hidden")
+                  
+                  $("#s1").addClass("visually-hidden")
+                  }
+                else{alert(data)}
                } , 
-              error:function (error) {
-                  alert(error);
+              error:function (xhr, status, error) {
+                var message = xhr.responseText;
+                
+                 //弹窗显示(message);
+                alert(message)
+                
               } 
           })
     })

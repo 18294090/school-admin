@@ -1,7 +1,7 @@
 from flask_paginate import Pagination, get_page_parameter
 import pandas as pd
 from .import job_manage
-from flask import render_template, redirect, flash, request,jsonify,make_response,send_from_directory
+from flask import render_template, redirect, flash, request,jsonify,make_response,send_from_directory,abort
 from ..models import job, job_detail,job_student,job_class,difficult, student,class_info,class_student, teaching_information,user,teacher,Permission,grade_info,abnormal_job
 from .. import db
 from .forms import publish
@@ -67,8 +67,8 @@ def job_mg():
     #class__=current_user.teacher.teaching_information.order_by(teaching_information.class_id.asc())   
     pagination = Pagination(page=page, total=len(job.query.all()), bs_version=4, search=search, record_name='job')
     for i in jobs:            
-        a=os.path.join(os.getcwd(),"app","static","answer",str(i.id))
-        b=os.path.join(os.getcwd(),"app","static","job_readed",str(i.id))
+        a=os.path.join(os.getcwd(),"app","static","job","answer",str(i.id))
+        b=os.path.join(os.getcwd(),"app","static","job","job_readed",str(i.id))
         count[i.id]=len(os.listdir(a))
         count1[i.id]=len(os.listdir(b))
     return(render_template("job/mainpage.html", p=p,jobs=jobs,count=count,count1=count1,Permission=Permission,subjects=["语文","数学","外语","政治","历史","地理","物理","化学","生物","通用技术","信息技术"],pagination=pagination))
@@ -92,8 +92,8 @@ def search_job(name):
     p = publish()
     pagination = Pagination(page=page, total=len(job.query.all()), bs_version=4, search=search, record_name='job')
     for i in jobs:            
-        a=os.path.join(os.getcwd(),"app","static","answer",str(i.id))
-        b=os.path.join(os.getcwd(),"app","static","job_readed",str(i.id))
+        a=os.path.join(os.getcwd(),"app","static","job","answer",str(i.id))
+        b=os.path.join(os.getcwd(),"app","static","job","job_readed",str(i.id))
         count[i.id]=len(os.listdir(a))
         count1[i.id]=len(os.listdir(b))
     return(render_template("job/mainpage.html", p=p,pagination =pagination,jobs=jobs,count=count,count1=count1,Permission=Permission,subjects=["语文","数学","外语","政治","历史","地理","物理","化学","生物","通用技术","信息技术"]))
@@ -183,10 +183,8 @@ def question_statistics():
         for serial_No, details in groups.items():
             if serial_No<=job_.select:
                 choices = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
-                choices_={'A':"",'B':"",'C':"",'D':""}
-                
-                for detail in details:
-                    
+                choices_={'A':"",'B':"",'C':"",'D':""}                
+                for detail in details:                    
                     choices[detail.answer[0]] += 1
                     #将每个选项的选择人员名单存入choices_字典中
                     choices_[detail.answer[0]]+=" "+detail.stu.name
@@ -346,7 +344,6 @@ def job_info(job_id):
             df2=df.T
             #计算相似度,若答案为4,则不计算相似度
             similarity=df2.corr(method='pearson')
-
             #将相似度矩阵转换为列表，每个元素是一个三元组，表示行索引，列索引，相似度
             x=[]
             y=[]
@@ -360,9 +357,7 @@ def job_info(job_id):
                         y.append(js[similarity.columns[j]][1])
                         a+=1
                         b+=1
-
             #根据相似度，创建热力图,x轴为学生，y轴为学生，颜色越深，相似度越高，similarity的index为学生学号，columns为学生学号，values为相似度
-        
             c = (#图像大小为页面大小
                 HeatMap(init_opts=opts.InitOpts(width="100%",height="600px"))
                 .add_xaxis(x)
@@ -404,10 +399,7 @@ def create_paper():
     data["status"]=0
     if request.method == "POST":        
         title=request.form.get("title") 
-               
         if job.query.filter(job.job_name==title).first():
-            
-            
             data["status"]+=1
             data["%s" %data["status"]]="已存在该作业"
             return(data)
@@ -424,23 +416,21 @@ def create_paper():
         g=request.form.get("grade") 
         g=json.loads(g)
         print(g,title)
-                  
         if current_user.role.has_permission(Permission.job_publish): 
             teacher = current_user.teacher.id
             subject=current_user.teacher.subject
-        s_answer=request.form.get("answers")            
+        s_answer=request.form.get("answers")
         tags=request.form.get("tags")
         tags=json.loads(tags)
         r=creat_paper.paper(subject,current_user.realname,2000,title,int(select),subtopic)
         url =str(teacher)+"-"+str(time.time())+".png"
-        path=os.path.join(os.getcwd(),"app","static","paper","excercise",url)       
-        
+        path=os.path.join(os.getcwd(),"app","static","job","paper","excercise",url)
         if not r[-1]:
             data["status"]=1                
             data["1"]="生成答题卡失败，题目过多，超出卷面"
             return(data)                  
         r[1].save(path) 
-        path=os.path.join(os.getcwd(),"app","static","paper","question_paper",subject) 
+        path=os.path.join(os.getcwd(),"app","static","job","paper","question_paper",subject) 
         if not os.path.exists(path): 
             os.makedirs(path)            
         file_ext = file.filename.rsplit('.', 1)[1] # 获取文件扩展名
@@ -450,8 +440,8 @@ def create_paper():
         job_submit = job(job_name=title,publish_time=publish_time,publisher=publisher,question_paper=filename,subject=subject,select_answer=s_answer,context=json.dumps(tags),paper_url=url,s_m=int(number),complete=json.dumps(c_mark),line=json.dumps(r[0]),select=int(select))
         db.session.add(job_submit)
         db.session.flush()
-        path=os.path.join(os.getcwd(),"app","static","answer",str(job_submit.id))
-        path1=os.path.join(os.getcwd(),"app","static","job_readed",str(job_submit.id))
+        path=os.path.join(os.getcwd(),"app","static","job","answer",str(job_submit.id))
+        path1=os.path.join(os.getcwd(),"app","static","job","job_readed",str(job_submit.id))
         if not os.path.exists(path):
             os.makedirs(path)
         if not os.path.exists(path1):
@@ -475,14 +465,11 @@ def create_paper():
                         j_stu=job_student(job_id=job_submit.id,student=j.number)
                         db.session.add(j_stu)
                         db.session.flush()
-            
-        else:
-            
+        else:            
             data["status"]+=1
             data["%s" %data["status"]]="没有设置班级"
         data["url"]="/static/paper/excercise/"+url
-        db.session.commit()
-        
+        db.session.commit()        
     else:
         data["status"]+=1
         data["%s" %data["status"]]="没有提交作业数据"
@@ -513,7 +500,7 @@ def del_job():
     url=request.form.get("url")    
     try:
         job_=job.query.filter(job.paper_url==url.split("/")[-1]).first()
-        path=os.path.join(os.getcwd(),"app","static","paper","excercise",job_.paper_url)
+        path=os.path.join(os.getcwd(),"app","static","job","paper","excercise",job_.paper_url)
         print(path)
         if os.path.exists(path):
             os.remove(path)       
@@ -529,8 +516,11 @@ def del_job():
 @login_required 
 @permission_required(Permission.job_submit)
 def upload_paper(id):
-    if request.method == 'POST':       
-        url=os.path.join(os.getcwd(),"app","static","answer",str(id))
+    if request.method == 'POST':
+        if id=="all":
+            url=os.path.join(os.getcwd(),"app","static","job","answer")
+        else:       
+            url=os.path.join(os.getcwd(),"app","static","job","answer",str(id))
         print(url)
         files = request.files.getlist("files")
         n=0
@@ -540,8 +530,7 @@ def upload_paper(id):
                 file.save(os.path.join(os.getcwd(),url, filename))
                 n+=1
             except Exception as e:
-                return(e)
-                       
+                return(e)                       
         count=len(os.listdir(url))
         return(jsonify([n,count]))
        
@@ -555,11 +544,11 @@ def job_judge(id):
         judge.line=list(map(int,job_.line[1:-1].split(",")))
     answers=job_.select_answer[:-1].split(" ")
     select=job_.select 
-    img=judge.open(os.path.join(os.getcwd(),"app","static","paper","excercise",job_.paper_url))
+    img=judge.open(os.path.join(os.getcwd(),"app","static","job","paper","excercise",job_.paper_url))
     split=judge.paper_split(img,select,judge.line)
-    root=os.path.join(os.getcwd(),"app","static","answer",str(id))
+    root=os.path.join(os.getcwd(),"app","static","job","answer",str(id))
     tags = json.loads(job_.context)
-    abnormal_path=os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id))
+    abnormal_path=os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id))
     if not os.path.exists(abnormal_path):
         os.makedirs(abnormal_path)
     for dirpath, dirnames, filenames in os.walk(root): #遍历答题卷文件夹阅卷
@@ -571,7 +560,7 @@ def job_judge(id):
                 split=judge.paper_split(ep,select,judge.line)
                 number=judge.number_pos(split[0])
                 if  len(number)<10:
-                    shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
+                    shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),filepath))
                     abnormal=abnormal_job(job_id=id,reason="学号扫描不正确",paper=filepath)
                     db.session.add(abnormal)
                     db.session.flush()
@@ -581,10 +570,10 @@ def job_judge(id):
                     #判断是否重复阅卷，即j_stu.select_mark是否为空
                     """if j_stu.select_mark:
                         #将重复的未阅答卷移动到异常文件夹
-                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
+                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),filepath))
                         abnormal=abnormal_job(job_id=id,reason="该学号重复",paper=filepath,student_id=number)
                         #将重复的已阅答卷移动到异常文件夹
-                        shutil.move(os.path.join(os.getcwd(),"app","static","job_readed",str(id),str(number)+".jpg"), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),str(number)+".jpg"))
+                        shutil.move(os.path.join(os.getcwd(),"app","static","job","job_readed",str(id),str(number)+".jpg"), os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),str(number)+".jpg"))
                         abnormal1=abnormal_job(job_id=id,reason="该学号重复",paper=str(number)+".jpg",student_id=number)
                         #删除重复的阅卷记录
                         job_detail.query.filter(job_detail.job_id==int(id),job_detail.student==number).delete()
@@ -598,7 +587,7 @@ def job_judge(id):
                     if job_.select!=0:
                         s=judge.check_select(split[1],select) #选择题阅卷
                     if len(s)<select:
-                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),number+".jpg"))
+                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),number+".jpg"))
                         abnormal=abnormal_job(job_id=id,reason="选择题扫描不正确",paper=number+".jpg",student_id=number)
                         db.session.add(abnormal)
                         db.session.flush()
@@ -634,9 +623,9 @@ def job_judge(id):
                     n+=1
                     #如果当前文件仍存在，移到已阅文件夹
                     if os.path.exists(os.path.join(dirpath, filepath)):
-                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job_readed",str(id),"%s.jpg"%number))
+                        shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job","job_readed",str(id),"%s.jpg"%number))
                 else:
-                    shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),filepath))
+                    shutil.move(os.path.join(dirpath, filepath), os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),filepath))
                     abnormal=abnormal_job(job_id=id,reason="该学生没有本作业任务",paper=filepath,student_id=number)
                     db.session.add(abnormal)
                     db.session.flush()
@@ -682,7 +671,6 @@ def show_answer(id):
     job_=job.query.filter(job.id==id).first().select_answer
     return jsonify(job_)
 
-
 @job_manage.route("/cpl_judge/",methods=["POST","GET"]) #
 @login_required 
 @permission_required(Permission.job_publish)
@@ -705,10 +693,10 @@ def cpl_judge():
                 .order_by(job_detail.serial_No).first()
         if j_detail:
             print(j_detail.student)
-            paper =os.path.join(os.getcwd(),"app","static","job_readed",str(id),j_detail.student+".jpg")
+            paper =os.path.join(os.getcwd(),"app","static","job","job_readed",str(id),j_detail.student+".jpg")
             
             if os.path.exists(paper):
-                img=judge.open(os.path.join(os.getcwd(),"app","static","paper","excercise",j.paper_url))
+                img=judge.open(os.path.join(os.getcwd(),"app","static","job","paper","excercise",j.paper_url))
                 ep =judge.open2(paper)
                 ep=judge.paper_ajust(img,ep)
                 #if judge.qr(img)==judge.qr(ep):
@@ -721,9 +709,9 @@ def cpl_judge():
                 response['Content-Type'] = 'image/png'
                 return jsonify(response)
             else:
-                paper1=os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),j_detail.student+".jpg")
+                paper1=os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),j_detail.student+".jpg")
                 if os.path.exists(paper1):
-                    img=judge.open(os.path.join(os.getcwd(),"app","static","paper","excercise",j.paper_url))
+                    img=judge.open(os.path.join(os.getcwd(),"app","static","job","paper","excercise",j.paper_url))
                     ep =judge.open2(paper1)
                     ep=judge.paper_ajust(img,ep)
                     #if judge.qr(img)==judge.qr(ep):
@@ -742,6 +730,7 @@ def cpl_judge():
             response= make_response("无待阅卷")
             response.headers['Content-Type'] = 'text/plain'
         return(response)
+
 @job_manage.route("/set_cpl_mark/",methods=["POST"]) #
 @login_required 
 @permission_required(Permission.job_publish)
@@ -791,7 +780,7 @@ def clear_abnormal(id):
         for d in data:
             abnormal_job.query.filter(abnormal_job.paper==d).delete()
             #删除异常异常卷图片
-            path=os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),d)
+            path=os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),d)
             if os.path.exists(path):
                 os.remove(path)
             n+=1
@@ -811,8 +800,8 @@ def abnormal(args):
     id,paper=args.split(":")
     job_=job.query.filter(job.id==id).first()
     abnormal=abnormal_job.query.filter(abnormal_job.job_id==id,abnormal_job.paper==paper+".jpg").first()
-    img=judge.open(os.path.join(os.getcwd(),"app","static","paper","excercise",job_.paper_url))
-    pict=judge.open2(os.path.join(os.getcwd(),"app","static","abnormal_paper",str(id),paper+".jpg"))
+    img=judge.open(os.path.join(os.getcwd(),"app","static","job","paper","excercise",job_.paper_url))
+    pict=judge.open2(os.path.join(os.getcwd(),"app","static","job","abnormal_paper",str(id),paper+".jpg"))
     pict=judge.paper_ajust(img,pict)
     split=judge.paper_split(pict,job_.select,json.loads(job_.line))
     #split为分割后的图片列表，每个元素为一个opencv2的image图片，将其转换为base64格式，flask将其发送给前端，前端jinja将其渲染显示出来
@@ -884,7 +873,6 @@ def job_analyse():
         #x轴的数据旋转角度
     )
     #查找出所有在所选时间段内，布置给所任教班级的所任教学科的作业，布置时间数据在job_class表date字段中，job_class数据表为作业布置数据表,以布置时间排序
-     
     jobs=job.query.join(job_class).filter(job_class.class_id.in_([c.id for c in classes]),job.subject==current_user.teacher.subject,job_class.date.between(start,end)).order_by(job_class.date).all()
     #将作业的平均分，完成率，标准差，以pyecharts折线图呈现
     job_names=[j.job_name for j in jobs]
@@ -916,18 +904,15 @@ def job_analyse():
             else:
                 avg_scores.append(0)
                 completion_rates.append(0)
-                std_devs.append(0)
-    
+                std_devs.append(0)    
     line = (
         Line( )#图表宽度为页面的一半
         .add_xaxis(job_names)
         .add_yaxis("平均得分率", avg_scores)
         .add_yaxis("完成率", completion_rates)
         .add_yaxis("标准差", std_devs)
-        .set_global_opts(title_opts=opts.TitleOpts(title="所选时段内作业情况变化趋势图"),xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-15)),)
-        
+        .set_global_opts(title_opts=opts.TitleOpts(title="所选时段内作业情况变化趋势图"),xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-15)),)   
     )
-
     return render_template("job/job_analyse.html", classes=classes, chart=bar.render_embed(),chart2=line.render_embed())
 
 @job_manage.route("/modify_mark/<id>",methods=["POST","GET"]) #修改选择题成绩，当选择题分数设置错误，需要整体修改时运行该函数
@@ -938,8 +923,7 @@ def modify_mark(id):
     mark=job_.s_m
     jt=job_detail.query.filter(job_detail.job_id==id).filter(job_detail.serial_No<=job_.select).all()
     answers=job_.select_answer[:-1].split(" ")
-    for j in jt:
-        
+    for j in jt:        
         if j.answer==answers[j.serial_No-1]:
             j.mark=mark
     j_s=job_student.query.filter(job_student.job_id==id).filter(job_student.mark!=None).all()
@@ -967,8 +951,7 @@ def modify_mark(id):
             j.min=min
         if std:
             j.std=std
-        db.session.flush()
-    
+        db.session.flush()    
     db.session.commit()
     return ("chenggong")
 
@@ -1065,21 +1048,31 @@ def student_charts(number):
 @login_required
 @permission_required(Permission.job_publish)
 def test():
-    return(render_template("/job/paper.html",Permission=Permission))
+    diff=difficult.query.all()
+    if current_user.role.has_permission(Permission.job_publish):
+        class__=current_user.teacher.teaching_information.order_by(teaching_information.class_id.asc())
+        class_=[]
+        for i in class__:
+            if i.class_info not in class_:
+                class_.append(i.class_info)
+    elif current_user.role.role=="representative":
+        class_.append(current_user.student.class_info)
+    if current_user.role.has_permission(Permission.job_grade):
+        pass
+    g=grade_info.query.all()
+    return(render_template("/job/paper.html",g=g,difficult=diff,class_=class_,Permission=Permission))
+
 
 @job_manage.route("/paper/",methods=["POST","GET"])
 @login_required
 @permission_required(Permission.job_publish)
-def initial_paper():
-    if request.method=="POST":
-        title=request.form.get("title")            
+def initial_paper():               
     paper=creat_paper.genarate_papaer(2000)#paper为pil格式图片
-    n=paper.width//82
-    paper=creat_paper.add_title(paper,title)    
+    n=paper.width//82       
     creat_paper.number_area(n,paper,n*27,n*9,10)
     paper=creat_paper.paste_image(paper)
     #将paper保存在static文件夹下的temp文件夹中，文件名为currentuser的id，格式为png
-    paper.save(os.path.join(os.getcwd(),"app","static","temp",str(current_user.id)+".png"))
+    paper.save(os.path.join(os.getcwd(),"app","static","job","temp",str(current_user.id)+".png"))
     #将pil格式图片转换为opencv格式图片
     paper_cv=np.array(paper)
     paper_cv=cv2.cvtColor(paper_cv,cv2.COLOR_RGB2BGR)
@@ -1090,6 +1083,25 @@ def initial_paper():
     # 设置响应头
     response.headers['Content-Type'] = 'text/plain'
     return(response)
+
+@job_manage.route("/modifyTitle/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def modifyTitle():
+    if request.method=="POST":
+        title=request.form.get("title")
+        img=Image.open(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
+        img=creat_paper.add_title(img,title)
+        img.save(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
+        img_cv=np.array(img)
+        img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
+        retval, buffer = cv2.imencode('.png', img_cv)
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+        # 创建响应对象
+        response = make_response(img_b64)
+        # 设置响应头
+        response.headers['Content-Type'] = 'text/plain'
+        return(response)
 
 @job_manage.route("/paper/select",methods=["POST","GET"])
 @login_required
@@ -1103,11 +1115,11 @@ def drawSelect():
         position=int(request.form.get("position"))
         checkMultiple=request.form.get('checkMultiple')
         #打开pil图像,图像位置在static文件夹下的temp目录中
-        img=Image.open(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        img=Image.open(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
         n=img.width//82
         print(checkMultiple)
         pos=creat_paper.genarate_select(n,number1,number2,quantity,score,img,n*7,n*position,checkMultiple)
-        img.save(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        img.save(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
         #将pil格式图片转换为opencv格式图片
         img_cv=np.array(img)
         img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
@@ -1118,6 +1130,7 @@ def drawSelect():
         # 设置响应头
         response.headers['Content-Type'] = 'text/plain'
         return(response)
+
 @job_manage.route("/paper/complete/",methods=["POST","GET"])
 @login_required
 @permission_required(Permission.job_publish)
@@ -1131,10 +1144,10 @@ def drawComplete():
         c_marks=json.loads(c_marks)       
         position=int(request.form.get("position"))
         #打开pil图像,图像位置在static文件夹下的temp目录中
-        img=Image.open(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        img=Image.open(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
         n=img.width//82
         pos=creat_paper.generate_completion(n,img,subtopic,c_marks,n*7,n*position,number1,number2)
-        img.save(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        img.save(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
         #将pil格式图片转换为opencv格式图片
         img_cv=np.array(img)
         img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
@@ -1158,10 +1171,10 @@ def drawShortAnswer():
         number2=int(request.form.get("number2"))
         position=int(request.form.get("position"))
         #打开pil图像,图像位置在static文件夹下的temp目录中
-        img=Image.open(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        img=Image.open(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
         n=img.width//82
         pos=creat_paper.drawShortAnswer(n,img,n*position,line,score,number1,number2)
-        img.save(os.path.join(os.getcwd(),"app/static/temp",str(current_user.id)+".png"))
+        img.save(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
         #将pil格式图片转换为opencv格式图片
         img_cv=np.array(img)
         img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
@@ -1171,3 +1184,206 @@ def drawShortAnswer():
         response = make_response(json.dumps({"pos":pos,"img":img_b64}, default=str))
         response.headers['Content-Type'] = 'text/plain'
         return(response)
+
+@job_manage.route("/paper/rollBack/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def rollback():
+    if request.method=="POST":
+        #获取后台传来的structrued数据
+        structrued=request.form.get("structrued")
+        structrued=json.loads(structrued)
+        key=structrued.keys()
+        last=structrued[list(key)[-1]]
+        if "选" in last["类型"]:
+            start=last["位置"]["start"]
+            end=last["位置"]["end"]
+        else:
+            key=last["位置"].keys()
+            start=last["位置"][list(key)[0]]["start"]
+            end=last["位置"][list(key)[-1]]["end"]+1
+        #打开pil图像,图像位置在static文件夹下的temp目录中
+        print(start,end)
+        img=Image.open(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
+        #将img的start到end的区域填充为白色
+        n=img.width//82
+        img=creat_paper.fillWhite(img,(start-3)*n,end*n)
+        pos=start-3
+        img.save(os.path.join(os.getcwd(),"app/static/job/temp",str(current_user.id)+".png"))
+        #将pil格式图片转换为opencv格式图片
+        img_cv=np.array(img)
+        img_cv=cv2.cvtColor(img_cv,cv2.COLOR_RGB2BGR)
+        retval, buffer = cv2.imencode('.png', img_cv)
+        img_b64 = base64.b64encode(buffer).decode('utf-8')
+        # 创建响应对象，将pos和img_b64传输给前端,pos是一个列表，每个元素是一个字典，包含了每题的开始位置和结束位置
+        response = make_response(json.dumps({'img':img_b64,'pos':pos}, default=str))
+        response.headers['Content-Type'] = 'text/plain'
+        return(response)
+
+@job_manage.route("/publish_work/",methods=["POST","GET"])
+@login_required 
+@permission_required(Permission.job_publish)
+def publish_work():
+    db.session.commit()
+    if request.method=="POST":
+        title=request.form.get("title")
+        if job.query.filter_by(job_name=title).first():
+            return("作业名重复")
+        #获取后台传来的structrued数据
+        structrued1=request.form.get("structrued")
+        structrued=json.loads(structrued1)                
+        answer=request.form.get("answers")
+        answer=json.loads(answer)
+        classlist=request.form.get("classlist")
+        classlist=json.loads(classlist)
+        g=request.form.get("grade") 
+        g=json.loads(g)       
+        tags=request.form.get("tags")
+        tags=json.loads(tags)
+        files=request.files.get("file")
+        subject=current_user.teacher.subject
+        total=0
+        select=[]
+        no_Select=[]
+        for key in structrued.keys():
+            print(structrued[key]["分值"])
+            if "选" in structrued[key]["类型"]:
+                s={}
+                total+=structrued[key]["分值"]*structrued[key]["小题数"]
+                s["大题号"]=key
+                s["初始题号"]=structrued[key]["初始题号"]
+                s["题目数量"]=structrued[key]["小题数"]
+                s["分值"]=structrued[key]["分值"]
+                s["位置"]=structrued[key]["位置"]
+                select.append(s)
+            else:
+                total+=sum(structrued[key]["分值"].values())                
+                for k in structrued[key]["位置"].keys():
+                    NS={}
+                    NS["题号"]=key
+                    NS["位置"]=structrued[key]["位置"][k]
+                    NS["分值"]=structrued[key]["分值"][k]
+                    no_Select.append(NS)
+        if files:
+            filename=secure_filename(files.filename)
+            filename=title+"."+filename.split(".")[-1]
+            url=os.path.join(os.getcwd(),"app/static/job/paper/question_paper",subject)
+            if not os.path.exists(url):
+                os.makedirs(url)
+            url=os.path.join(url,filename)
+            files.save(url)
+        job1=job(job_name=title,answerCardStructure=json.dumps(structrued),select_answer=json.dumps(answer),context=json.dumps(tags),subject=subject,publisher=current_user.id ,multiple_choice_infor=json.dumps(select),no_multiple_choice_infor=json.dumps(no_Select),total1=total,question_paper=filename,publish_time=datetime.datetime.now())
+        db.session.add(job1)
+        db.session.flush()
+        job1.paper_url=str(job1.id)+".png"
+        db.session.commit()
+        path=os.path.join(os.getcwd(),"app","static","job","answer",str(job1.id))  
+        path1=os.path.join(os.getcwd(),"app","static","job","job_readed",str(job1.id))      
+        if not os.path.exists(path):
+            os.makedirs(path)
+        if not os.path.exists(path1):
+            os.makedirs(path1)        
+        if g:
+            class_list=db.session.query(class_info).join(grade_info).filter(grade_info.id.in_(g)).filter(class_info.attribute=="行政班").all()    
+        else:          
+            class_list=db.session.query(class_info).filter(class_info.id.in_(json.loads(request.form.get("classlist")))).all()
+        #将答题卡移至对应的文件夹中
+        path=os.path.join(os.getcwd(),"app","static","job","answerCard",subject)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        try:
+            path1=os.path.join(os.getcwd(),"app","static","job","temp",str(current_user.id)+".png")
+            path2=os.path.join(os.getcwd(),"app","static","job","answerCard",subject,str(job1.id)+".png")
+            #给答题卡添加二维码
+            img = Image.open(path1)
+            n=img.width//82
+            messeage=str(job1.id)+"_"+str(current_user.realname)+"_"+str(job1.job_name) 
+            print(messeage) 
+            creat_paper.qr_paste(messeage,img,(n*66,n*20),n*12) 
+            img.save(path2)
+            img.save(path1)
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+        #将作业发布给对应的班级
+        if class_list:  # 作业布置 
+            for i in class_list:                    
+                check_job=job_class.query.join(job,job_class.job).filter(job.job_name==title,job_class.class_id==i.id,job.subject==current_user.teacher.subject).first()  #避免重复布置相同作业
+                if check_job:
+                    messege="%s班已经有名为《%s》的作业！" %(check_job.class_info.class_name,title)
+                    return(messege)
+                else:
+                    job_publish = job_class(class_id=i.id,job_id=job1.id)
+                    db.session.add(job_publish)
+                    db.session.flush()
+                    for j in i.students:
+                        j_stu=job_student(job_id=job1.id,student=j.number)
+                        db.session.add(j_stu)
+                        db.session.flush()
+        else:
+            messege="没有设置班级,请在作业主界面选择班级布置作业！"
+            return(messege)
+        db.session.commit()
+        return("success")
+    
+@job_manage.route("/super_judge/",methods=["POST","GET"])
+@login_required 
+@permission_required(Permission.job_submit)
+def super_judge():
+    path=os.path.join(os.getcwd(),"app","static","job","answer")
+    #遍历path文件夹下的所有文件
+    files=os.listdir(path)
+    n=1
+    for i in files:
+        #获取文件的绝对路径
+        file=os.path.join(path,i)
+        #判断是否是文件夹
+        if not os.path.isdir(file):
+            n+=1
+            if n>10:
+                break
+            img=cv2.imread(file)
+            judge.n=img.shape[1]//82
+            messeage=judge.qr_recognize(img,(judge.n*10,judge.n*57,judge.n*66,judge.n*80))
+            if messeage:               
+                messeage=messeage[0].split("_")                
+                job_id=messeage[0]
+                
+                    
+    return("messeage")
+
+def multiple_choice_judge(anwer_card,job_id):
+    job_=db.session.query(job).filter(job.id==job_id).first()
+    if job_:
+        path=os.path.join(os.getcwd(),"app","static","job","answerCard",job_.subject,str(job_.id)+".png")
+        card=judge.open_answer_card(path)
+        student_card=judge.open_student_card(answer_card)
+        if card:
+            student_card=judge.paper_ajust(student_card,card)
+            structrued=job_.answerCardStructure
+            multiple_choice_infor=json.loads(job_.multiple_choice_infor)
+            select_answer=json.loads(job_.select_answer)
+            answer={}
+            mark={}     
+            for key in multiple_choice_infor:
+                img=student_card[multiple_choice_infor[key]['位置']['start']:multiple_choice_infor[key]['位置']['end']]
+                number=initial_number=multiple_choice_infor[key]['初始编号']
+                score=multiple_choice_infor[key]['分值']
+                quantity=multiple_choice_infor[key]['小题数']
+                answer=select_answer[key]
+                student_answer=judge.multiple_choice_judge(img,quantity)
+                #将学生答案与标准答案进行比较
+                for k in student_answer:
+                    if student_answer[k]==answer[k]:
+                        mark[number]=score
+                    else:
+                        mark=0
+                    #将学生答案写入数据库
+                    j_t=job_detail
+
+                    
+                
+        else:
+            return("答题卡识别失败")
+    else:
+        return("作业不存在")

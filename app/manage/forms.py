@@ -4,7 +4,7 @@ from wtforms import PasswordField, SubmitField, SelectField, StringField, Intege
 from flask_wtf import FlaskForm
 from flask_wtf.file import DataRequired
 from flask_ckeditor import CKEditorField
-from flask_codemirror.fields import CodeMirrorField
+
 from wtforms.validators import InputRequired, EqualTo
 
 subjects =[(1, '语文'), (2, '数学'), (3, '外语'), (4, '政治'), (5, '历史'),(6, '地理'), (7, '物理'), (8, '化学'), (9, '生物'), (10, '信息技术'), (11, '通用技术'), (12, '音乐'), (13, '体育'), (14, '美术'), (15, '科学')]

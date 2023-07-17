@@ -1,8 +1,66 @@
 {% extends "base.html" %}
-
 {%block main%}
 
-  
+ <div class="container" onclick="toggleFullScreen(this)" style="background-color:#ccccf5;">
+  <div class="row">
+      <div class="col-md-12" style="text-align: center;">
+        <h1>数据中心</h1>
+      </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6 "  onclick="toggleFullScreen(this)">
+      <div class="card text-bg-primary mb-3">
+        <div class="card-header">学校总览</div>
+        <div class="card-body">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6"  onclick="toggleFullScreen(this)">
+      <div class="card">
+        <div class="card-header">成绩统计</div>
+        <div class="card-body">
+        </div>
+      </div>
+    </div>
+  </div>
 
+<div class="row">
+  <div class="col-md-4"  onclick="toggleFullScreen(this)">
+      <div class="card text-bg-secondary mb-3">
+        <div class="card-header">作业情况</div>
+        <div class="card-body">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4"  onclick="toggleFullScreen(this)">
+      <div class="card">
+        <div class="card-header">考勤情况</div>
+        <div class="card-body">
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4"  onclick="toggleFullScreen(this)">
+      <div class="card">
+        <div class="card-header">学生行为记录</div>
+        <div class="card-body">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  {%endblock%}
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/popper.js/1.15.0/umd/popper.min.js"></script>
+ 
+<script>
+  element=document.getElementById("fullscreen");
+  // 获取全屏显示的元素
+  function toggleFullScreen(element) {
+  if (!document.fullscreenElement) {
+    element.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+</script>
+{%endblock%}

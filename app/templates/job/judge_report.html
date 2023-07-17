@@ -60,8 +60,6 @@
                 refresh_table(data,id);
             }
         );
-    
-    
     function refresh_table(data,id){
         var s_num=document.getElementById("s_num");
         var d_num=document.getElementById("d_num");
@@ -83,7 +81,7 @@
             tr.appendChild(td);
             td=document.createElement("td");
             a=document.createElement("a");
-            a.href="/static/abnormal_paper/"+String(id)+"/"+String(data["d_list"][i][1]);
+            a.href="/static/job/abnormal_paper/"+String(id)+"/"+String(data["d_list"][i][1]);
             a.innerHTML=data["d_list"][i][1];
             td.appendChild(a);
             tr.appendChild(td);
@@ -105,6 +103,5 @@
             tbody.append(tr);
         }
     }
-   
 </script>
 {%endblock%}         
