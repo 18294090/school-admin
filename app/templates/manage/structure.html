@@ -39,7 +39,7 @@
       <tbody id="class-list" >
         {%for i in cla%}
         <tr>
-        <td>{{i.class_name}}</td>
+        <td><a href="/manage/class/{{i.id}}" >{{i.class_name}}</a></td>
         <td id="{{i.id}}-c_master" ondblclick="edit(this)">{%if i.teacher%}{{i.teacher.user_info.realname}}{%endif%}</td>
         <td>{{i.grade.grade_name}}</td>
         <td>{{i.grade.academic_year}}</td>
@@ -50,8 +50,7 @@
     </table>
 	</div>
 	</div>
-	<div class="row ">
-		
+	<div class="row ">		
       <div class="btn-group fixed-bottom" role="group">
         <button class="btn btn-primary" type="button"  onclick="graduate()">
         升班毕业

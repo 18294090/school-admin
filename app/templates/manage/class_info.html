@@ -1,4 +1,55 @@
 {% extends "base.html" %}
 {%block title%}
-<title>个人信息</title>
+<title>班级管理</title>
+{%endblock%}
+{%block main%}
+<!-表头为姓名，学号，操作-->
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>姓名</th>
+                    <th>性别</th>
+                    <th>学号</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{student.gender}}
+                    <td>{{ student.number }}</td>
+                    <td>
+                        <a class="btn btn-primary">重分配班级</a>
+                        <a onclick="delete({{student.id,cla.id}})" class="btn btn-danger">从本班删除</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <a href="/student/create" class="btn btn-success">添加学生</a>
+        </div>
+    </div>
+<script>
+    function delete(id,cla_id) {
+        //ajax请求
+        $.ajax({
+            url:'/manage/delFromCla',
+            type:'post',
+            data:{'id':id,'cla_id':cla_id},
+            success:function (data) {
+                if(data.code==200){
+                    alert(data.msg);
+                    window.location.reload();
+                }else{
+                    alert(data.msg);
+                }
+            }
+        })
+    }
 {%endblock%}

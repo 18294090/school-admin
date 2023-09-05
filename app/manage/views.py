@@ -199,7 +199,20 @@ def student_overview(id):
 @manage.route("/class/<id>", methods =["POST","GET"])
 def class_overview(id):
     cla=class_info.query.filter(class_info.id==id).first()
-    return(render_template("manage/class_info.html",cla=cla))
+    students=student.query.join(class_student).filter(class_student.class_id==id).all()
+    return(render_template("manage/class_info.html",cla=cla,students=students))
+
+@manage.route("/delFromCla/", methods =["POST","GET"])
+@login_required
+@permission_required(Permission.admin)
+def delFromCla():
+    if request.method=="POST":
+        data=request.get_json()
+        for i in data:
+            s=student.query.filter(student.id==i).first()
+            db.session.delete(s)
+            db.session.flush()
+        db.session.commit()
 
 @manage.route("/representative/", methods =["POST","GET"])
 def representative_overview():
