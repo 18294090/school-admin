@@ -7,13 +7,13 @@ n=0
 def open_answer_card(url1):
     global n
     img=cv2.imread(url1)
-    n=img.shape[1]//82   
+    n=img.shape[1]//82
     return(img)
 
 def open_student_card(url):
-    global n
     img=cv2.imread(url)
-    img=img[n*2:-n*2,n*2:-n*2]
+    n=img.shape[1]//82
+    img=img[n*1:-n*1,n*1:-n*1]
     return(img)
 
 #读取识别二维码
@@ -37,9 +37,7 @@ def qr_recognize(pic,pos):
     #反色
     pic= cv2.bitwise_not(pic)
     #显示pic
-    """cv2.imshow('pic',pic)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()"""
+    
     barcodes =""
     barcodes = pyzbar.decode(pic)    
     barcodeData=[]
@@ -63,19 +61,23 @@ def pict(gray):  # 图像处理，二值化
 
  
 def paper_ajust(original_image, target_image):
-    # 查找原图像和目标图像中的四个黑色方块的位置
+    #将目标图像大小调整为原图像大小
+    target_image = cv2.resize(target_image, (original_image.shape[1], original_image.shape[0]))
     original_corners = find_corners(original_image)
     target_corners = find_corners(target_image)
-    # 获取仿射变换矩阵
-    M = cv2.getPerspectiveTransform(target_corners, original_corners)
-    # 应用仿射变换矩阵对目标图像进行变换，实现矫正
+    # 将target_image透视变换
+    M = cv2.getPerspectiveTransform(np.float32(target_corners), np.float32(original_corners))
     adjusted_image = cv2.warpPerspective(target_image, M, (original_image.shape[1], original_image.shape[0]))
-    return adjusted_image
+    #显示调整后的图像
+    global n  
+    return(adjusted_image)
 
 def find_corners(img):
-    # 转换为灰度图像
+    # 转换为灰度图像    
     if len(img.shape)!=2:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)    
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
+    else:
+        gray=img   
     # 二值化处理
     _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     # 形态学操作，去除噪点和细节，填充小的白色区域
@@ -85,7 +87,7 @@ def find_corners(img):
     opening = cv2.morphologyEx(binary_erosion, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
     # 查找轮廓
-    contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    
+    contours, _ = cv2.findContours(closing, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)   
     # 计算轮廓的质心，即中心点
     centers = []
     for cnt in contours:
@@ -95,23 +97,25 @@ def find_corners(img):
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
             centers.append((cx, cy))
-    # 确定四个黑色方块的中心点
+    # 确定四个顶点
     top_left = min(centers, key=lambda x: x[0] + x[1])
     bottom_right = max(centers, key=lambda x: x[0] + x[1])
     top_right = max(centers, key=lambda x: x[0] - x[1])
-    bottom_left = min(centers, key=lambda x: x[0] - x[1])
+    bottom_left = min(centers, key=lambda x: x[0] - x[1])    
     return(np.array([top_left,bottom_right,top_right,bottom_left],dtype=np.float32))
 
 def number_pos(pic): #识别号码
-    img=pict(pic)
-    
+    img=pict(pic[16*n:36*n,27*n:67*n])
     cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    
+    """cv2.namedWindow('adjusted_image', cv2.WINDOW_NORMAL)
+    cv2.imshow('adjusted_image',pic[16*n:36*n,27*n:67*n])
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""
+
     pnt1=[]
     for cnt in cnts:
-        area = cv2.contourArea(cnt)
-        
-        if area>500:
-            
+        area = cv2.contourArea(cnt)        
+        if area>500:            
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
@@ -124,8 +128,8 @@ def number_pos(pic): #识别号码
         for i in pnt1:
             result+=str((i[1]//n)//2)
     else:
-        print(len(pnt1))
-        return("图像错误")
+        return("考号识别错误")
+    
     return(result)
 
 #矫正完成后，对画面进行切割，分别切割出考号填涂区，选择题区，和非选择题区
@@ -145,19 +149,16 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
         return(pnt)    
     s=pict(dst)
     cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    """dst=cv2.drawContours(dst, cnts, -1, (0, 0, 255), 3)
-    cv2.namedWindow("2",cv2.WINDOW_NORMAL)
-    cv2.imshow("2",dst)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()"""
+ 
     for cnt in cnts:
         area = cv2.contourArea(cnt)
         if area>1000:
-            M = cv2.moments(cnt)
+            M = cv2.moments(cnt)#计算轮廓的质心，即中心点
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
             pnt1.append((cx, cy))
-    
+    #将pnt1按照x坐标排序
+    pnt1.sort(key=lambda x:x[0])
     ans=["A","B","C","D"]
     for i in pnt1:
         row=int((i[1]//n+1)/2)

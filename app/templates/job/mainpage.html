@@ -2,8 +2,27 @@
 {% from 'bootstrap/form.html' import render_field %}
 {%block title%}
 <TITLE>作业</TITLE>
+<style>
+    .dropdown-menu li {
+    position: relative;
+    }
+    .dropdown-menu .dropdown-submenu {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: -7px;
+    }
+    .dropdown-menu .dropdown-submenu-left {
+    right: 100%;
+    left: auto;
+    }
+    .dropdown-menu > li:hover > .dropdown-submenu {
+    display: block;
+    }
+</style>
 {%endblock%}
 {% block main%}
+
 <div class="container-fluid">
 <br>
 	<div class="row">
@@ -161,10 +180,8 @@
                     <td>{{loop.index + pagination.skip }}</td>
                     <td><a href='/job/job_info/{{i.id}}'>{{i.job_name}}</a></td>
                     <td>{{i.subject}}</td>                        
-                    <td>{{i.publish_time}}</td>
-                    
-                    <td>{{i.user.realname}}</td>
-                    
+                    <td>{{i.publish_time}}</td>                    
+                    <td>{{i.user.realname}}</td>                    
                     <td> <div class="input-group">
                         <input type="file" class="form-control" id="inputGroupFile{{i.id}}" aria-describedby="inputGroupFileAddon04" aria-label="Upload" multiple accept=".png,.jpg,.bmp">
                         <button class="btn btn-outline-primary" type="button" id="inputGroupFileAddon04" onclick="upload_paper({{i.id}})">上传</button>
@@ -178,18 +195,24 @@
                                 操作
                             </button> 
                             <ul class="dropdown-menu">
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button> 
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='job/answerCard/'+i.subject+"/"+i.paper_url) }}'">查看答题卡</button>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick=judge({{i.id}}) >选择题阅卷</button>
-                                {%if i.complete%}
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="c_judge({{i.id}})">填空题阅卷</button>
+                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button></li>
+                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button></li>
+                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='job/answerCard/'+"/"+i.paper_url) }}'">查看答题卡</button></li>
+                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button></li>
+                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick=judge({{i.id}}) >选择题阅卷</button>
+                                </li>
+                                {%if i.no_multiple_choice_infor%} 
+                                <li>                                                       
+                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="get_title_number({{i.id}})">填空题阅卷</button>
+                                </li>
                                 {%endif%}
+                                <li>
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">查看阅卷报告</button>
-                                
+                                </li>
                                 {%if count1[i.id]==0 and count[i.id]==0%}
+                                <li>
                                 <button type="button" class="btn btn-secondary dropdown-item" id="cancel-{{i.id}}" name="{{i.paper_url}}">删除</button>
+                                </li>
                                 {%endif%}
                             </ul>
                         </div>  
@@ -225,29 +248,28 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ></button>
       </div>
       <div class="modal-body" id='show_answer'>
-      
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >确定</button>
-        
-      </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >确定</button>        
+    </div>
     </div>
   </div>
 </div>
 </div>
        
-<div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+<div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="complete" aria-hidden="true">
   <div class="modal-dialog modal-lg" >
     <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel2">填空题阅卷</h1>
+      <div class="modal-header">        
+        <div class="modal-title fs-5"  id="complete" >请选择待阅题目：</div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ></button>
       </div>
       <div class="modal-body" id='c-judge'>
+            <div ></div>
             <div id="txt"></div> 
             <div id="image" ></div> 
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer">      
       <label>评分</label>
       <div class="btn-group btn-group" role="group" id='btn-group'>
       </div>        
@@ -269,17 +291,14 @@
                 processData: false,//用于对data参数进行序列化处理 这里必须false
                 contentType: false, //必须
                 success: function(data) {
-                    $.each(data.split(" "),function(index,c){
-                        if(c){
-                            $("#show_answer").append(c+" ")
-                        }
-                        
-                        if((index+1)%5==0){
-                            $("#show_answer").append("<br>")
-                        }
-                    });
-                     
-                 }
+                    data=JSON.parse(data)
+                // 遍历字典的每个键值对
+                $.each(data, function(key, value) {
+                    //显示答案
+                    $("#show_answer").append("<p>"+key+"、"+value+"</p>");
+                    ;
+                });
+                }
     })
     }
     function search_job(){
@@ -311,13 +330,14 @@
                     list:JSON.stringify(values),
                     csrf_token : '{{csrf_token()}}'
                 },
-                dataType: "json",    // 服务器端返回的数据类型
+                dataType: "json",// 服务器端返回的数据类型
                 success: function(data) {
                     alert(data)
                 },
                 error:function(erro){
                     alert(erro)
-                }}
+                }
+                }
                 )
     }
    function get_class(id){    
@@ -411,8 +431,8 @@
         }
         var csrf_token="{{csrf_token()}}";
         $.ajax({
-                url: "/job/upload/all",    // 提交到controller的url路径 
-                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                url: "/job/upload/all",// 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token}, //提交给flask后台必须有csrf认证
                 type: "POST",    // 提交方式               
                 data: formData,  // data为String类型，必须为 Key/Value 格式。
                 dataType: "json",    // 服务器端返回的数据类型
@@ -452,15 +472,17 @@
                 alert(error);}
             });
     } 
-    function c_judge(id){       
+    function c_judge(id,m){       
         var csrf_token="{{csrf_token()}}"; 
+        
         $("#txt").empty(); 
         $("#image").empty();       
         $.ajax({
                 url: "/job/cpl_judge/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
                 type: "POST",    // 提交方式                
-                data: {'id':id},  // data为String类型，必须为 Key/Value 格式。                
+                data: {'id':id,
+                title_number:m},  // data为String类型，必须为 Key/Value 格式。                
                 success: function (response, status, xhr) { 
                     var contentType = xhr.getResponseHeader("Content-Type"); 
                     handleResponse(response, contentType); },
@@ -490,6 +512,31 @@
             else {
                 alert("Unknown content type: " + contentType); } 
             }
+    function get_title_number(id){
+        var csrf_token="{{csrf_token()}}";
+        $.ajax({
+                url: "/job/get_cpl_title_number/",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式                
+                data: {'id':id},  // data为String类型，必须为 Key/Value 格式。                
+                success: function (data) { 
+                    title_number=data
+                    $("#txt").empty(); 
+                    $("#image").empty();  
+                     $("#complete").empty();
+                     $("#complete").append("选择题目：");
+                    for(var i=0;i<title_number.length;i++){
+                        var nod=`<div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="cpl_number" id="cpl${title_number[i]}" value="${title_number[i]}" onclick="c_judge(${id},${title_number[i]})">
+                            <label class="form-check-label" for="cpl${title_number[i]}">${title_number[i]}</label>
+                            </div>`                        
+                    
+                        $("#complete").append(nod);
+                    }
+                    },
+                error: function(xhr, status, error) { console.log("Error: " + error); }     
+            });
+    };
 
     
  $("[id^='cancel']").click(function(e) {  
@@ -544,7 +591,7 @@
          // 显示 Spinners
          showSpinners(); 
         $.ajax({
-                url: "/job/judge1/",    // 提交到controller的url路径 
+                url: "/job/super_judge/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},//提交给flask后台必须有csrf认证
                 type: "POST",// 提交方式
                 contentType: 'application/json; charset=UTF-8', //提交数据类型
@@ -552,11 +599,15 @@
                 dataType: "json",    // 服务器端返回的数据类型
                 success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值
                     hideSpinners();  // 隐藏 Spinners                                          
-                    refresh_table(data,id);
+                    alert(data)
+                    
+                  
                 },
                 error:function (error) {
-                        hideSpinners();
-                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
+                    hideSpinners();
+                    console.log(error)
+                    alert("选择题阅卷失败，请检查答题卡或联系管理员");
+                }
             });
     };
     function showSpinners() {
@@ -571,14 +622,12 @@
     //使网页变为灰色，不可点击，不可滚动
     $("body").css("pointer-events", "none");
     }
-
     // 隐藏 Spinners
     function hideSpinners() {
     $("#spinners").addClass('d-none');
     //使网页恢复点击和滚动
     $("body").css("pointer-events", "auto");
-    } 
-
+    }
 </script>      
 {%endblock%}
 

@@ -156,7 +156,7 @@ class job(db.Model):  # 作业
     question_paper = db.Column(db.String(64))
     subject = db.Column(db.String(64))    
     context = db.Column(db.Text)
-    select =db.Column(db.Integer) #选择题数量
+    select =db.Column(db.String(64)) #选择题数量
     s_m=db.Column(db.Integer)#选择题分数
     select_answer=db.Column(db.Text)
     complete = db.Column(db.String(64))#为一个列表，为各题的分数，如：[6,6,8]表示填空题有三题，分别为6分6分8分
@@ -179,11 +179,16 @@ class job(db.Model):  # 作业
 class abnormal_job(db.Model):
     __tablename__ = "abnormal_job"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
+    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'))
     job = db.relationship("job", backref=db.backref("abnormal_job", lazy="dynamic"))
     reason = db.Column(db.String(64))
     paper = db.Column(db.String(64))
     student_id = db.Column(db.String(20),nullable=True)
+    #阅卷人
+    teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))
+    teacher = db.relationship("teacher", backref=db.backref("abnormal_job", lazy="dynamic"))
+    #阅卷时间
+    time = db.Column(db.DateTime)
 
 class job_class(db.Model):
     __table_args__ = {'extend_existing': True}

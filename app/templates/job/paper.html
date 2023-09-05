@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block main %}
 <link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
 
@@ -27,13 +26,13 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="setselectLabel">设置选择题</h5>（
+          <h5 class="modal-title" id="setselectLabel">设置选择题</h5>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="checkMultiple">
             <label class="form-check-label" for="flexCheckDefault">
               多选
             </label>
-          </div>）
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -52,8 +51,7 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-          
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>          
           <button type="button" class="btn btn-primary" id="saveSelect" data-bs-dismiss="modal" onclick="check()">保存</button>
         </div>
       </div>
@@ -194,7 +192,7 @@
                     <div class="row">
                         <div class="mb-4">                          
                             <label for="formFile" class="form-label">上传试题卷</label>
-                            <input class="form-control" type="file" id="formFile" accept=".txt,.pdf,.doc,.docx">
+                            <input class="form-control" type="file" id="formFile" accept=".docx" placeholder="只能上传docx格式文件">
                           </div >
                         <div class="mb-4">
                         <label class="form-label" for="check_class">选择班级</label>
@@ -297,11 +295,7 @@
     var tags = [];
     //点击card时，显示structured和position
     $(".card").click(function () { 
-        console.log(structrued);
-        console.log(answers);
-        console.log(tags); 
-        console.log(number1);
-        console.log(number2);
+        console.log("位置"+position);
     });
     //submit_title提交按钮的点击事件
     $("#submit_title").click(function () {
@@ -335,10 +329,12 @@
     var selectQuantity=document.getElementById("select-quantity")
     //selectQuantity.onchange时调用buidOptions函数，生成选项列表
     selectQuantity.onchange=function(){
-      if(!/[0-9]$/.test(selectQuantity.value) ||Number(selectQuantity.value)>80){
-    selectQuantity.value=""
-    selectQuantity.placeholder=("只能填不大于80的数字");
-    selectQuantity.style.borderColor="red";
+      l=Math.ceil(Number(selectQuantity.value)/4)*2+5
+      if(!/[0-9]$/.test(selectQuantity.value) ||l+position>116){        
+        selectQuantity.value=""
+        m=Math.floor((116-position-5)/2)*4
+        selectQuantity.placeholder=("只能填不大于"+String(m)+"的数字");
+        selectQuantity.style.borderColor="red";
     }
   else{selectQuantity.style.removeProperty("border-color");      
         buidOptions()}
@@ -576,6 +572,7 @@ function saveComplete(){
   //检测subtopic和c_mark的值是否符合要求 
   var f1=true
   var f2=true
+  var c=position+4
   for (var i=0;i<subtopic.length;i++){
     if(subtopic[i].value==""||subtopic[i].value==null){
       subtopic[i].value=""
@@ -585,6 +582,17 @@ function saveComplete(){
     }
     else{
       subtopic[i].style.removeProperty("border-color")
+      //检测试题是否超出试卷范围
+      var l=subtopic[i].value.split(" ").length
+      console.log(l)
+      if(l*3+7+c>114){
+        subtopic[i].value=""
+        subtopic[i].placeholder="超出试卷范围"
+        subtopic[i].style.borderColor="red"
+        f1=false
+        break
+      }
+      c+=l*3
     }
     if(c_mark[i].value==""||c_mark[i].value==null){
       c_mark[i].value=""
@@ -708,8 +716,8 @@ function saveShortAnswer(){
         var sum = line.reduce(function(acc, val) {
           return acc + val;
         }, 0);
-        if (position+sum>100){
-          alert("位置超过100")
+        if (position+sum+5>114){
+          alert("位置超过"+String(position+sum-109)+"，请重新设置")
           f1=false
           break
         }
@@ -782,9 +790,6 @@ function rollBack(){
       for(var i=0;i<structrued[number1]["小题数"];i++){
         tags.pop()
       }
-      console.log(number1)
-      //如果当前题型为选择题，则删除answers中的相关元素
-      console.log(structrued[number1]["类型"])
       if(String(structrued[number1]["类型"]).includes("选")){
         //删除answers中的相关元素
         delete answers[number1]

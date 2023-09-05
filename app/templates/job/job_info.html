@@ -1,13 +1,9 @@
 {% extends "base.html" %}
-
 {%block title%}
-
 <title>{{class_name}} 作业《{{dict["name"]}}》详情</title>
 {%endblock%} 
 {% block main%}
-
 <script src={{url_for('static',filename="build/js/echarts.min.js")}}></script>
-
 <div class="container-fluid ">
       <nav id="navbar-example2" class="navbar bg-body-tertiary px-3 mb-3 fixed-bottom bg-dark" data-bs-theme="dark">
         <a class="navbar-brand text-white" href="#" id="back-to-top">回到页首</a>
@@ -38,7 +34,7 @@
           <div class="card-header">
           <div class="row">
             <div class="col-1">
-              <label for="select">选择班级:</label>
+              <label>选择班级:</label>
             </div>
             <div class="col-1">
               <select class="form-select" id="class-select">
@@ -77,8 +73,11 @@
                             <th>
                                 姓名
                             </th>
-                            {%for i in range(dict['select'])%}
-                            <td>{{i+1}}</td>
+                            {%for i in dict['select'].keys()%}
+                            <th>{{i}}</th>
+                            {%endfor%}
+                            {%for i in dict['no_select'].keys()%}
+                            <th>{{i}}</th>
                             {%endfor%}
                             <th>
                                 选择题得分
@@ -92,30 +91,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {%for i in df.index%}
+                        {%for key,value in js.items()%}
                         <tr>
                             <td>
                               {{ loop.index}}
                             </td>
                             <td>
-                              <a href="{{ url_for('static', filename='job/job_readed/'+dict["id"]|string+'/'+js[i][0]|string+'.jpg') }}">{{js[i][0]}}</a>
+                              <a href="{{ url_for('static', filename='job/job_readed/'+dict["id"]|string+'/'+value['number']|string+'.png')}}">{{value['number']}}</a>
                             </td>
                             <td>
-                            {{js[i][1]}}
+                            {{value['name']}}
                             </td>
-                            {%for j in range(dict['select'])%}
-                            
-                            <td {%if js[i][j+2].answer==answers[j]%}style="background-color: #8aff8a;"{%elif not js[i][j+2]%}{%else%}style="background-color: #ff6868;"{%endif%}>{%if js[i][j+2]%}{{js[i][j+2].answer}}{%endif%}</td>
-                            {%endfor%}           
+                            {%for j in dict['select'].keys()%}                            
+                            <td {%if value[j]==dict['select'][j]%}style="background-color: #8aff8a;"{%elif not value[j]%}{%else%}style="background-color: #ff6868;"{%endif%}>{%if value[j]%}{{value[j]}}{%endif%}
+                            </td>
+                            {%endfor%}  
+                            {%for j in dict['no_select'].keys()%}
+                            <td style="{%if value[j]%}{%if value[j]/dict['no_select'][j]["分值"]>0.9%}background-color: #8aff8a;{%elif value[j]/dict['no_select'][j]["分值"]>0.6%}background-color: #fffa68;{%elif value[j]/dict['no_select'][j]["分值"]>0.3%}background-color: #ff9a68;{%else%}background-color: #ff6868;{%endif%}{%endif%}">{%if value[j]%}{{value[j]}}{%endif%}
+                            </td>
+                            {%endfor%}
                             <td>
-                                {%if js[i][-3]%}{{js[i][-3]}}{%endif%}
+                                {%if value['select_mark']%}{{value['select_mark']}}{%endif%}
                             </td>    
+                            <td>
+                                {%if value['complete_mark']!=None%}{{value['complete_mark']}}{%endif%}
                             </td>
                             <td>
-                                {%if js[i][-2]!=None%}{{js[i][-2]}}{%endif%}
-                            </td>
-                            <td>
-                              {%if js[i][-1]!=None%}{{js[i][-1]}}{%endif%}
+                              {%if value['mark']!=None%}{{value['mark']}}{%endif%}
                             </td>
                         </tr>
                         {%endfor%}
@@ -183,8 +185,7 @@ $(document).ready(function() {
            window.addEventListener('resize', function() {
              var parents= document.getElementsByClassName("col-md");
                 for(i = 0;i<parents.length;i++){        
-                    var chart = echarts.getInstanceByDom(parents[i]);
-                    
+                    var chart = echarts.getInstanceByDom(parents[i]);                    
                     chart.resize();
                     }
       });
@@ -194,11 +195,10 @@ $(document).ready(function() {
                 }
                 });
 }
+gettable()
 });
 
-$(document).ready(function() {
-  gettable();
-  });
+
 $("#class-select").change(function(event) {
   gettable()
         });

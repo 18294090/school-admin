@@ -53,6 +53,9 @@
 	<div class="row ">
 		
       <div class="btn-group fixed-bottom" role="group">
+        <button class="btn btn-primary" type="button"  onclick="graduate()">
+        升班毕业
+        </button>
         <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop" aria-controls="staticBackdrop" onclick="c1_show()">
         创建行政班
         </button>
@@ -120,7 +123,30 @@ const csrf_token = '{{csrf_token()}}';
     td.querySelector('input').focus();
   }
   
+function graduate(){
+  //发送ajax请求
+  $.ajax({
+    url: '/manage/graduate/',
+    method: 'GET',
+    contentType: "application/json",
+     beforeSend: function(xhr, settings) {
+    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+      xhr.setRequestHeader("X-CSRFToken", csrf_token);
+    }
+  },
+    success: function(data) {
+      alert(data);
+      //页面重载
+      window.location.reload();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      // 处理错误
+      console.log(textStatus, errorThrown);
+    }
+  });
+  
 
+}
   function save(input) {
     const value = input.value;
     const td = input.parentNode;

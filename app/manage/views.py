@@ -10,6 +10,7 @@ import pandas as pd
 from flask_login import current_user,login_required
 from sqlalchemy import func
 import os
+import datetime
 
 @manage.route("/people_management/", methods=["POST", "GET"])
 @login_required 
@@ -42,11 +43,11 @@ def people_management():
             count=0
             count1=0
             count2=0
+            count3=0
             for index, i in df.iterrows():
                 if not i['学号'] and i['姓名'] and i['班级'] :
                     flash("第%s行信息不全" %index )
-                    continue                    
-                
+                    continue 
                 num=i["学号"]
                 if not isinstance(num, str):
                     num=str(num)
@@ -55,6 +56,7 @@ def people_management():
                 stu=student.query.filter(student.number==num).first()
                 class_= db.session.query(class_info).filter_by(class_name=i["班级"]).first()
                 if stu:
+                    count1+=1
                     pass
                 else:
                     stu = student()
@@ -63,8 +65,7 @@ def people_management():
                     if i["性别"] in ["男","女"]:
                         stu.gender=i["性别"]
                     else:
-                        stu.gender=""
-                    
+                        stu.gender=""                    
                     if class_:
                         stu.class_id =class_.id
                     else:
@@ -80,16 +81,19 @@ def people_management():
                     db.session.add(c_s)
                     db.session.flush()
                 else:
+                    c_s.class_id=class_.id
+                    db.session.flush()
                     count1+=1
             if count1:    
-                flash("%s名学生已存在，并已在班级中，请检查文件"%count1)
+                flash("%s名学生已存在，请检查文件"%count1)
             if count2:
                 flash("%s名学生分班信息已导入"%count2)
             if  count:
                 flash("成功导入学生%s名" %count)
+            if count3:
+                flash("%s名学生已存在，已更新分班信息"%count3)
             try:                                                                 
-                db.session.commit()
-               
+                db.session.commit()               
             except Exception:
                 db.session.rollback()
                 flash("添加错误，请重试")
@@ -138,8 +142,15 @@ def people_management():
 @permission_required(Permission.admin)
 def teacher_manage(id):
     teacher_ = user.query.filter_by(id=id).first()
-    g = grade_info.query.all()
-    c = class_info.query.all()
+    g = grade_info.query.filter(grade_info.grade_name!="已毕业").all()
+    #class_info.class_name中不包含"届"字的行政班和班级
+    c = class_info.query.filter(class_info.class_name.op('NOT LIKE')('%届%')).filter(class_info.attribute=="行政班").all()
+    #class_info.class_name中名字以当前用户的学科开头的选考班
+    if teacher_.teacher.subject=="信息技术" or teacher_.teacher.subject=="通用技术":
+        c1=class_info.query.filter(class_info.class_name.op('LIKE')("技术"+"%")).filter(class_info.attribute=="选考班").all()
+    else:
+        c1=class_info.query.filter(class_info.class_name.op('LIKE')(teacher_.teacher.subject+"%")).filter(class_info.attribute=="选考班").all()
+    c=c+c1
     t=teaching_information.query.filter(teaching_information.teacher_id==teacher_.teacher.id)
     class_=[]
     for i in t.all():
@@ -171,8 +182,7 @@ def teacher_manage(id):
                 t1=teaching_information(subject="master_teacher",class_id=new.id,teacher_id=teacher_.teacher.id)
                 db.session.add(t1)  
         db.session.flush()                
-        db.session.commit()
-        
+        db.session.commit()        
         return(redirect(url_for("manage.people_management")))
     return(render_template("manage/teacher.html",teacher=teacher_,teaching_information=class_ ,g=g,c=c))
 
@@ -200,17 +210,16 @@ def representative_overview():
 @permission_required(Permission.admin)
 def structure():
     if request.method=="POST":
-        grade_id =request.get_json()['grade_id']
-        
-        if grade_id:
-            
+        grade_id =request.get_json()['grade_id']        
+        if grade_id:            
             cla = class_info.query.filter_by(grade_id=grade_id).all()
         else:
             cla = class_info.query.all()
     else:   
         cla=class_info.query.all() 
-    grade=grade_info.query.all()
+    grade=grade_info.query.order_by(grade_info.academic_year.desc()).all()  
     return(render_template("manage/structure.html",cla=cla,grade=grade))
+
 @manage.route("/update_class_master/", methods=["POST", "GET"])  # 批量添加数据的方法案例, 设置年级和班级
 @login_required 
 @permission_required(Permission.admin)
@@ -234,6 +243,7 @@ def update_class_master():
             messege="成功任命%s位班主任" %m+messege
         db.session.commit()
     return(messege)
+
 @manage.route("/creat_classes/", methods=["POST", "GET"])  # 批量添加数据的方法案例, 设置年级和班级
 @login_required 
 @permission_required(Permission.admin)
@@ -269,6 +279,7 @@ def creat_classes():
             db.session.rollback()
             messege=["数据库写入错误"]     
     return(jsonify( messege))
+
 @manage.route("/teaching_team_leader/", methods=["POST", "GET"])  # 个别添加班级
 @login_required 
 @permission_required(Permission.admin)
@@ -276,10 +287,8 @@ def teaching_team_leader():
     if request.method=="POST":
         id=request.form.get("id")
         status=request.form.get("status")
-        ttl=user.query.filter(user.id==id).first()
-        
-        if status=="true":
-            
+        ttl=user.query.filter(user.id==id).first()        
+        if status=="true":            
             ttl.role_id=role.query.filter(role.role=="教研组长").first().id
         else:
             print(id,status)
@@ -287,6 +296,7 @@ def teaching_team_leader():
         db.session.flush()
         db.session.commit()
         return("设置成功")
+
 @manage.route("/create_class/", methods=["POST", "GET"])  # 个别添加班级
 @login_required 
 @permission_required(Permission.admin)
@@ -311,9 +321,6 @@ def creat_class():
             messege="数据库写入失败"
     return(jsonify(messege)) 
 
-
-
-
 @manage.route("/representative/<arg>")
 def rep(arg):
     s=arg.split('-')
@@ -335,4 +342,31 @@ def rep(arg):
     except Exception:
         db.session.rollback
     return(redirect( url_for("manage.student_overview",id=s[1])))
+
+@manage.route("/graduate/", methods=["POST", "GET"])  # 升班毕业
+@login_required
+@permission_required(Permission.admin)
+def graduate():
+    db.session.rollback()
+    #从数据库中检索出所有的行政班 
+    classes = class_info.query.filter(class_info.attribute=="行政班").order_by(class_info.class_name.desc()).all()
+    #从数据库中检索出所有的年级,从大到小排序
+    grades = grade_info.query.order_by(grade_info.grade_name.desc()).all()
+    print(grades)
+    for i in grades:
+        if i.academic_year==datetime.datetime.now().year:
+            i.grade_name="已毕业"
+        else:
+            i.grade_name="%s年级" %str(4-(i.academic_year-datetime.datetime.now().year))
+        db.session.flush()
+    for i in classes:
+        if i.grade.academic_year==datetime.datetime.now().year :    
+            i.class_name=str(i.grade.academic_year) + "届" + i.class_name
+            i.attrbute="毕业班"
+        else:
+            i.class_name="%s%s" %(i.grade.grade_name[0],i.class_name[1:])
+        db.session.flush()
+    db.session.commit()
+    return(jsonify("毕业设置成功"))
+
 

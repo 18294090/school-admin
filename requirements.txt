@@ -22,13 +22,11 @@ Flask-MySQLdb==0.2.0
 flask-paginate==0.8.1
 Flask-SQLAlchemy==2.5.1
 Flask-WTF==0.15.1
-greenlet==1.1.0
 idna==2.10
 invoke==1.6.0
 itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
-mysqlclient==2.1.0
 numpy==1.22.3
 opencv-python==4.6.0.66
 openpyxl==3.0.9
