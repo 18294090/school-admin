@@ -673,10 +673,8 @@ def cpl_judge():
                 .filter(job_detail.serial_No==title_number,job_detail.mark==None)\
                 .order_by(job_detail.serial_No).first()
         else:
-            #找出本人所任教班级中的学生
-            
+            #找出本人所任教班级中的学生            
             j_detail=job_detail.query.filter(job_detail.job_id==id,job_detail.student==stu,job_detail.serial_No==title_number).first()
-                        
         if j_detail:
             paper =os.path.join(os.getcwd(),"app","static","job","job_readed",str(id),j_detail.student+".png")            
             if os.path.exists(paper):
