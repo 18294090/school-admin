@@ -38,8 +38,8 @@
                             <img src="{{url_for('static',filename='/picture/OIG.jpeg')}}" class="img-fluid  " alt="Responsive image" style="height: 90px;">
                         </div>    
                         <p class="card-text col-9">
-                            1、发布作业，填写作业标题，截至时间等作业信息<br>
-                            2、确定选择题答案，及其对应知识点<br>
+                            1、发布作业，填写作业标题等作业信息<br>
+                            2、确定选择题答案<br>
                             3、生成打印相应答题卡<br>
                         </p>
                     </div>    
@@ -260,8 +260,15 @@
 <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="complete" aria-hidden="true">
   <div class="modal-dialog modal-lg" >
     <div class="modal-content">
-      <div class="modal-header">        
-        <div class="modal-title fs-5"  id="complete" >请选择待阅题目：</div>
+      <div class="modal-header">  
+        <div class="row">            
+            <div class="col-sm-9">
+             <div class="modal-title fs-5"  id="complete" ></div>
+            </div>
+            <div class="col-sm-3">
+            <input type="text" class="form-control" id="search_stu" placeholder="请输入学生姓名" aria-label="Search">
+            </div>
+        </div> 
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" ></button>
       </div>
       <div class="modal-body" id='c-judge'>
@@ -278,6 +285,7 @@
     </div>
   </div>
 </div>
+
 </div>
 <script  src="/static/build/js/jquery.min.js"></script>
 <script>
@@ -455,8 +463,11 @@
             });
     };
     function set_mark(id,m){
-        data={"id":id,"mark":m}
+        //获取单选框的值
+        var title_number=$("input[name='cpl_number']:checked").val();        
+        data={"id":id,"title_number":title_number,"mark":m}
         var csrf_token="{{csrf_token()}}";
+        console.log(data)
         $.ajax({
                 url: "/job/set_cpl_mark/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
@@ -465,7 +476,7 @@
                 data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
                 dataType: "json",    // 服务器端返回的数据类型
                 success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值    
-                    c_judge(data)
+                    c_judge(data,title_number)
                 },
                 error:function (error) {
                 console.log("cuowu")  
@@ -474,7 +485,8 @@
     } 
     function c_judge(id,m){       
         var csrf_token="{{csrf_token()}}"; 
-        
+        //获取search_stu的值
+        var stu=$("#search_stu").val();
         $("#txt").empty(); 
         $("#image").empty();       
         $.ajax({
@@ -482,7 +494,8 @@
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
                 type: "POST",    // 提交方式                
                 data: {'id':id,
-                title_number:m},  // data为String类型，必须为 Key/Value 格式。                
+                        'stu':stu,
+                        'title_number':m},  // data为String类型，必须为 Key/Value 格式。                
                 success: function (response, status, xhr) { 
                     var contentType = xhr.getResponseHeader("Content-Type"); 
                     handleResponse(response, contentType); },
@@ -529,8 +542,7 @@
                         var nod=`<div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="cpl_number" id="cpl${title_number[i]}" value="${title_number[i]}" onclick="c_judge(${id},${title_number[i]})">
                             <label class="form-check-label" for="cpl${title_number[i]}">${title_number[i]}</label>
-                            </div>`                        
-                    
+                            </div>`
                         $("#complete").append(nod);
                     }
                     },

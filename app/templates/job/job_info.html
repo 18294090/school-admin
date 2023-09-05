@@ -4,6 +4,24 @@
 {%endblock%} 
 {% block main%}
 <script src={{url_for('static',filename="build/js/echarts.min.js")}}></script>
+<div class="modal" id = myModal tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container-fluid ">
       <nav id="navbar-example2" class="navbar bg-body-tertiary px-3 mb-3 fixed-bottom bg-dark" data-bs-theme="dark">
         <a class="navbar-brand text-white" href="#" id="back-to-top">回到页首</a>
@@ -105,9 +123,9 @@
                             {%for j in dict['select'].keys()%}                            
                             <td {%if value[j]==dict['select'][j]%}style="background-color: #8aff8a;"{%elif not value[j]%}{%else%}style="background-color: #ff6868;"{%endif%}>{%if value[j]%}{{value[j]}}{%endif%}
                             </td>
-                            {%endfor%}  
-                            {%for j in dict['no_select'].keys()%}
-                            <td style="{%if value[j]%}{%if value[j]/dict['no_select'][j]["分值"]>0.9%}background-color: #8aff8a;{%elif value[j]/dict['no_select'][j]["分值"]>0.6%}background-color: #fffa68;{%elif value[j]/dict['no_select'][j]["分值"]>0.3%}background-color: #ff9a68;{%else%}background-color: #ff6868;{%endif%}{%endif%}">{%if value[j]%}{{value[j]}}{%endif%}
+                            {%endfor%}
+                            {%for j in dict['no_select'].keys()%}                          
+                            <td onclick="showAnswer('{{value['number']}}',{{j}})" style="{%if value[j]%}{%if value[j]/dict['no_select'][j]["分值"]>0.9%}background-color: #8aff8a;{%elif value[j]/dict['no_select'][j]["分值"]>0.6%}background-color: #fffa68;{%elif value[j]/dict['no_select'][j]["分值"]>0.3%}background-color: #ff9a68;{%else%}background-color: #ff6868;{%endif%}{%endif%}">{%if value[j]%}{{value[j]}}{%endif%}
                             </td>
                             {%endfor%}
                             <td>
@@ -155,6 +173,34 @@
 <script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
 
 <script>
+//发送ajax请求获取答案图片，函数showAnswer参数为学号和题号，类型为字符串
+function showAnswer(stu,question){
+
+  csrf_token="{{ csrf_token() }}";
+  $("#myModal").modal("show");
+  $(".modal-title").empty();
+  //使用ajax,向job/cpl_judge/发送请求获取答案图片
+    $.ajax({
+                url: "/job/cpl_judge/",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式                
+                data: {'id':{{dict["id"]}},
+                        'stu':stu,
+                        'title_number':question},  // data为String类型，必须为 Key/Value 格式。                
+                success: function (response, status, xhr) { 
+                    
+                    var img = $("<img>").attr("src", "data:image/png;base64," + response.image);
+                    img.attr("class","img-fluid") 
+                    img.attr("alt","Image")
+                    $(".modal-body").empty();
+                    $(".modal-body").append(img);
+                    $(".modal-title").empty();
+                    $(".modal-title").append("姓名："+response.name+"  题号："+question);
+                   },
+                error: function(xhr, status, error) { console.log("Error: " + error); }     
+            });
+
+} 
 $(document).ready(function() {
     // 页面载入时获取初始数据
     getData();
