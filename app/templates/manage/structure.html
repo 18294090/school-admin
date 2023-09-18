@@ -39,11 +39,11 @@
       <tbody id="class-list" >
         {%for i in cla%}
         <tr>
-        <td><a href="/manage/class/{{i.id}}" >{{i.class_name}}</a></td>
+        <td>{{i.class_name}}</td>
         <td id="{{i.id}}-c_master" ondblclick="edit(this)">{%if i.teacher%}{{i.teacher.user_info.realname}}{%endif%}</td>
         <td>{{i.grade.grade_name}}</td>
         <td>{{i.grade.academic_year}}</td>
-        <td>{{i.students|length}}</td>
+        <td><a href="/manage/class/{{i.id}}" >{{i.students|length}}</a></td>
         </tr>
         {%endfor%}
       </tbody>
@@ -82,8 +82,7 @@
         <div class="row mb-3">
           
           <label  for="gradenum">年级数量：</label>
-          <input  type="number" id="gradenum">
-          
+          <input  type="number" id="gradenum">          
           </div>
           <div class="row mb-3" id="classnum">
           </div>
@@ -170,7 +169,7 @@ function submit() {
     method: 'POST',
     data:JSON.stringify(data),
     contentType: "application/json",
-     beforeSend: function(xhr, settings) {
+    beforeSend: function(xhr, settings) {
     if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
       xhr.setRequestHeader("X-CSRFToken", csrf_token);
     }

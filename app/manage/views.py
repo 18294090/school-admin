@@ -202,18 +202,24 @@ def class_overview(id):
     students=student.query.join(class_student).filter(class_student.class_id==id).all()
     return(render_template("manage/class_info.html",cla=cla,students=students))
 
-@manage.route("/delFromCla/", methods =["POST","GET"])
+@manage.route("/delfromcla/", methods =["POST","GET"])
 @login_required
 @permission_required(Permission.admin)
-def delFromCla():
+def delfromcla():
+    
     if request.method=="POST":
-        data=request.get_json()
-        for i in data:
-            s=student.query.filter(student.id==i).first()
-            db.session.delete(s)
+        student_id=request.form.get("student_id")
+        class_id=request.form.get("class_id")
+        print(student_id,class_id)
+        try:
+            db.session.query(class_student).filter(class_student.student_id==student_id,class_student.class_id==class_id).delete()
             db.session.flush()
-        db.session.commit()
-
+            db.session.commit()
+            return("删除成功")
+        except Exception:
+            return("删除失败")
+    return("错误的请求")
+        
 @manage.route("/representative/", methods =["POST","GET"])
 def representative_overview():
     pass

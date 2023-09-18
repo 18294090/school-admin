@@ -56,7 +56,6 @@
                 var id={{id}};
                 //将后台传来的jsonify化的字典数据转化为js字典
                 var data=JSON.parse('{{data|tojson|safe}}');
-                console.log(data);
                 refresh_table(data,id);
             }
         );
@@ -77,27 +76,31 @@
             td.innerHTML=i+1;
             tr.appendChild(td);
             td=document.createElement("td");
-            td.innerHTML=data["d_list"][i][0];
+            td.innerHTML=data["d_list"][i][1];
             tr.appendChild(td);
             td=document.createElement("td");
             a=document.createElement("a");
             a.href="/static/job/abnormal_paper/"+String(id)+"/"+String(data["d_list"][i][1]);
-            a.innerHTML=data["d_list"][i][1];
+            a.innerHTML=data["d_list"][i][2];
             td.appendChild(a);
             tr.appendChild(td);
             td=document.createElement("td");
-            td.innerHTML=data["d_list"][i][2];
+            td.innerHTML=data["d_list"][i][3];
             tr.appendChild(td); 
             td = document.createElement("td");
             //按钮用于处理异常卷，点击该按钮，跳转到处理异常卷的页面
             button = document.createElement("button");
             button.className = "btn btn-primary";
+            button.type = "button";
             button.innerHTML = "处理";
-            var url="/job/abnormal/"+String(id)+":"+data["d_list"][i][1].split(".")[0];
+            var url="/job/abnormal/"+String(id)+":"+data["d_list"][i][0];
             console.log(url);
-            button.onclick = function(){
-                window.location.href = url;
-            }
+            //给按钮添加点击事件：点击按钮，跳转到处理异常卷的页面
+            button.onclick = (function(url) {
+                return function() {
+                    window.location.href = url;
+                };
+                })(url);//这里的url是一个参数，需要用闭包来传递，否则会出错
             td.appendChild(button);
             tr.appendChild(td);
             tbody.append(tr);

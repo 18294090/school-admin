@@ -22,7 +22,7 @@ def qr_recognize(pic,pos):
     if len(pic.shape)!=2:
         pic = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)    
     pic=pic[pos[0]:pos[1],pos[2]:pos[3]]
-    
+   
     if pic.dtype != np.uint8:
         pic = pic.astype(np.uint8)
     # 去除噪点
@@ -105,13 +105,8 @@ def find_corners(img):
     return(np.array([top_left,bottom_right,top_right,bottom_left],dtype=np.float32))
 
 def number_pos(pic): #识别号码
-    img=pict(pic[16*n:36*n,27*n:67*n])
-    cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)    
-    """cv2.namedWindow('adjusted_image', cv2.WINDOW_NORMAL)
-    cv2.imshow('adjusted_image',pic[16*n:36*n,27*n:67*n])
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()"""
-
+    img=pict(pic[16*n:36*n,27*n:67*n])    
+    cnts,h=cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)        
@@ -119,17 +114,11 @@ def number_pos(pic): #识别号码
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
-            pnt1.append((cx, cy))
-    
-    result=""
-    
-    pnt1.sort(key=lambda x:x[0])
-    if len(pnt1)==10:        
-        for i in pnt1:
-            result+=str((i[1]//n)//2)
-    else:
-        return("考号识别错误")
-    
+            pnt1.append((cx, cy))    
+    result=""    
+    pnt1.sort(key=lambda x:x[0])          
+    for i in pnt1:
+        result+=str((i[1]//n)//2)    
     return(result)
 
 #矫正完成后，对画面进行切割，分别切割出考号填涂区，选择题区，和非选择题区
@@ -175,3 +164,8 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
         else:
             pass
     return(pnt)
+
+""" cv2.namedWindow('adjusted_image', cv2.WINDOW_NORMAL)
+    cv2.imshow('adjusted_image',pic)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""

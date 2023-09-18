@@ -5,36 +5,58 @@
 {%block main%}
 <div class= "container">
     <div class= "row">
-        <div class= "col-md-6">
-            <!-- 异常试卷图像,图像大小适合屏幕-->
-            <h4>源图像</h4>
-            <img class="img-responsive img-fluid" src= "/static/abnormal_paper/{{job.id}}/{{abnormal.paper}}" alt= "Responsive image">
+        <div class= "col-md-12" style="text-align:center">
+            <h3>作业名称：{{job.job_name}}</h3>
         </div>
+    </div>
+    <div class= "row">
+       
         <div class= "col-md-6">
-            <h4>分割后图像</h4>
-            <!-- 异常试卷图像,图像大小适合屏幕，处理后端传来的splits图像列表，分别将其显示出来，splits元素为使用base64得到的图像字符串-->
-            {%for split in splits%}
-            <div class="row">
-            <img class="img-responsive img-fluid" src= "data:image/jpg;base64,{{split}}" alt= "Responsive image">
-            </div>
-            {%endfor%}
-        </div>
-         <div class= "col-md-4">
-            <!-- 处理异常信息的form -->
+        <!--card-->
             <div class="card shadow">
-           <form>
-            {%if abnormal.reason in ["学号扫描不正确"]%}
-            <!-- input，用来输入正确的学号 -->
-            <div class="form-group">
-                <label for="InputNum">请输入正确的学号</label>
-                <input type="text" class="form-control" id="InputNum" placeholder="学号">
+                <div class="card-header">           
+                    <h6 class="card-title">异常原因：{{abnormal.reason}}</h6>
+                </div>
+                <div class="card-body">   
+                <!-- 异常试卷图像,图像大小适合屏幕，处理后端传来的img图像，分别将其显示出来，splits元素为使用base64得到的图像字符串-->
+                <div class="row">
+                <img class="img-responsive img-fluid" src= "data:image/jpg;base64,{{img}}" alt= "Responsive image">
+                </div>
+                </div>
             </div>
-            {%endif%}            
-            </form> 
+
+        </div>
+         <div class= "col-md-6">
+            <div class="btn-group-vertical" role="group" aria-label="Vertical button group">                   
+            {%if "学号" in abnormal.reason %}
+            <div class="form-label-group">
+                <label for="inputNumber">学号</label>
+                <input type="text" id="inputNumber" class="form-control" placeholder="请输入正确的学号" required autofocus>
+                
             </div>
-            
+            {%endif%}
+            {%if "选择题" in abnormal.reason %}
+             
+            {%endif%}
+            {%if "二维码识别失败" in abnormal.reason %}
+             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">上传答题卡</button>
+             <button class="btn btn-primary">阅卷</button>
+             <button class="btn btn-primary">删除</button>
+            {%endif%}    
+            {%if "二维码信息不匹配" in abnormal.reason %}
+             <button class="btn btn-primary" onclick="MoveCard({{abnormal.paper}})">重新识别作业，自动阅卷</button>
+             <button class="btn btn-primary">删除</button>
+            {%endif%}
+            {%if "任务" in abnormal.reason %}
+             <button class="btn btn-primary">分配任务并阅卷</button>             
+            {%endif%}
+            </div>            
         </div>
     </div>
 </div>
 
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script>
+
+</script>
 {%endblock%}
