@@ -187,7 +187,7 @@
                         <button class="btn btn-outline-primary" type="button" id="inputGroupFileAddon04" onclick="upload_paper({{i.id}})">上传</button>
                         </div>
                     </td>
-                    <td id="c-{{i.id}}"><a href="{{'/answer/url'|replace('url',i.id)}}">{{count[i.id]}}</a></td>
+                    <td id="c-{{i.id}}">{{count[i.id]}}</td>
                     <td id="r-{{i.id}}">{{count1[i.id]}}</td>	
                     <td>
                         <div class="btn-group btn-group-sm" role="group" aria-label="Basic example"> 
@@ -201,8 +201,9 @@
                                 <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button></li>
                                 <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick=judge({{i.id}}) >选择题阅卷</button>
                                 </li>
-                                {%if i.no_multiple_choice_infor%} 
-                                <li>                                                       
+                                {%if i.no_multiple_choice_infor|length>2%} 
+                                <li>   
+                                                                                  
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="get_title_number({{i.id}})">填空题阅卷</button>
                                 </li>
                                 {%endif%}
@@ -612,8 +613,9 @@
                 },
                 error:function (error) {
                         hideSpinners();
-                        console.log(error)
-                alert("选择题阅卷失败，请检查答题卡或联系管理员");}
+                        console.log(error);
+                        //显示 erro的responseText内容
+                    alert(error.responseText);}
             });
     };
     function judge1(){       

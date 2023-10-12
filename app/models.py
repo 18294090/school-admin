@@ -183,6 +183,7 @@ class abnormal_job(db.Model):
     job = db.relationship("job", backref=db.backref("abnormal_job", lazy="dynamic"))
     reason = db.Column(db.String(64))
     paper = db.Column(db.String(64))
+    position = db.Column(db.String(64))
     student_id = db.Column(db.String(20),nullable=True)
     #阅卷人
     teacher_id = db.Column(db.Integer, ForeignKey("teacher.id"))

@@ -220,8 +220,7 @@ def question_statistics():
                             )
                     #当鼠标移到柱形图的柱体上时，显示柱体表示的选项的选择人员名单，选择人员名单数据在choices_字典中,提示框大小设置为自适应换行
                     .set_global_opts(title_opts=opts.TitleOpts(subtitle=f'{difficult.query.filter(difficult.id==tags[serial_No-1]).first().difficult}'),
-                                    tooltip_opts=opts.TooltipOpts(trigger="axis",formatter= JsCode("function (params) { return params[0].data.text;}")),       
-                                    )
+                                    tooltip_opts=opts.TooltipOpts(trigger="axis",formatter= JsCode("function (params) { return params[0].data.text;}")),)
                     )
             else:                
                 mark=int(json.loads(job_.no_multiple_choice_infor)[str(serial_No)]["分值"])
@@ -574,7 +573,6 @@ def job_judge(id):
                 #旋转180度
                 img1=cv2.rotate(img,cv2.ROTATE_180)
                 messeage=judge.qr_recognize(img1,(judge.n*15,judge.n*37,judge.n*66,judge.n*82))
-               
                 """if not messeage:
                     #异常卷移至abnormal_paper文件夹中
                     os.rename(file,os.path.join(path1,i))
@@ -632,8 +630,7 @@ def job_judge(id):
                 os.rename(file,path2)
             #生成非选择题阅卷信息
             non_multiple_choice_to_read(number,id)
-    for i in id:
-        update_class_info(i)
+    update_class_info(id)
     db.session.commit()
     return(jsonify("成功阅卷%s份" %n))
 
@@ -657,7 +654,7 @@ def get_title_number():
         title_number=[]
         for k in cpl.keys():
             title_number.append(k)
-        print(title_number)
+        
         return(jsonify(title_number))
 
 
@@ -821,7 +818,7 @@ def clear_abnormal(id):
     name=job.query.filter(job.id==id).first().job_name
     return(jsonify({"s_num":n,"d_num":len(data),"name":name,"total":total,"d_list":data}))
 
-#job/abnormal/<id>/<paper>用于处理异常卷
+
 @job_manage.route("/abnormal/<args>",methods=["POST","GET"])
 @login_required
 @permission_required(Permission.job_publish)
@@ -850,7 +847,86 @@ def abnormal(args):
     retval, buffer = cv2.imencode('.png', pict)
     img_b64 = base64.b64encode(buffer).decode('utf-8')
     return render_template("job/abnormal.html",img=img_b64,job=job_,abnormal=abn)
-    
+   
+@job_manage.route("/JudgeErroHanding/modifyNumber/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def modifyNumber():
+    if request.method=="POST":
+        id=request.form.get("id")
+        number=request.form.get("number")
+        ab=abnormal_job.query.filter(abnormal_job.id==id).first()
+        paper=os.path.join(os.getcwd(),'app','static','job','abnormal_paper',str(ab.job_id),ab.paper)
+        print(paper)
+        msg=judgeWithNumber(number,paper,ab.job_id)
+        if msg!="success":
+            ab.reason=msg
+        else:
+            #删除abs
+            db.session.delete(ab)
+        db.session.flush()
+        db.session.commit()
+        return(msg)
+
+@job_manage.route("/JudgeErroHanding/Assignjob/",methods=["POST","GET"])
+@login_required
+@permission_required(Permission.job_publish)
+def Assignjob():
+    if request.method=="POST":
+        id=request.form.get("id")
+        job_id=request.form.get("job_id")
+        student_id=request.form.get("student_id")
+        ab=abnormal_job.query.filter(abnormal_job.id==id).first()
+
+        print(job_id,student_id)
+        j_s=job_student.query.filter(job_student.job_id==job_id,job_student.student==student_id).first()
+        if j_s:
+            msg="该学生已经有名为《%s》的作业任务" %job.query.filter(job.id==job_id).first().job_name
+        else:
+            j_s=job_student(job_id=job_id,student=student_id)
+            db.session.add(j_s)
+            db.session.flush()
+            msg="已为学号为%s的学生布置名为《%s》的作业任务" %(student_id,job.query.filter(job.id==job_id).first().job_name)
+        msg1=judgeWithNumber(student_id,os.path.join(os.getcwd(),'app','static','job','abnormal_paper',str(job_id),ab.paper),job_id)
+        #如果msg1不为success，则将异常卷的原因改为msg1,否则删除abnormal_job表中的记录
+        if msg1!="success":
+            ab.reason=msg1
+            ab.student_id=student_id
+            ab.job_id=job_id
+        else:
+            db.session.delete(ab)
+        db.session.flush()
+        db.session.commit()
+        return(msg,msg1)
+
+def judgeWithNumber(number,paper,job_id):
+    j_stu=job_student.query.filter(job_student.job_id==int(job_id),job_student.student==number).first()
+    if not j_stu:
+        return("学号为:%s的学生没有名为《%s》的作业任务" %(number ,job.query.filter(job.id==job_id).first().job_name))  
+    card=os.path.join(os.getcwd(),'app','static','job','answerCard',job.query.filter(job.id==job_id).first().paper_url)
+    img=judge.open_student_card(paper)
+    img=judge.paper_ajust(judge.open_answer_card(card),img)
+    msg1,mark=multiple_choice_judge(img,job_id)
+    print(msg1,mark)
+    if msg1=="作业不存在":   
+        return msg1        
+    se=update_select_info(number,job_id,mark)    
+    j_stu.select_mark=se
+    j_stu.submit_time=datetime.datetime.now()
+    if msg1=="success":
+#将已经阅卷的卷子移至job_readed文件夹中,并修改文件名    
+        path1=os.path.join(os.getcwd(),"app","static","job","job_readed",str(job_id))
+        if not os.path.exists(path1):
+            os.makedirs(path1)
+        path2=os.path.join(path1,str(number)+".png")
+        os.rename(paper,path2)
+    #生成非选择题阅卷信息
+    non_multiple_choice_to_read(number,job_id)
+    update_class_info(job_id)
+    db.session.flush()
+    db.session.commit()
+    return(msg1)
+
 @job_manage.route("func1",methods=["POST","GET"])
 def func1():
     #获取当前用户的行政班任教信息
@@ -1031,7 +1107,7 @@ def student_info(id):
         scores = []
         for j in job_:
             job_student_ = job_student.query.filter(job_student.job_id==j.id, job_student.student==s.number).first()
-            print(job_student_)
+            
             if job_student_ is not None  and job_student_.mark is not None and j.total1:
                 scores.append(job_student_.mark / j.total1)
         dict["平均得分率"] = round(sum(scores) / len(scores)*100,2) if scores else 0
@@ -1337,7 +1413,7 @@ def publish_work():
             img.save(path2)
             img.save(path1)
         except Exception as e:
-            print(e)
+            
             db.session.rollback()
         #将作业发布给对应的班级
         if class_list:  # 作业布置 
@@ -1401,7 +1477,6 @@ def super_judge():
                     os.rename(file,os.path.join(path1,i))
                     continue
                 msg1,mark=multiple_choice_judge(img,job_id)
-                #判断mark是不是一个字典
                 if msg1!="success":
                     ab=abnormal_job(job_id=job_id,paper=i,student_id=number,reason=mark,time=datetime.datetime.now(),teacher_id=current_user.teacher.id)
                     db.session.add(ab)
@@ -1439,7 +1514,7 @@ def super_judge():
 def UpdateClassInfo():
     if request.method=="POST":
         id=request.get_json()["id"]
-        print(id    )
+        print(id)
         update_class_info(id)
         return(jsonify("成功更新成绩信息"))
 
@@ -1452,9 +1527,6 @@ def multiple_choice_judge(answer_card,job_id):
         multiple_choice_infor=json.loads(job_.multiple_choice_infor)
         answer=json.loads(job_.select_answer)
         tag=json.loads(job_.context)
-
-        
-        
         for q in multiple_choice_infor:
             #切出题目区域垂直方向为start到end，水平方向为n*7到n*75
             img=answer_card[q['位置']['start']*judge.n:q['位置']['end']*judge.n,judge.n*7:judge.n*75]
@@ -1462,7 +1534,6 @@ def multiple_choice_judge(answer_card,job_id):
             score=q['分值']
             quantity=q['题目数量']
             student_answer=judge.check_select(img,quantity)
-
             for k in student_answer.keys():
                 if student_answer[k]==answer[str(initial_number+k-1)]:
 
@@ -1470,18 +1541,14 @@ def multiple_choice_judge(answer_card,job_id):
                    
                 else:
                     mark[initial_number+k-1]=[student_answer[k],0,tag[initial_number+k-2]]
-            
-        if len(mark)<quantity:
-            msg="选择题数量不正确"
-        else:
-            msg="success"
-
+    
+        msg="success"
     else:
         msg="作业不存在"
     return(msg,mark)
 
 def check_student_number(number,id):
-    if  len(number)<10:
+    if  len(number)!=10:
         return("学号长度不正确")
     job_=job.query.filter(job.id==int(id)).first()
     j_stu=job_student.query.filter(job_student.job_id==int(id),job_student.student==number).first()

@@ -27,29 +27,57 @@
 
         </div>
          <div class= "col-md-6">
-            <div class="btn-group-vertical" role="group" aria-label="Vertical button group">                   
-            {%if "学号" in abnormal.reason %}
-            <div class="form-label-group">
-                <label for="inputNumber">学号</label>
-                <input type="text" id="inputNumber" class="form-control" placeholder="请输入正确的学号" required autofocus>
-                
-            </div>
-            {%endif%}
-            {%if "选择题" in abnormal.reason %}
-             
-            {%endif%}
-            {%if "二维码识别失败" in abnormal.reason %}
-             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal">上传答题卡</button>
-             <button class="btn btn-primary">阅卷</button>
-             <button class="btn btn-primary">删除</button>
-            {%endif%}    
-            {%if "二维码信息不匹配" in abnormal.reason %}
-             <button class="btn btn-primary" onclick="MoveCard({{abnormal.paper}})">重新识别作业，自动阅卷</button>
-             <button class="btn btn-primary">删除</button>
-            {%endif%}
-            {%if "任务" in abnormal.reason %}
-             <button class="btn btn-primary">分配任务并阅卷</button>             
-            {%endif%}
+         <div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+  {%if "学号" in abnormal.reason or "重复阅卷" in abnormal.reason%}
+            
+            
+        <h2 class="accordion-header" id="headingOne">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+            修改学号
+        </button>
+        </h2>
+        
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+            <div class="input-group">
+                    
+                    <input type="text" id="inputNumber" class="form-control" placeholder="请输入正确的学号" required autofocus>
+                    <button for="inputNumber" class="btn btn-primary" onclick="modifyNumber({{abnormal.id}})">提交</button>
+                </div>
+        </div>
+        </div>
+    </div>
+    {%endif%}
+        {%if "作业任务" in abnormal.reason %}     
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                分配作业任务
+        </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+        <button class="btn btn-primary" onclick="Assignjob('{{abnormal.id}}','{{abnormal.job_id}}','{{abnormal.student_id|string}}')">分配作业任务</button>
+        </div>
+        </div>
+    </div>
+        {%endif%}
+        {%if "二维码识别失败" in abnormal.reason or "二维码信息不匹配" in abnormal.reason %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+            Accordion Item #3
+        </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+            <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+        </div>
+        </div>
+    </div>
+    </div>
+        {%endif%}
             </div>            
         </div>
     </div>
@@ -57,6 +85,43 @@
 
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 <script>
+function modifyNumber(id){
+    number=document.getElementById("inputNumber").value;
+    csrftoken='{{csrf_token()}}';
+    $.ajax({
+        url:"/job/JudgeErroHanding/modifyNumber/",
+        type:"POST",
+        //csrf认证
+        headers:{"X-CSRFToken":csrftoken},
+        data:{"id":id,"number":number},
+        success:function(data){
+            alert(data);
+            //跳转到judge_report界面
+            window.location.href="/job/judge_report/{{abnormal.job_id}}"
+        }
+    });
+}
 
+function Assignjob(ab_id,job_id,student_id){
+    
+    csrftoken='{{csrf_token()}}';
+    $.ajax({
+        url:"/job/JudgeErroHanding/Assignjob/",
+        type:"POST",
+        //csrf认证
+        headers:{"X-CSRFToken":csrftoken},
+        data:{id:ab_id,"job_id":job_id,"student_id":student_id},
+        success:function(data){
+            alert(data);
+            //跳转到judge_report界面
+            window.location.href="/job/judge_report/{{abnormal.job_id}}"
+        },
+
+        error:function(data){
+            alert(data);
+        }
+
+    });
+}
 </script>
 {%endblock%}

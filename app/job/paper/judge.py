@@ -137,8 +137,7 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
     if dst.shape[0]==0:
         return(pnt)    
     s=pict(dst)
-    cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
- 
+    cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
     for cnt in cnts:
         area = cv2.contourArea(cnt)
         if area>1000:
