@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from 'bootstrap/form.html' import render_field %}
+{%block title%}
+<TITLE></TITLE>
+{%endblock%}
+{% block main%}
+<div class="container-fluid">
+<div class="row">
+    <div class="col-md-10">
+    <div id="card">        
+    <img src="data:image/png;base64,{{student_card}}" alt="student_card" width="100%" height="100%">
+    </div>
+    </div>
+    <div class="col-md-2">
+    <div class="card">
+    <button class="btn btn-primary" onclick="update()">更新阅卷信息</button>
+    </div>
+    </div>
+</div>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script >
+csrf_token="{{ csrf_token() }}";
+function update(){
+    $.ajax({
+        url:"/job/update/",
+        type:"POST",
+        headers:{"X-CSRFToken":csrf_token},
+        contentType:"application/json",
+        data:JSON.stringify({
+            "student_id":"{{student_id}}",
+            "job_id":"{{job_id}}" ,            
+            'answers':{{answers|safe}},
+        }),
+        success:function(data){
+            if(data=="success"){
+                alert("更新成功");
+            
+                window.location.href="/job/job_info/{{job_id}}";
+            }
+            else{
+                alert("更新失败");
+            }
+        }
+    })
+}
+</script>
+{%endblock%}
