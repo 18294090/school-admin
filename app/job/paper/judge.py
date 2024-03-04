@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import cv2
 from pyzbar import pyzbar
+from .detect import find_paper
 line=[]
 n=0
 def open_answer_card(url1):
@@ -10,7 +11,7 @@ def open_answer_card(url1):
     n=img.shape[1]//82
     return(img)
 
-def open_student_card(url):
+def open_student_card(url):   
     img=cv2.imread(url)
     n=img.shape[1]//82
     img=img[n*1:-n*1,n*1:-n*1]
@@ -52,8 +53,8 @@ def pict(gray):  # 图像处理，二值化
     # 二值化处理
     _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    binary_erosion =cv2.erode(thresh, kernel,iterations=2)#腐蚀
-    binary_dilation =cv2.dilate(binary_erosion, kernel,iterations=4)    
+    binary_erosion =cv2.erode(thresh, kernel,iterations=3)#腐蚀
+    binary_dilation =cv2.dilate(binary_erosion, kernel,iterations=3) #膨胀   
     # 形态学操作，去除噪点和细节，填充小的白色区域
     opening = cv2.morphologyEx(binary_dilation, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
@@ -92,7 +93,7 @@ def find_corners(img):
     centers = []
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area>1800:
+        if area>1000:
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
@@ -110,7 +111,7 @@ def number_pos(pic): #识别号码
     pnt1=[]
     for cnt in cnts:
         area = cv2.contourArea(cnt)        
-        if area>500:            
+        if area>300:            
             M = cv2.moments(cnt)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
@@ -140,7 +141,7 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
     cnts,h=cv2.findContours(s, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) 
     for cnt in cnts:
         area = cv2.contourArea(cnt)
-        if area>1000:
+        if area>300:
             M = cv2.moments(cnt)#计算轮廓的质心，即中心点
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
@@ -149,22 +150,31 @@ def check_select(dst,m): #选择题阅卷，返回一个字典，{题目序号�
     pnt1.sort(key=lambda x:x[0])
     ans=["A","B","C","D"]
     for i in pnt1:
-        row=int((i[1]//n+1)/2)
-        col=(i[0]//n-1)
+        #根据坐标计算题目序号
+        row=int((i[1]/n)//2)
+        col=int(i[0]/n)
         order=(row)*4+col//15+1
         if order>m:
+            print(order,m,"超出题目数量")
             continue
         s=(col%15-2)//3
-        if s<=3:
+        if s<0:
+            pnt[order]+=ans[0]
+        elif s<=3:
             if order in pnt:
-                pnt[order]+=ans[s]
+                if ans[s] in pnt[order]:
+                    print("第%s选项已存在%s" %(order,ans[s]))
+                    pass
+                else:
+                    pnt[order]+=ans[s]
             else:
                 pnt[order]=ans[s]
         else:
-            pass
+            pnt[order]+=ans[3]
     return(pnt)
 
 """ cv2.namedWindow('adjusted_image', cv2.WINDOW_NORMAL)
     cv2.imshow('adjusted_image',pic)
     cv2.waitKey(0)
     cv2.destroyAllWindows()"""
+

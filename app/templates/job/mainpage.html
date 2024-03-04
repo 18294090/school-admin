@@ -164,6 +164,8 @@
                         上传答卷
                     </th>
                     <th>
+                        摄像头录入答题卡
+                    <th>
                         待阅卷
                     </th>
                     <th>
@@ -187,6 +189,9 @@
                         <button class="btn btn-outline-primary" type="button" id="inputGroupFileAddon04" onclick="upload_paper({{i.id}})">上传</button>
                         </div>
                     </td>
+                    <td>
+                    <button class="btn btn-outline-primary" onclick="window.location.href='/job/GetCardFromCamera/{{i.id}}'">打开摄像头</button>
+                    </td>
                     <td id="c-{{i.id}}">{{count[i.id]}}</td>
                     <td id="r-{{i.id}}">{{count1[i.id]}}</td>	
                     <td>
@@ -204,11 +209,11 @@
                                 {%if i.no_multiple_choice_infor|length>2%} 
                                 <li>   
                                                                                   
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="get_title_number({{i.id}})">填空题阅卷</button>
+                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal2" onclick="get_title_number({{i.id}})">主观题阅卷</button>
                                 </li>
                                 {%endif%}
                                 <li>
-                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">查看阅卷报告</button>
+                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">查看自动阅卷报告</button>
                                 </li>
                                 {%if count1[i.id]==0 and count[i.id]==0%}
                                 <li>
@@ -251,7 +256,7 @@
       <div class="modal-body" id='show_answer'>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >确定</button>        
+        <button type="button" class="btn btn-secondary"  onclick="modifyAnswer()">确定</button>        
     </div>
     </div>
   </div>
@@ -287,7 +292,7 @@
 </div>
 
 </div>
-<script  src="/static/build/js/jquery.min.js"></script>
+<script src="/static/assets/js/jquery.min.js"></script>
 <script>
     function update_class_info(id){
         var csrf_token="{{csrf_token()}}";
@@ -320,15 +325,22 @@
                 // 遍历字典的每个键值对
                 $.each(data, function(key, value) {
                     //显示答案
-                    $("#show_answer").append("<p>"+key+"、"+value+"</p>");
-                    ;
+                    $("#show_answer").append(`<div class="mb-3" style="display: flex; ">
+                    <label for="modifyAnswer_${key}"  style="margin-right: 10px; align-items: center;" class="form-label">${key}</label>
+                    <input type="text" class="form-control" id="modifyAnswer_${key}" name="${id}" value="${value}" disabled></div>`);
+                    // 添加双击事件
+                    $(`#modifyAnswer_${key}`).dblclick(function() {
+                        $(this).prop('disabled', false);
+                        //光标定位到最后
+                        $(this).focus().val($(this).val());
+                    });
                 });
                 }
     })
     }
     function search_job(){
         var id=$("#search").val();
-        console.log(id)
+        
         if (id)
            { window.location.href="/job/search_job/"+String(id);}
         else{
@@ -441,7 +453,7 @@
                        counttag.innerHTML="<a href="+{{'/answer/url'|replace('url',id)}}+">"+data[1]+"</a>"
                         judge(id)
                     } else {
-                        console.log(data)
+                        
                         alert("上传失败")
                     }
                 },
@@ -473,7 +485,7 @@
                        counttag.innerHTML="<a href="+{{'/answer/url'|replace('url',id)}}+">"+data[1]+"</a>"
                         judge(id)
                     } else {
-                        console.log(data)
+                        
                         alert("上传失败")
                     }
                 },
@@ -484,7 +496,7 @@
         var title_number=$("input[name='cpl_number']:checked").val();        
         data={"id":id,"title_number":title_number,"mark":m}
         var csrf_token="{{csrf_token()}}";
-        console.log(data)
+        
         $.ajax({
                 url: "/job/set_cpl_mark/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
@@ -496,7 +508,7 @@
                     c_judge(data,title_number)
                 },
                 error:function (error) {
-                console.log("cuowu")  
+                 
                 alert(error);}
             });
     } 
@@ -521,7 +533,6 @@
     };
     function handleResponse(response, contentType) {
             if (contentType.includes("text/plain")) {
-                
                 $("#txt").text(response); 
                 } 
             else if (contentType.includes("application/json")) {
@@ -660,6 +671,47 @@
     //使网页恢复点击和滚动
     $("body").css("pointer-events", "auto");
     }
+function modifyAnswer(){
+    //获取所有非disabled 的input的值
+    var inputs = $("#show_answer input:not(:disabled)");
+    //得到input的id中的题号和答案
+    var data = {};
+    inputs.each(function() {
+        var id = $(this).attr("id");
+        var title_number = id.split("_")[1];
+        var answer = $(this).val();
+        //答案必须为A、B、C、D，否则提示错误，若为小写则转换为大写
+        answer = answer.toUpperCase();
+        let regex = /^[ABCD]+$/;
+        if (!regex.test(answer) || new Set(answer).size !== answer.length) {
+            alert("答案必须为 A、B、C、D 中的一个或几个，且不能重复");
+            
+        } else {
+            //关闭modal
+            $("#exampleModal1").modal("hide");
+            data[title_number] = answer;
+           
+        }
+    });
+     //将data使用ajax传输给后台
+            var csrf_token="{{csrf_token()}}";
+            id=$("#show_answer input").attr("name");    
+            data={"id":id,"answer":data};
+            
+            $.ajax({
+                url: "/job/modifyAnswer/",    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值    
+                    alert(data)
+                },
+                error:function (error) {                 
+                alert("答案修改失败，请联系管理员");},
+            });
+}
 </script>      
 {%endblock%}
 

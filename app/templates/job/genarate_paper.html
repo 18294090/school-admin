@@ -160,7 +160,7 @@
     
 </div>
 
-<script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
 <script>
 
@@ -395,8 +395,7 @@ if (n<subtopic.length || n1<subtopic.length){
 }
 else{gen.style.removeProperty("border-color");f4=true}
   if(f0&&f1&&f2&&f3&&f4){
-    $(function () {
-      
+    $(function () {      
           var url ="/job/create_paper";           
           var formData =new FormData();
           formData.append("file",tp.files[0])

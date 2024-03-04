@@ -36,25 +36,31 @@
 							<li class="nav-item">
 								
 							</li>
+							{%if current_user.is_authenticated%}
 							<li class="nav-item">
-								{%if current_user.role.role=="admin"%}
-								{{render_nav_item("manage.people_management","人员管理")}}
-								{%elif current_user.role.role=="teacher"%}
-								{{render_nav_item("manage.people_management","学生管理")}}
-								{%endif%}
+																
+								
+									{%if current_user.role.role=="admin"%}
+										{{render_nav_item("manage.people_management","人员管理")}}
+									{%elif current_user.role.role=="teacher"%}
+										{{render_nav_item("manage.people_management","学生管理")}}
+									{%endif%}
+								
 							</li>
+							
 							{%if current_user.role.role=="admin"%}
 								<li class="nav-item dropdown">
 									<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-										组织结构
+										班级与任教关系
 									</a>
 									<ul class="dropdown-menu">
 									<li><a class="dropdown-item" href="/manage/structure">班级设置</a></li>
-									<li><a class="dropdown-item" href="/manage/people_management">教学工作安排</a></li>
+									<li><a class="dropdown-item" href="/manage/people_management">任教关系设置</a></li>
 									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="#">组织结构总览</a></li>
+									<li><a class="dropdown-item" href="#">任教关系总蓝</a></li>
 									</ul>
 								</li>
+							{%endif%}
 							{%endif%}
 							<li class="nav-item">
 							<a class="nav-link disabled">待开发</a>
@@ -64,6 +70,7 @@
 					</div>
 					<div class="collapse navbar-collapse justify-content-right">
 							<ul class="navbar-nav ms-auto ">
+							
 								{%if current_user.is_authenticated%}
 								<li class="nav-item active"><a class="nav-link" href="{{url_for('auth.logout')}}"><span class="sr-only">登出</span></a></li>
 								{%else%}

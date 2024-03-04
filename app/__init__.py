@@ -10,14 +10,13 @@ from flask_datepicker import datepicker
 import os
 import json
 from flask_migrate import Migrate
+from flask_socketio import SocketIO
 
-login_manager = LoginManager()  # flask-loginm模块进行登录管理
+login_manager = LoginManager()  # flask-login模块进行登录管理
 login_manager.login_view = "auth.login"
 ckeditor = CKEditor()  # 富文本编辑器插件
 bootstrap = Bootstrap5()
 db = SQLAlchemy()
-
-
 csrf = CSRFProtect()  # 跨站攻击保护
 def from_json(value):
     return json.loads(value)
@@ -28,10 +27,20 @@ def create_app(config_name):
     app.config.from_object(config[config_name])  # 先导入设置
     config[config_name].init_app(app)
     db.init_app(app)  # 初始化sqlalchemy，必须先导入设置，然后初始化数据库，否则要报错
-    bootstrap.init_app(app)    
+    bootstrap.init_app(app) 
+    socketio = SocketIO(app)
+    @app.teardown_request #请求结束后关闭数据库连接，如果检测到错误，则回滚
+    def teardown_request(exception): #
+        if exception:
+            print("数据库错误回滚")
+            db.session.rollback()            
+        db.session.remove()   
     app.config['BOOTSTRAP_SERVE_LOCAL'] = True
     app.config['UPLOAD_FOLDER'] = os.getcwd()+"\\app\\static\\"
-    app.config['MAX_CONTENT_LENGTH'] = 32 * 4000 * 3000
+    app.config['MAX_CONTENT_LENGTH'] = 32 * 4000 * 3000 #文件大小限制
+    app.config['SQLALCHEMY_POOL_SIZE'] = 20 #数据库连接池大小
+    app.config['SQLALCHEMY_POOL_TIMEOUT'] = 5 #数据库连接超时时间
+    app.config['SQLALCHEMY_POOL_RECYCLE'] = 3600 #数据库连接回收时间
     ckeditor.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
@@ -50,4 +59,5 @@ def create_app(config_name):
     app.register_blueprint(examination,url_prefix="/exam")
     app.register_blueprint(manage,url_prefix="/manage")
     app.register_blueprint(pedagogical_analysis,url_prefix='/p_analysis')
+    socketio.run(app, debug=True)
     return(app)

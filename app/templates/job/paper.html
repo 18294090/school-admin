@@ -535,8 +535,8 @@ else{
         subtopicInputs.forEach(input => {
           input.addEventListener("change", () => {
             const value = input.value.trim();     
-            // 输入的数据为若干个数字，数字范围为1-6,每个数字用空格隔开
-            if (!/^[1-6](\s[1-6])*$/.test(value)) {
+            if (!/^[0-9 ]+$/.test(value)){
+             // 检测value文本格式，数字范围为1-20,每个数字用空格隔开
               input.value = "";
               input.placeholder="只能输入1-6的数字，数字之间用空格隔开"
               input.style.borderColor="red"
@@ -583,16 +583,22 @@ function saveComplete(){
     else{
       subtopic[i].style.removeProperty("border-color")
       //检测试题是否超出试卷范围
-      var l=subtopic[i].value.split(" ").length
+      var l=subtopic[i].value.split(" ")
+      //l为每道题的空数
+      l=l.map(Number)
       console.log(l)
-      if(l*3+7+c>114){
+      //l为列表，将该列表中每个数字除以4，向上取整，一个新列表，求出这个新列表的和
+      let newList = l.map(num => Math.ceil(num / 4));
+      let sum = newList.reduce((a, b) => a + b, 0);
+      console.log(sum,c)
+      if(sum*3+7+c>114){
         subtopic[i].value=""
         subtopic[i].placeholder="超出试卷范围"
         subtopic[i].style.borderColor="red"
         f1=false
         break
       }
-      c+=l*3
+      c+=sum*3
     }
     if(c_mark[i].value==""||c_mark[i].value==null){
       c_mark[i].value=""

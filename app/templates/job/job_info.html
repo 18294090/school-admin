@@ -23,9 +23,10 @@
 </div>
 
 <div class="container-fluid ">
-      <nav id="navbar-example2" class="navbar bg-body-tertiary px-3 mb-3 fixed-bottom bg-dark" data-bs-theme="dark">
+      <nav id="navbar-example2" class="navbar bg-body-tertiary px-3 fixed-bottom bg-dark" data-bs-theme="dark">
         <a class="navbar-brand text-white" href="#" id="back-to-top">回到页首</a>
-        <ul class="nav nav-pills"> 
+        <ul class="nav nav-pills">
+        
           <li class="nav-item">
             <a class="nav-link" href="#scrollspyHeading1">各班统计对比图</a>
           </li>
@@ -77,35 +78,37 @@
           </div>
           </div>
           <div class="card-body">
-            <!--带有水平和垂直滚动条的表格，当表格内容超出页面内容时，出现滚动条-->
-              <div class="table-responsive">
+            <!--带有水平和垂直滚动条的表格，当表格内容超出页面内容时，出现滚动条,单元格内容水平显示-->
+              <div class="table-responsive"  style="height: 100vh; overflow: auto;">
                 <table class="table table-striped table-bordered" id="table">
                     <thead>
                         <tr>
-                            <th>
+                            <th style="position: sticky; top: 0; background: white;white-space: nowrap;text-align: center;">
                                 序号
                             </th>
-                            <th>
+                            <th style="position: sticky; top: 0; background: white;white-space: nowrap;text-align: center;">
                                 学号
                             </th>
-                            <th>
+                            <th style="position: sticky; top: 0; background: white;white-space: nowrap;text-align: center;">
                                 姓名
                             </th>
-                            {%for i in dict['select'].keys()%}
-                            <th>{{i}}</th>
-                            {%endfor%}
-                            {%for i in dict['no_select'].keys()%}
-                            <th>{{i}}</th>
-                            {%endfor%}
-                            <th>
-                                选择题得分
-                            </th>
-                            <th>
-                                填空题得分
-                            </th>
-                            <th>
+                            <th style="position: sticky; top: 0; background: white;white-space: nowrap;text-align: center;">
                                 总分
                             </th>
+                            <th style="position: sticky; top: 0; background: white;white-space: nowrap;text-align: center;">
+                                选择
+                            </th>
+                            {%for i in dict['select'].keys()%}
+                            <th style="position: sticky; top: 0; background: white;">{{i}}</th>
+                            {%endfor%}
+                            {%for i in dict['no_select'].keys()%}
+                            <th style="position: sticky; top: 0; background: white;">{{i}}</th>
+                            {%endfor%}
+                            
+                            <th style="position: sticky; top: 0; background: white;">
+                                填空
+                            </th>
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -114,12 +117,18 @@
                             <td>
                               {{ loop.index}}
                             </td>
-                            <td>
-                              <a href="{{ url_for('static', filename='job/job_readed/'+dict["id"]|string+'/'+value['number']|string+'.png')}}">{{value['number']}}</a>
+                            <td style="text-align: center;white-space: nowrap;">
+                              <a href="{{ "/job/show_student_card/%s_%s" % (dict["id"], value['number']) }}">{{value['number']}}</a>
                             </td>
-                            <td>
+                            <td style="text-align: center;white-space: nowrap;">
                             {{value['name']}}
                             </td>
+                            <td>
+                              {%if value['mark']!=None%}{{value['mark']}}{%endif%}
+                            </td>
+                            <td>
+                                {%if value['select_mark']%}{{value['select_mark']}}{%endif%}
+                            </td>   
                             {%for j in dict['select'].keys()%}                            
                             <td {%if value[j]==dict['select'][j]%}style="background-color: #8aff8a;"{%elif not value[j]%}{%else%}style="background-color: #ff6868;"{%endif%}>{%if value[j]%}{{value[j]}}{%endif%}
                             </td>
@@ -128,15 +137,11 @@
                             <td onclick="showAnswer('{{value['number']}}',{{j}})" style="{%if value[j]%}{%if value[j]/dict['no_select'][j]["分值"]>0.9%}background-color: #8aff8a;{%elif value[j]/dict['no_select'][j]["分值"]>0.6%}background-color: #fffa68;{%elif value[j]/dict['no_select'][j]["分值"]>0.3%}background-color: #ff9a68;{%else%}background-color: #ff6868;{%endif%}{%endif%}">{%if value[j]%}{{value[j]}}{%endif%}
                             </td>
                             {%endfor%}
-                            <td>
-                                {%if value['select_mark']%}{{value['select_mark']}}{%endif%}
-                            </td>    
+                             
                             <td>
                                 {%if value['complete_mark']!=None%}{{value['complete_mark']}}{%endif%}
                             </td>
-                            <td>
-                              {%if value['mark']!=None%}{{value['mark']}}{%endif%}
-                            </td>
+                            
                         </tr>
                         {%endfor%}
                     </tbody>
@@ -170,7 +175,7 @@
         </div>
 
 </div>
-<script src={{url_for('static',filename="assets/js/jquery.min.js")}}></script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 
 <script>
 //发送ajax请求获取答案图片，函数showAnswer参数为学号和题号，类型为字符串

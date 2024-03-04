@@ -3,21 +3,6 @@
 {%block main%}
 <link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
 <div class="container-fluid">
-  <!--以下为时间选择器-->
-    <div class="row">
-        <div class="col-md-4">
-            <label for="start-date" class="form-label">请选择开始日期</label>
-            <input type="date" id="start-date" class="form-control">
-        </div>
-        <div class="col-md-4">
-            <label for="end-date" class="form-label">请选择结束日期</label>
-            <input type="date" id="end-date" class="form-control" >
-        </div>
-        <div class="col-md-4">
-           
-        </div>
-    </div>
-    <br>
     <div class="row">
         <!-- 第一个区域 -->
         <div class="col-md-12">
@@ -32,35 +17,53 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card shadow">
-                <div class="card-body " style="align-self: center">
+                <div class="card-header">
                     <!--右上角有一个select，用于选择班级-->
                     <div class="row">
-                        <div class="col-md-9">
-                        </div>
-                        <div class="col-md-2 ">
+                    
+                        <div class="col-md-6 ">
                             <label for="class" class="form-label">请选择班级</label>
                             <select class="form-select" id="class">
-                                <option selected value="">全部</option>
-                                {%for i in classes%}
-                                <option value="{{i.id}}">{{i.class_name}}</option>
-                                {%endfor%}
+                            <option selected value="">全部</option>
+                            {%for i in classes%}
+                            <option value="{{i.id}}">{{i.class_name}}</option>
+                            {%endfor%}
                             </select>
                         </div>
-                        <div class="col-md-1 d-flex justify-content-bottom " style="align-self: right;" >
-                            
-                            
+                        
+                        <div class="col-md-6 d-flex justify-content-bottom " style="align-self: right;" >        
                            <button type ='button' class="btn  text-nowrap btn-sm visually-hidden" id="btn1" ><i class="bi-file-earmark-person" style="font-size: 1rem; ">学生个人作业统计</i></button>
                         </div>
-                        
-                    </div>
-                    <div class="row" id="line" >
-                     {{chart2|safe}}
-                    </div>
+                    </div>  
+                </div> 
+               
+            
+                <div class="card-footer text-muted" id="line">
+                  
+                        {{chart2|safe}}
+                   
+                
                 </div>
             </div>
         </div>
     </div>
+    <br><br>
 </div>
+<!--以下为时间选择器,固定在窗口最下方显示-->
+    <div class="row fixed-bottom bg-body-tertiary bg-white" > 
+        <div class="col-md-4">
+            <label for="start-date" class="form-label">请选择开始日期</label>
+            <input type="date" id="start-date" class="form-control">
+        </div>
+        <div class="col-md-4">
+            <label for="end-date" class="form-label">请选择结束日期</label>
+            <input type="date" id="end-date" class="form-control" >
+        </div>
+        <div class="col-md-4">
+            <label for="end-date" class="form-label">请输入作业名称</label>
+            <input type="text" id="job_name" class="form-control" >
+        </div>
+    </div>
  <script>
     let today = new Date();
   // 格式化为yyyy-mm-dd的字符串
@@ -77,15 +80,16 @@
 
 </script>
 <script src={{url_for('static',filename="build/js/echarts.min.js")}}></script>
-<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 <script>
     
 // Bind change event to date pickers
-$('#start-date, #end-date').change(function() {
+$('#start-date, #end-date,#job_name').change(function() {
     // Get selected start and end dates
     let startDate = $('#start-date').val();
     let endDate = $('#end-date').val();
     let id=$('#class').val();
+    let job_name=$('#job_name').val();
     //csrf_token
     let csrf_token = "{{ csrf_token() }}";
     // Send POST request to server with start and end dates
@@ -98,14 +102,13 @@ $('#start-date, #end-date').change(function() {
         data: {
             start: startDate,
             end: endDate,
-            id:id
+            id:id,
+            job_name:job_name
         },
         success: function(data) {
            //后台返回的是网页，将网页中的id为bar的div的内容替换为后台返回的内容中id为bar的div的内容
             $('#bar').html($(data).find('#bar').html());
             $('#line').html($(data).find('#line').html());
-            
-
         },
         error: function() {
             console.log('Error retrieving data');
@@ -117,6 +120,7 @@ $(document).on('change', "#class", function(){
     let startDate = $('#start-date').val();
     let endDate = $('#end-date').val();
     let id=$('#class').val();
+    let job_name=$('#job_name').val();
     let csrf_token = "{{ csrf_token() }}";
     //如果id的值为空，则删除btn对象的的visually-hidden类，否则添加visually-hidden类
     if(id==''){
@@ -135,7 +139,8 @@ $(document).on('change', "#class", function(){
         data: {
             start:startDate,
             end:endDate,
-            id:id
+            id:id,
+            job_name:job_name
         },
         success: function(data) {
             $('#line').html($(data).find('#line').html());

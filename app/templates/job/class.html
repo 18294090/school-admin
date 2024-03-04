@@ -4,23 +4,36 @@
 <link rel="stylesheet" href={{url_for("static",filename="bootstrap-icons-1.10.5/font/bootstrap-icons.css")}}>
 <div class="container-fluid">
  <!--以下为时间选择器-->
-    <div class="row">
-        <div class="col-md-4">
+    <div class="row fixed-bottom bg-body-tertiary bg-white" >
+        <div class="col-md-2">
             <label for="start-date" class="form-label">请选择开始日期</label>
             <input type="date" id="start-date" class="form-control">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-2">
             <label for="end-date" class="form-label">请选择结束日期</label>
             <input type="date" id="end-date" class="form-control" >
         </div>
-        <!--以下为应交作业数，垂直靠下显示-->
-
-        <div class="col-md-4" style="align-self: flex-end;">
+         <div class="col-md-3">
+            <label for="end-date" class="form-label">输入作业名称</label>
+            <input type="text" id="job_name" class="form-control" >
+        </div>
+        <div class="col-md-3">
+         <label for="class" class="form-label">请选择班级</label>
+            <select class="form-select" id="class">
+                
+                {%for i in current_user.teacher.teaching_information%}
+                <option value="{{i.class_id}}">{{i.class_info.class_name}}</option>
+                {%endfor%}
+            </select>
+        </div>
+        <div class="col-md-2" style="align-self: flex-end;">
         <h3>
+           
            <label for="jobs" class="form-label">时段内应交作业数：</label>
             <span id="jobs">{{jobs}}</span>
+        </h3>
           </div>
-         </h3>
+        
     </div>
     <br>
     <!--以下为作业情况-->
@@ -60,7 +73,11 @@
                     {%endfor%}
                 </tbody>
             </table>
+            <br>
+        <br><br>
+        
         </div>
+        
         <!--以下为bootstrap modal,大小为800*600-->
 
 
@@ -82,7 +99,7 @@
             </div>
         </div>
 </div>
-<script type="text/javascript" src="/static/build/js/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
 <script src={{url_for('static',filename="build/js/echarts.min.js")}}></script>
 
 <script>
@@ -98,7 +115,7 @@ document.getElementById("start-date").value = todayStr;
 // 为日期选择器绑定change事件，当日期发生变化时，使用ajax技术，用post方法向服务器发送开始时间start和和结束时间end，获取数据
    
 // Bind change event to date pickers
-$('#start-date, #end-date').change(function() {
+$('#start-date, #end-date,#job_name,#class').change(function() {
     // Get selected start and end dates
     let startDate = $('#start-date').val();
     let endDate = $('#end-date').val();    
@@ -114,6 +131,8 @@ $('#start-date, #end-date').change(function() {
         data: {
             start: startDate,
             end: endDate,
+            job_name:$('#job_name').val(),
+            class_id:$('#class').val()
 
         },
         success: function(data) {
@@ -142,6 +161,7 @@ function personal(number){
         data: {
             start: $('#start-date').val(),
             end: $('#end-date').val(),
+            job_name:$('#job_name').val(),
         },
         
         success: function(data) {

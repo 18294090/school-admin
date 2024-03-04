@@ -76,6 +76,7 @@ def genarate_select1(n,n1,pic,x,y): #生成选择题，n1为题目数量，pic�
             y+=2*n
             x=n*7
     return([end,n1]) 
+
 def generate_completion(n,pic,list,c_mark,x,y,number1,n1): #生成填空题，list为二维列表，存储每个小题几个空[[1,2],[1,1,1]],x,y 为位置，n1为题号
     line={}
     flag=True
@@ -115,7 +116,7 @@ def generate_completion(n,pic,list,c_mark,x,y,number1,n1): #生成填空题，li
             flag=False
         else:
             pos["end"]=y//n
-            line[n1]=pos            
+            line[n1]=pos           
             n1+=1
     end=y
     draw.rectangle([n*6,start,pic.width-n*5,end],width=2,outline="#000000")

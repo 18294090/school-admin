@@ -179,8 +179,8 @@ class job(db.Model):  # 作业
 class abnormal_job(db.Model):
     __tablename__ = "abnormal_job"
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'))
-    job = db.relationship("job", backref=db.backref("abnormal_job", lazy="dynamic"))
+    job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'))#删除作业时，abnormal_job表中的数据也会被删除
+    job = db.relationship("job", backref=db.backref("abnormal_job", lazy="dynamic")) #删除abnormal_job表中的数据时，不会影响作业表
     reason = db.Column(db.String(64))
     paper = db.Column(db.String(64))
     position = db.Column(db.String(64))
