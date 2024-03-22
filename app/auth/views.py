@@ -41,12 +41,17 @@ def reset():
         id=request.form.get("id")        
         if current_user.id == int(id) or current_user.role.role=="admin":
             u=user.query.filter(user.id==id).first()
-            u.password="123456"
+            u.password="z123456"
             db.session.flush()
             db.session.commit()
-            return("密码修改成功,默认密码123456")
+            return("密码修改成功,默认密码z123456")
         else:
             return("你没有权限")
+    else:
+        current_user.password="z123456"
+        db.session.flush()
+        db.session.commit()
+        return("密码修改成功,默认密码z123456")
 
 @auth.route("/ad")
 def ad():

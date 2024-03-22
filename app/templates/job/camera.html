@@ -1,80 +1,123 @@
-<!DOCTYPE html>
-<html>
-<body>
-<div class="grid-item">
-<div class="col-12" >
-<h1>摄像头监视器</h1>
-</div>
-<div class="col-12" >
-<select  class="form-select" id="videoSource">
-
-</select>
-</div>
-<div class="col-12" >
-<video autoplay="true" id="videoElement"></video>
+{% extends "base.html" %}
+{% block main %}
+<div class="container">
+<div class="row">
+  <div class="col-8" >
+  <h1>摄像头监视器</h1>
+  </div>
+  <div class="col-4" >
+<h3>识别结果</h3>
 </div>
 </div>
+<div class="row">
+<div class="col-2" >
+<label for="videoSource">选择摄像头:</label>
+</div>
+<div class="col-5" >
+<select class="form-select" id="videoSource" onchange="startStream()"></select>
+</div>
+</div>
+  <div class="row">
+    <div class="col-8" >
+    <video autoplay="true" id="videoElement" style="width: 640px; height: auto;"></video>
+    </div>
+    <div class="col-4" >
+      <div class="card shadow ">  
+        <div class="card-body">
+          <img src="" class="img-thumbnail" alt="识别结果" style="width: 100%; height: auto;">
+        </div>
+      <div class="card-footer text-muted" id="prompt">没有识别到试卷</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-
-
-<script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
-<script src="https://unpkg.com/peerjs@1/dist/peerjs.min.js"></script>
 <script>
-// Add missing import statement
-
-
-window.onload = function() {
 var video = document.querySelector('video');
-var canvas = document.createElement('canvas');
 var select = document.querySelector('#videoSource');
-var socket = io.connect();
+var canvas = document.createElement('canvas');
+var context = canvas.getContext('2d');
+var intervalId = null;
+var csrf_token = "{{ csrf_token() }}";
+function createCaptureImageFunction(id) {
+  return function() {
+    captureImage(id);
+  }
+}
+function startStream() {
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 
-// Declare hasVideoInput variable
-var hasVideoInput = false;
+  var constraints = {
+    video: {
+      deviceId: select.value,
+      width: { ideal: 1920 },
+      height: { ideal: 1340 }
+    },
+    audio: false
+  };
 
-navigator.mediaDevices.enumerateDevices()
-  .then(function(devices) {
-    devices.forEach(function(device) {
-      if (device.kind === 'videoinput') {
-        var option = document.createElement('option');
-        option.value = device.deviceId;
-        option.text = device.label || 'camera ' + (select.length + 1);
-        select.appendChild(option);
-        hasVideoInput = true; // Set hasVideoInput to true if video input device is found
-      }
-    });
-     if (!hasVideoInput) {
-      
-      alert( '没有找到摄像头');
-     
-    } else {
-      select.onchange();
-    }
-  })
-  .catch(function(err) {
-    console.log('An error occurred: ' + err);
-  });
-
-select.onchange = function() {
-  var deviceId = select.value;
-  navigator.mediaDevices.getUserMedia({ video: { deviceId: deviceId }, audio: false })
+  navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) {
       video.srcObject = stream;
-      video.play();
-      setInterval(function() {
+      video.onloadedmetadata = function() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        var data = canvas.toDataURL('image/jpeg');
-        socket.emit('image', data);
-      }, 1000 / 30);  // 每秒30帧
+        
+        intervalId = setInterval(createCaptureImageFunction({{id}}), 3000);
+      
+      };
     })
     .catch(function(err) {
       console.log('An error occurred: ' + err);
     });
-};
-};
-</script>
+}
 
-</body>
-</html>
+function captureImage(id) {
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  var dataUrl = canvas.toDataURL('image/jpeg');
+  //发送数据，并获取后台返回的结果，返回结果为一个元组，第一个元素为识别结果，第二个元素为识别结果的图片
+  fetch('/job/GetCardFromCamera/'+String(id), 
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrf_token
+    },
+    body: JSON.stringify({ image: dataUrl })
+  }).then(response => response.json())
+  .then(data => {
+    if (data[0] != 2) {
+      document.querySelector('img').src = 'data:image/jpeg;base64,' + data[1];
+      document.querySelector('#prompt').innerHTML = "成功检测到试卷";
+    }
+    else{
+      document.querySelector('img').src = '';
+      document.querySelector('#prompt').innerHTML = '没有识别到试卷';
+    }
+  });
+  
+  
+  
+}
+
+window.onload = function() {
+  navigator.mediaDevices.enumerateDevices()
+    .then(function(devices) {
+      devices.forEach(function(device) {
+        if (device.kind === 'videoinput') {
+          var option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || 'camera ' + (select.length + 1);
+          select.appendChild(option);
+        }
+      });
+      select.onchange();
+    })
+    .catch(function(err) {
+      console.log('An error occurred: ' + err);
+    });
+}
+</script>
+{% endblock %}

@@ -56,8 +56,11 @@ def people_management():
                 stu=student.query.filter(student.number==num).first()
                 class_= db.session.query(class_info).filter_by(class_name=i["班级"]).first()
                 if stu:
-                    count1+=1
-                    pass
+                    if stu.name!=i["姓名"]:
+                        stu.name=i["姓名"]
+                        count3+=1
+                    else:
+                        count1+=1
                 else:
                     stu = student()
                     stu.number = num
@@ -81,9 +84,13 @@ def people_management():
                     db.session.add(c_s)
                     db.session.flush()
                 else:
-                    c_s.class_id=class_.id
+                    if c_s.class_id!=class_.id:
+                        c_s.class_id=class_.id
+                        count3+=1
+                    else:
+                        pass
                     db.session.flush()
-                    count1+=1
+                    
             if count1:    
                 flash("%s名学生已存在，请检查文件"%count1)
             if count2:
@@ -91,7 +98,7 @@ def people_management():
             if  count:
                 flash("成功导入学生%s名" %count)
             if count3:
-                flash("%s名学生已存在，已更新分班信息"%count3)
+                flash("%s名学生已存在，已更新信息"%count3)
             try:                                                                 
                 db.session.commit()               
             except Exception:

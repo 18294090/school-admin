@@ -28,7 +28,7 @@ def create_app(config_name):
     config[config_name].init_app(app)
     db.init_app(app)  # 初始化sqlalchemy，必须先导入设置，然后初始化数据库，否则要报错
     bootstrap.init_app(app) 
-    socketio = SocketIO(app)
+    #socketio = SocketIO(app)
     @app.teardown_request #请求结束后关闭数据库连接，如果检测到错误，则回滚
     def teardown_request(exception): #
         if exception:
@@ -59,5 +59,5 @@ def create_app(config_name):
     app.register_blueprint(examination,url_prefix="/exam")
     app.register_blueprint(manage,url_prefix="/manage")
     app.register_blueprint(pedagogical_analysis,url_prefix='/p_analysis')
-    socketio.run(app, debug=True)
+    
     return(app)

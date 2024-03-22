@@ -73,11 +73,11 @@
             </div>
 
             <div class="col-8" id="infor">
-              <span class="d-block p-2 bg-primary text-white"> 《{{dict["name"]}}》 <small>未交：{{dict.n_sub}}人| 作业总分：{{dict["sum"]}}   | 平均分：{%if j_c.average%}{{j_c.average|round(2)}}{%endif%}| 最高分：{{j_c.max}} | 最低分：{{j_c.min}} | 平均得分率：{{(j_c.average/dict["sum"]*100)|round(2)  }}%</small></span>
+              <span class="d-block p-2 bg-primary text-white"> 《{{dict["name"]}}》 <small>未交：{{dict.n_sub}}人| 作业总分：{{dict["sum"]}}   | 平均分：{%if j_c.average%}{{j_c.average|round(2)}}{%endif%}| 最高分：{{j_c.max}} | 最低分：{{j_c.min}} | 平均得分率：{%if j_c.average%}{{(j_c.average/dict["sum"]*100)|round(2)  }}{%else%}0{%endif%}%</small></span>
             </div>
           </div>
           </div>
-          <div class="card-body">
+          <div class="card-body" id="showStaus">
             <!--带有水平和垂直滚动条的表格，当表格内容超出页面内容时，出现滚动条,单元格内容水平显示-->
               <div class="table-responsive"  style="height: 100vh; overflow: auto;">
                 <table class="table table-striped table-bordered" id="table">
@@ -173,6 +173,11 @@
         <div class="card-body">               
             <div class="row" id="bar_charts" style="width:100;height:auto"></div>
         </div>
+        <div class="card-footer">
+          <div class="row" style="height:200">
+            
+          </div>
+        </div>
 
 </div>
 <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
@@ -180,10 +185,10 @@
 <script>
 //发送ajax请求获取答案图片，函数showAnswer参数为学号和题号，类型为字符串
 function showAnswer(stu,question){
-
   csrf_token="{{ csrf_token() }}";
   $("#myModal").modal("show");
   $(".modal-title").empty();
+  showLoadingIndicator(".modal-body");
   //使用ajax,向job/cpl_judge/发送请求获取答案图片
     $.ajax({
                 url: "/job/cpl_judge/",    // 提交到controller的url路径 
@@ -193,7 +198,7 @@ function showAnswer(stu,question){
                         'stu':stu,
                         'title_number':question},  // data为String类型，必须为 Key/Value 格式。                
                 success: function (response, status, xhr) { 
-                    
+                    hideLoadingIndicator(".modal-body");                    
                     var img = $("<img>").attr("src", "data:image/png;base64," + response.image);
                     img.attr("class","img-fluid") 
                     img.attr("alt","Image")
@@ -206,6 +211,16 @@ function showAnswer(stu,question){
             });
 
 } 
+// 显示加载指示器
+function showLoadingIndicator(selector) {
+  $(selector).append('载入中，请稍候...<div class="spinner-border text-primary" role="status"><span class="visually-hidden"></span></div>');
+}
+
+// 隐藏加载指示器
+function hideLoadingIndicator(selector) {
+  $(selector).find('.spinner-border').remove();
+}
+
 $(document).ready(function() {
     // 页面载入时获取初始数据
     getData();
@@ -216,6 +231,8 @@ $(document).ready(function() {
     function getData() {
         // 获取选中的班级ID
         var class_id = $("#class1-select").val();
+        $("#bar_charts").empty();
+        showLoadingIndicator("#bar_charts");
         // 发送ajax请求
         $.ajax({
             type: "POST",
@@ -226,6 +243,7 @@ $(document).ready(function() {
                 'csrf_token':'{{ csrf_token() }}',
             },
             success: function (data) {
+                hideLoadingIndicator("#bar_charts");
                  $('#bar_charts').empty();
                     var barHtmlList=JSON.parse(data)
                     for (var i = 0; i < barHtmlList.length; i++) {
@@ -260,7 +278,9 @@ $("#mod").change(function(event) {
         // 获取选中的班级ID
         var class_id = $("#class-select").val();
         var mod=$("#mod").val();
-        
+        //清空表格
+        $("#table").empty();
+        showLoadingIndicator("#table");
         // 发送ajax请求
         $.ajax({
             type: "POST",
@@ -272,6 +292,7 @@ $("#mod").change(function(event) {
                 'csrf_token':'{{ csrf_token() }}',
             },
             success: function(response) {
+                hideLoadingIndicator("#table");
                  $("#table").html($(response).find("#table").html());
                  $("#infor").html($(response).find("#infor").html());
                   $("#heatmap").html($(response).find("#heatmap").html());

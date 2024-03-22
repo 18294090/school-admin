@@ -2,9 +2,7 @@
 <!DOCTYPE html>
 <html lang=en>
 <head>
-
 {%block css%}
-
 {{bootstrap.load_css() }}
 {%endblock%}
 {%block title%}
@@ -82,7 +80,7 @@
 									</a>
 									<ul class="dropdown-menu">
 										<li><a class="dropdown-item" href="{{url_for('auth.personal_details')}}">修改个人信息</a></li>
-										<li><a class="dropdown-item" href="">修改密码</a></li>
+										<li><a class="dropdown-item" href="{{url_for('auth.reset')}}">修改密码</a></li>
 										<li><hr class="dropdown-divider"></li>
 										<li><a class="dropdown-item" href="#"></a></li>
 									</ul>

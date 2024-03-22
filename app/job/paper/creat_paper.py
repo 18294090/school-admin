@@ -6,6 +6,8 @@ import math
 import qrcode
 import time
 import os
+import barcode
+
 f_url=os.getcwd()+"/app/job/paper/font/simsun.ttc"
 #产生二维码和答题卷模板，将二维码贴到答题卷上，二维码内容为作业的学科，名称，布置教师
 # width 为试卷宽度，message为二维码信息,pic为image对象,pos为二维码在答题卷上的放置位置,元组结构（x，y）,n1为二维码宽度，单位为像素，返回一个pillow对象
@@ -15,6 +17,14 @@ def qr_paste(message,pic,pos,n1):
     qr=qr.resize((n1,n1))
     pic.paste(qr,pos)
     return(pos)
+
+def generate_barcode(message, pic, pos, n1):
+    writer = barcode.writer.ImageWriter()
+    code = barcode.get('code128', message, writer=writer)
+    barcode_img = code.render()
+    barcode_img = barcode_img.resize((n1, n1//2))
+    pic.paste(barcode_img, pos)
+    return pos
 
 def genarate_papaer(width):  #生成试卷，width为宽度，高度为宽度的2的1/2次方
     height=int(width*math.sqrt(2))  
@@ -236,6 +246,7 @@ def paper(subject,teacher,width,title,s_n,complete):
     img=img.resize((name_width,27*n))
     paper.paste(img,(n*6,n*9))
     number_area(n,paper,n*27,n*9,10)
+    
     qr_paste(subject+"-"+title+"-"+teacher,paper,(paper.width-n*16,n*15),n*12)
     p_name=os.getcwd()+"/app/static/paper/excercise/"+teacher+"-"+str(time.time())+".png"
     return((line,paper,flag))

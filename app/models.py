@@ -227,7 +227,7 @@ class job_student(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     job_id = db.Column(db.Integer, ForeignKey("job.id", ondelete='CASCADE'),nullable=False)
     job = db.relationship("job", order_by="job.publish_time.desc()",back_populates="job_student")    
-    student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)
+    student = db.Column(db.String(64), ForeignKey("student.number", ondelete='CASCADE'),nullable=False)#删除job_student表中的数据时，不会影响student表
     stu_ = db.relationship("student", backref=db.backref('job_student', lazy="dynamic", cascade="all, delete"), uselist=False)
     submit_time=db.Column(db.DateTime)
     select_mark=db.Column(db.Float(precision=2))

@@ -26,10 +26,14 @@ def find_paper(img):
     h, w = img.shape[:2] 
     # 检查图像的宽高比
     ratio = w / h
-    #判断图像宽高比是否接近A4，以及边缘一圈是否基本为白色 ，若满足条件则视为扫描件   
-    if 0.700 <= ratio <= 0.717 and np.mean(img[:10, :10]) > 200:
-        print('The image is already A4 paper size.')
-        return 0,img
+    if ratio > 1:
+        img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        h, w = img.shape[:2]
+    chWidth=w//82
+    #计算图像边缘一圈的像素平均值，若大于100则为A4纸   
+    if (np.mean(img[:10, :w])+np.mean(img[h-10:h,:w])+np.mean(img[10:h-10,:10])+np.mean(img[w-10,w-10:w]))/4 > 150:
+        print('扫描件')
+        return 1,img
     # 转换为灰度图像
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # 对图像进行模糊处理
@@ -43,16 +47,36 @@ def find_paper(img):
     # 找到边缘的轮廓
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # 找到最大的轮廓
+    if len(contours) == 0:
+        print('找不到答题卡.')
+        return 2,None
     max_contour = max(contours, key=cv2.contourArea)
+    #判断轮廓是否为矩形，且面积是否大于图片面积的1/3
+    if len(max_contour) < 4 or cv2.contourArea(max_contour) < w * h *2/ 3:
+        print('找不到答题卡.')
+        return 2,None
+
     # 使用多边形逼近找到轮廓的四个角点
     epsilon = 0.02 * cv2.arcLength(max_contour, True)
     approx = cv2.approxPolyDP(max_contour, epsilon, True)
     # 使用透视变换进行矫正，保证长边和短边保持正常比例
-    pts1 = order_points(approx.squeeze())
+    try:
+        pts1 = order_points(approx.squeeze())
+    except Exception as e:
+        print(e)
+        return 2,None
     pts2 = np.array([[0, 0], [2100, 0], [2100, 2970], [0, 2970]], dtype="float32")
     M = cv2.getPerspectiveTransform(pts1, pts2)
     dst = cv2.warpPerspective(img, M, (2100, 2970))
-    return 1,dst
+    
+
+    #判断是纸张，判断依据为纸张边缘一圈是否基本为白色
+    if (np.mean(img[:10, :w])+np.mean(img[h-10:h,:w])+np.mean(img[10:h-10,:10])+np.mean(img[w-10,w-10:w]))/4>150:
+        print('找到答题卡')
+        return 1,dst
+    else:
+       
+        return 2,None
 
 #遍历文件夹下和子文件夹的所有图片
 def get_file(file_path):

@@ -103,20 +103,7 @@
 
 <br>
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-          {% for message in messages %}
-        <div class="alert alert-dismissable alert-danger" id="message">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
-                ×
-            </button>
-            <h4>
-                警告
-            </h4> <strong>作业已过截止日期不能提交</strong> 
-		</div>
-          {% endfor %}
-    {% endif %}
- {% endwith %}
+
 <div class="row">
     <div class="col-12">    
         <div class=" d-flex input-group  shadow" role="search">
@@ -127,10 +114,29 @@
 </div>
 <br>
 <div class="row">
-<div class="col-4"></div>
+    <div class="col-4" >
+        <div class="d-flex align-items-center d-none"  >
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-dismissable alert-danger" id="message">
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+                    ×
+                </button>
+                <h4>
+                    警告
+                </h4> <strong>{{message}}</strong>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
 <div class="col-4"> 
 <div class="d-flex align-items-center d-none" id="spinners" >
-<strong>正在阅卷，请稍后...</strong>
+
+<strong id="tips"></strong>
 <div class="spinner-grow spinner-grow-sm ms-auto  text-secondary" role="status" aria-hidden="true"></div>
 <div class="spinner-grow spinner-grow-sm ms-auto  text-primary" role="status" aria-hidden="true"></div>
 <div class="spinner-grow spinner-grow-sm ms-auto  text-success" role="status" aria-hidden="true"></div>
@@ -138,7 +144,7 @@
 <div class="spinner-grow spinner-grow-sm ms-auto  text-light" role="status" aria-hidden="true"></div>
 </div>
 </div>
-<div class="col-4"></div>
+<div class="col-4" ></div>
 </div>
 <div class="col-md-12">
         <table class="table  table-striped shadow " style="text-align:center">
@@ -201,7 +207,7 @@
                             </button> 
                             <ul class="dropdown-menu">
                                 <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="get_class({{i.id}})">分配作业</button></li>
-                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">选择题答案</button></li>
+                                <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" data-bs-toggle="modal" data-bs-target="#exampleModal1" onclick="get_answer({{i.id}})">修改选择题答案</button></li>
                                 <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='{{ url_for('static', filename='job/answerCard/'+"/"+i.paper_url) }}'">查看答题卡</button></li>
                                 <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item" onclick="window.location.href='/job/show_paper/{{i.question_paper}}'">查看试题卷</button></li>
                                 <li><button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick=judge({{i.id}}) >选择题阅卷</button>
@@ -214,6 +220,14 @@
                                 {%endif%}
                                 <li>
                                 <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="window.location.href='/job/judge_report/{{i.id}}'">查看自动阅卷报告</button>
+                                
+                                </li>
+                                <li>
+                                <button type="button" class="btn btn-secondary text-nowrap dropdown-item"  onclick="resetJob({{i.id}})">重置作业</button>
+                                
+                                </li>
+                                <li>
+                                <button type="button" class="btn btn-secondary dropdown-item" onclick="exportData({{i.id}})" name="{{i.paper_url}}">导出学生成绩</button>
                                 </li>
                                 {%if count1[i.id]==0 and count[i.id]==0%}
                                 <li>
@@ -292,11 +306,65 @@
 </div>
 
 </div>
-<script src="/static/assets/js/jquery.min.js"></script>
+<script src="/static/build/js/jquery.min.js"></script>
+
 <script>
+    var spinners=document.getElementById("spinners");
+    function exportData(id){
+        showSpinners("导出中，请稍候");  // 显示 Spinners
+        fetch('/job/exportData/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ id: id }) // 这里的job_id是你想要导出的作业的ID
+            })
+            .then(response => response.blob()) // 获取blob数据
+            .then(blob => {
+            // 创建一个临时的<a>元素，并设置其href和download属性
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.xlsx';
+            hideSpinners();
+            // 触发点击事件来下载文件
+            a.click();
+
+            // 清除临时的URL
+            window.URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error('导出Excel出错:', error));
+    }
+    function resetJob(id){
+        var url ="/job/resetJob/";
+        var result = window.confirm("警告：重置该作业将删除所有上传的答题卡，以及有关该作业的所有信息，确定吗？");
+        if(result){
+            var sendData = {        
+                'flag':1,
+                'id':id,
+                'csrf_token':'{{ csrf_token() }}'
+            };
+            showLoadingIndicator('#spinners');
+            $.ajax({
+                url:url,
+                type:'post',
+                data:sendData,
+                success:function (data) {  
+                    hideLoadingIndicator('#spinners');                               
+                    alert(data)
+                    location.reload()               
+                    } ,
+                error:function (error) {
+                    alert(error);
+                },
+            });
+        }
+    }
     function update_class_info(id){
         var csrf_token="{{csrf_token()}}";
         var data={"id":id};
+        showLoadingIndicator('#spinners');
         $.ajax({
                 url: "/job/UpdateClassInfo/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
@@ -305,39 +373,105 @@
                 data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
                 dataType: "json",    // 服务器端返回的数据类型
                 success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值    
+                   hideLoadingIndicator('#spinners');
                    alert(data)
                 },
                 error:function (error) {                 
                 alert("成绩更新失败，请练习管理员");},
             });
     }
-    function get_answer(id){
-        $("#show_answer").empty();
-        $.ajax({
-                url: "/job/show_answer/"+String(id),// 提交到controller的url路径 
-                             //提交给flask后台必须有csrf认证
-                type: "GET", 
-                dataType: "json",    // 服务器端返回的数据类型
-                processData: false,//用于对data参数进行序列化处理 这里必须false
-                contentType: false, //必须
-                success: function(data) {
-                    data=JSON.parse(data)
-                // 遍历字典的每个键值对
-                $.each(data, function(key, value) {
-                    //显示答案
-                    $("#show_answer").append(`<div class="mb-3" style="display: flex; ">
-                    <label for="modifyAnswer_${key}"  style="margin-right: 10px; align-items: center;" class="form-label">${key}</label>
-                    <input type="text" class="form-control" id="modifyAnswer_${key}" name="${id}" value="${value}" disabled></div>`);
-                    // 添加双击事件
-                    $(`#modifyAnswer_${key}`).dblclick(function() {
-                        $(this).prop('disabled', false);
-                        //光标定位到最后
-                        $(this).focus().val($(this).val());
-                    });
-                });
-                }
-    })
-    }
+function get_answer(id) {
+  // 弹出对话框，要求输入密码认证,密码不显示
+  var password = prompt("请输入密码", "");
+
+  if (password == null) {
+    return;
+  }
+
+  // 显示加载指示器
+  showLoadingIndicator('#show_answer');
+
+  // 发送 AJAX 请求
+  $.ajax({
+    url: `/job/show_answer/${id}`,
+    headers: { "X-CSRFToken": "{{ csrf_token() }}",
+    'Content-Type': 'application/json'
+     },
+    type: 'POST',
+    dataType: 'json',
+    data: JSON.stringify({ "password": password }),
+    success: function(data) {
+    // 隐藏加载指示器
+        hideLoadingIndicator('#show_answer');
+
+       
+  
+      if ("erro" == data) {
+        alert('密码错误，请重试');
+        window.location.reload();
+        return;
+      }
+        data=JSON.parse(data)
+      // 清空 #show_answer 元素
+      $('#show_answer').empty();
+        //根据字典data的内容，生成元素显示答案
+        $.each(data, function(key, value) {
+        $('#show_answer').append(createAnswerElement(key, value,id));
+        });
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      // 隐藏加载指示器
+      hideLoadingIndicator('#show_answer');
+
+      // 显示错误消息
+      console.error(jqXHR, textStatus, errorThrown);
+      alert('无法获取答案，请稍后重试');
+    },
+  });
+}
+function createAnswerElement(key, value, id) {
+  // 创建一个包含标签的输入框
+  const input = $('<input/>', {
+    class: 'form-control',
+    id: `modifyAnswer_${key}`,
+    name: `${id}`,
+    value: `${value}`,
+    
+  });
+
+  // 添加双击事件
+  input.dblclick(function() {
+    $(this).attr('disabled', false);
+  });
+
+  // 创建一个包含输入框的 div 元素
+  const div = $('<div/>', {
+    class: 'mb-3',
+    style: 'display: flex;',
+  });
+
+  // 将标签和输入框添加到 div 元素中
+  div.append($(`<label/>`, {
+    for: `modifyAnswer_${key}`,
+    text: key,
+    style: 'margin-right: 10px; align-items: center;',
+    class: 'form-label',
+  }));
+  div.append(input);
+
+  return div;
+}
+
+// 显示加载指示器
+function showLoadingIndicator(selector) {
+  $(selector).append('<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>');
+}
+
+// 隐藏加载指示器
+function hideLoadingIndicator(selector) {
+  $(selector).find('.spinner-border').remove();
+}
+
     function search_job(){
         var id=$("#search").val();
         
@@ -359,6 +493,7 @@
             values.push([checkbox.value,false]);
         }
         }
+        
         $.ajax({
                 url: "/job/assign_job/"+String(id),    // 提交到controller的url路径 
                              //提交给flask后台必须有csrf认证
@@ -431,6 +566,7 @@
         var file=document.getElementById("inputGroupFile"+String(id));
         var formData =new FormData();
         var files = file.files;
+        showSpinners("上传中，请稍候");  // 显示 Spinners  
         for(var i=0; i<files.length; i++){
             formData.append('files',files[i]);
         }
@@ -451,11 +587,13 @@
                        var counttag=document.getElementById("c-"+String(id))
                        counttag.innerHTML=""
                        counttag.innerHTML="<a href="+{{'/answer/url'|replace('url',id)}}+">"+data[1]+"</a>"
+                       hideSpinners();  // 隐藏 Spinners
                         judge(id)
                     } else {
                         
                         alert("上传失败")
                     }
+                    
                 },
             });
     };
@@ -463,6 +601,7 @@
         var file=document.getElementById("GroupFile");
         var formData =new FormData();
         var files = file.files;
+        showSpinners("上传中，请稍候");  // 显示 Spinners
         for(var i=0; i<files.length; i++){
             formData.append('files',files[i]);
         }
@@ -483,15 +622,20 @@
                        var counttag=document.getElementById("c-"+String(id))
                        counttag.innerHTML=""
                        counttag.innerHTML="<a href="+{{'/answer/url'|replace('url',id)}}+">"+data[1]+"</a>"
+                        hideSpinners();  // 隐藏 Spinners
                         judge(id)
                     } else {
                         
                         alert("上传失败")
                     }
+                   
                 },
+
+
+
             });
     };
-    function set_mark(id,m){
+    function set_mark(id,m){//设置主观题分数
         //获取单选框的值
         var title_number=$("input[name='cpl_number']:checked").val();        
         data={"id":id,"title_number":title_number,"mark":m}
@@ -593,11 +737,13 @@
         'url':url1,
         'csrf_token':'{{ csrf_token() }}'
     };
+    showLoadingIndicator('#spinners');
      $.ajax({
             url:url,
             type:'post',
             data:sendData,
-            success:function (data) {                                 
+            success:function (data) {  
+                hideLoadingIndicator('#spinners');                               
                   alert(data)
                   location.reload()               
                 } ,
@@ -610,7 +756,7 @@
  function judge(id){
         var data={"judge":id};
         var csrf_token="{{csrf_token()}}";
-        showSpinners();  // 显示 Spinners
+        showSpinners("阅卷中，请稍候");  // 显示 Spinners
         $.ajax({
                 url: "/job/judge/"+String(id),    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
@@ -632,7 +778,7 @@
     function judge1(){       
         var csrf_token="{{csrf_token()}}";
          // 显示 Spinners
-         showSpinners(); 
+         showSpinners("阅卷中，请稍候"); 
         $.ajax({
                 url: "/job/super_judge/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},//提交给flask后台必须有csrf认证
@@ -653,8 +799,9 @@
                 }
             });
     };
-    function showSpinners() {
+    function showSpinners(msg) {
     $("#spinners").removeClass('d-none');
+    $("#tips").text(msg);
     //使spinners全屏局中
     $("#spinners").css("position", "fixed");
     $("#spinners").css("top", "50%");
@@ -697,7 +844,7 @@ function modifyAnswer(){
             var csrf_token="{{csrf_token()}}";
             id=$("#show_answer input").attr("name");    
             data={"id":id,"answer":data};
-            
+            showSpinners("答案修改中，请稍候");  // 显示 Spinners
             $.ajax({
                 url: "/job/modifyAnswer/",    // 提交到controller的url路径 
                 headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
@@ -706,10 +853,36 @@ function modifyAnswer(){
                 data: JSON.stringify(data),  // data为String类型，必须为 Key/Value 格式。
                 dataType: "json",    // 服务器端返回的数据类型
                 success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值    
+                    hideSpinners();  // 隐藏 Spinners
                     alert(data)
+                    showSpinners("成绩修改中，请稍候");  // 显示 Spinners
+                    //关闭modal
+                    $("#exampleModal1").modal("hide");
                 },
                 error:function (error) {                 
                 alert("答案修改失败，请联系管理员");},
+            });
+          
+            //调用后台/modify_mark/id
+            
+            $.ajax({
+                url: "/job/modify_mark/"+String(id),    // 提交到controller的url路径 
+                headers:{"X-CSRFToken":csrf_token},             //提交给flask后台必须有csrf认证
+                type: "POST",    // 提交方式
+                contentType: 'application/json; charset=UTF-8', //提交数据类型
+                data: JSON.stringify({}),  // data为String类型，必须为 Key/Value 格式。
+                dataType: "json",    // 服务器端返回的数据类型
+                success: function (data) {    // 请求成功后的回调函数，其中的参数data为controller返回的map,也就是说,@ResponseBody将返回的map转化为JSON格式的数据，然后通过data这个参数取JSON数据中的值    
+                    if (data) {
+                        hideSpinners();  // 隐藏 Spinners
+                        alert("成绩更新成功")
+                    } else {
+                        alert("成绩更新失败")
+                    }
+                },
+                error:function (error) { 
+                    console.log(error)                
+                alert("成绩更新失败，请联系管理员");},
             });
 }
 </script>      
